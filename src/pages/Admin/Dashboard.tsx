@@ -102,7 +102,7 @@ interface StatCardProps {
   title: string;
   value: string;
   description: string;
-  icon: React.FC<React.SVGProps<SVGSVGElement>>;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   trend?: {
     value: string;
     positive: boolean;
@@ -114,7 +114,7 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Ic
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon size={18} className="text-muted-foreground" />
+        <Icon className="text-muted-foreground h-4 w-4" />
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
@@ -124,8 +124,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Ic
             trend.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
           }`}>
             {trend.positive ? 
-              <ArrowUpRight size={14} className="mr-1" /> : 
-              <ArrowDownRight size={14} className="mr-1" />
+              <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> : 
+              <ArrowDownRight className="mr-1 h-3.5 w-3.5" />
             }
             {trend.value}
           </div>

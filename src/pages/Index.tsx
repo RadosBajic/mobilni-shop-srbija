@@ -10,7 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Cpu, ShieldCheck, TruckIcon, Headphones } from 'lucide-react';
 
 const Index: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const features = [
     {
@@ -74,8 +74,8 @@ const Index: React.FC = () => {
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">{feature.title[t.currentLanguage]}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description[t.currentLanguage]}</p>
+                  <h3 className="font-medium mb-1">{feature.title[language]}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description[language]}</p>
                 </div>
               </CardContent>
             </Card>
