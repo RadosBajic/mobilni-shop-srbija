@@ -1,13 +1,35 @@
-// Update this page (the content is just a fallback if you fail to update the page)
 
-const Index = () => {
+import React from 'react';
+import MainLayout from '@/components/Layout/MainLayout';
+import HeroSlider from '@/components/Home/HeroSlider';
+import CategoryBanner from '@/components/Home/CategoryBanner';
+import FeaturedProducts from '@/components/Home/FeaturedProducts';
+import PromoBanner from '@/components/Home/PromoBanner';
+import { useLanguage } from '@/contexts/LanguageContext';
+
+const Index: React.FC = () => {
+  const { t } = useLanguage();
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
-      </div>
-    </div>
+    <MainLayout>
+      {/* Hero slider */}
+      <HeroSlider />
+      
+      {/* Category banners */}
+      <CategoryBanner />
+      
+      {/* Featured products */}
+      <FeaturedProducts />
+      
+      {/* Promo banner */}
+      <PromoBanner />
+      
+      {/* New arrivals */}
+      <FeaturedProducts 
+        title={t('newArrivals')} 
+        viewAllLink="/new-arrivals" 
+      />
+    </MainLayout>
   );
 };
 
