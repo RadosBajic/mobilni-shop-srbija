@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +14,9 @@ import NotFound from "./pages/NotFound";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
 import Dashboard from "./pages/Admin/Dashboard";
+import Products from "./pages/Admin/Products";
+import Categories from "./pages/Admin/Categories";
+import ImportExport from "./pages/Admin/ImportExport";
 
 const queryClient = new QueryClient();
 
@@ -34,7 +36,10 @@ const App = () => (
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/admin" element={<AdminLayout />}>
                 <Route path="dashboard" element={<Dashboard />} />
-                {/* Add other admin routes here */}
+                <Route path="products" element={<Products />} />
+                <Route path="categories" element={<Categories />} />
+                <Route path="import-export" element={<ImportExport />} />
+                {/* Other admin routes will be added here */}
               </Route>
               
               {/* 404 catch-all */}

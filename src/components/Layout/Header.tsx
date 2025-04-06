@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X, Sun, Moon, ShoppingCart, Search, ChevronDown } from 'lucide-react';
+import { Menu, X, Sun, Moon, ShoppingCart, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import CommandSearch from '@/components/Search/CommandSearch';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Header: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
   const { isDarkMode, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const isMobile = useIsMobile();
 
   const categories = [
     { id: 'phone-cases', name: { sr: 'Maske za telefone', en: 'Phone Cases' } },
@@ -22,19 +23,12 @@ const Header: React.FC = () => {
     { id: 'headphones', name: { sr: 'Slušalice', en: 'Headphones' } },
   ];
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle search functionality
-    console.log('Search for:', searchQuery);
-    // Redirect to search results page
-  };
-
   const toggleLanguage = () => {
     setLanguage(language === 'sr' ? 'en' : 'sr');
   };
 
   return (
-    <header className="sticky top-0 z-50 bg-background border-b transition-theme">
+    <header className="sticky top-0 z-50 bg-background/95 backdrop-blur-sm border-b transition-theme">
       <div className="container">
         {/* Top header with logo, search, and actions */}
         <div className="flex items-center justify-between py-4">
@@ -45,18 +39,7 @@ const Header: React.FC = () => {
 
           {/* Search (hidden on mobile) */}
           <div className="hidden md:flex flex-1 max-w-md mx-6">
-            <form onSubmit={handleSearch} className="relative w-full">
-              <Input
-                type="text"
-                placeholder={t('search')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10"
-              />
-              <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                <Search size={18} />
-              </button>
-            </form>
+            <CommandSearch />
           </div>
 
           {/* Action buttons */}
@@ -127,18 +110,9 @@ const Header: React.FC = () => {
         {isOpen && (
           <div className="md:hidden py-4 border-t animate-fade-in">
             {/* Mobile search */}
-            <form onSubmit={handleSearch} className="relative mb-4">
-              <Input
-                type="text"
-                placeholder={t('search')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pr-10"
-              />
-              <button type="submit" className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                <Search size={18} />
-              </button>
-            </form>
+            <div className="mb-4">
+              <CommandSearch />
+            </div>
 
             {/* Mobile menu links */}
             <div className="flex flex-col space-y-2">

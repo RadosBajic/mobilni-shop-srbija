@@ -102,7 +102,7 @@ interface StatCardProps {
   title: string;
   value: string;
   description: string;
-  icon: React.FC<{ size?: number }>;
+  icon: React.FC<React.SVGProps<SVGSVGElement>>;
   trend?: {
     value: string;
     positive: boolean;
