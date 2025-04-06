@@ -1,5 +1,5 @@
 
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&family=Playfair+Display:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -76,10 +76,15 @@
 
   body {
     @apply bg-background text-foreground font-sans;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
 
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-medium;
+  }
+
+  h1 {
+    @apply tracking-tight;
   }
 
   .container {
@@ -89,30 +94,199 @@
   .transition-theme {
     @apply transition-all duration-200 ease-in-out;
   }
+
+  /* Glass effect for premium look */
+  .glass {
+    @apply bg-white/10 backdrop-blur-sm border border-white/20 dark:bg-black/30 dark:border-white/10;
+  }
+
+  /* Premium card styling */
+  .premium-card {
+    @apply bg-gradient-to-br from-card to-card/80 shadow-lg border border-border/50 backdrop-blur-sm;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .premium-card:hover {
+    @apply shadow-xl;
+    transform: translateY(-3px);
+  }
 }
 
 @layer components {
   .btn-primary {
-    @apply px-4 py-2 text-white transition-colors rounded-md bg-primary hover:bg-primary/90;
+    @apply px-4 py-2 text-white transition-all rounded-md bg-primary hover:bg-primary/90 hover:shadow-md;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 transition-colors rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80;
+    @apply px-4 py-2 transition-all rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 hover:shadow-sm;
   }
 
   .btn-accent {
-    @apply px-4 py-2 text-white transition-colors rounded-md bg-accent hover:bg-accent/90;
+    @apply px-4 py-2 text-white transition-all rounded-md bg-accent hover:bg-accent/90 hover:shadow-md;
   }
 
   .nav-link {
-    @apply relative px-3 py-2 transition-colors rounded-md hover:bg-background/50 hover:text-primary;
+    @apply relative px-3 py-2 transition-all rounded-md hover:bg-background/50 hover:text-primary;
   }
 
   .nav-link.active {
     @apply text-primary font-medium;
   }
 
+  .nav-link.active::after {
+    content: '';
+    @apply absolute bottom-0 left-1/2 w-1/2 h-0.5 bg-primary transform -translate-x-1/2;
+    animation: navLinkActive 0.3s ease forwards;
+  }
+
   .card-hover {
-    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+    @apply transition-all duration-300 hover:shadow-lg;
+    transform: translateY(0);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-5px);
+  }
+
+  /* Product card animation */
+  .product-card {
+    @apply transition-all duration-300;
+  }
+
+  .product-card:hover {
+    @apply shadow-xl;
+    transform: translateY(-5px) scale(1.02);
+  }
+
+  /* Custom badge */
+  .premium-badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold transition-colors;
+    background: linear-gradient(90deg, var(--accent-color, #F59E0B) 0%, var(--accent-color-light, #FBBF24) 100%);
+  }
+
+  /* Button animation */
+  .btn-animated {
+    @apply relative overflow-hidden;
+  }
+
+  .btn-animated::after {
+    content: '';
+    @apply absolute inset-0 bg-white/20 transform translate-x-full;
+    transition: transform 0.6s ease;
+  }
+
+  .btn-animated:hover::after {
+    @apply transform translate-x-[-100%];
+  }
+
+  /* Text gradient */
+  .text-gradient {
+    @apply font-bold;
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent)));
+  }
+
+  /* Slide in animation for content */
+  .slide-in {
+    animation: slideIn 0.5s ease forwards;
+  }
+
+  .slide-in-delayed {
+    animation: slideIn 0.5s ease 0.2s forwards;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes navLinkActive {
+  from {
+    width: 0;
+  }
+  to {
+    width: 50%;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(var(--accent-rgb), 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(var(--accent-rgb), 0);
+  }
+}
+
+/* Enhance animations in Tailwind config */
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease forwards;
+  }
+
+  .animate-slide-in {
+    animation: slideIn 0.5s ease forwards;
+  }
+
+  .animate-pulse-accent {
+    animation: pulse 2s infinite;
+  }
+
+  .hover-scale {
+    transition: transform 0.3s ease;
+  }
+
+  .hover-scale:hover {
+    transform: scale(1.05);
+  }
+
+  .hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .hover-lift:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   }
 }

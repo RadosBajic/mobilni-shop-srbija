@@ -28,7 +28,7 @@ import {
 
 const Dashboard: React.FC = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <div className="text-sm text-muted-foreground">
@@ -70,7 +70,7 @@ const Dashboard: React.FC = () => {
       
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
+        <Card className="hover-lift transition-all">
           <CardHeader>
             <CardTitle>Sales Overview</CardTitle>
             <CardDescription>Monthly revenue for the last 6 months</CardDescription>
@@ -91,13 +91,20 @@ const Dashboard: React.FC = () => {
                 <YAxis />
                 <Tooltip formatter={(value) => `${value} RSD`} />
                 <Legend />
-                <Line type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} />
+                <Line 
+                  type="monotone" 
+                  dataKey="revenue" 
+                  stroke="#8884d8" 
+                  activeDot={{ r: 8 }} 
+                  strokeWidth={2}
+                  dot={{ strokeWidth: 2 }}
+                />
               </LineChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="hover-lift transition-all">
           <CardHeader>
             <CardTitle>Product Categories</CardTitle>
             <CardDescription>Sales by product category</CardDescription>
@@ -128,7 +135,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-1 gap-6">
-        <Card>
+        <Card className="hover-lift transition-all">
           <CardHeader>
             <CardTitle>Top Selling Products</CardTitle>
             <CardDescription>Best performers this month</CardDescription>
@@ -158,7 +165,7 @@ const Dashboard: React.FC = () => {
       </div>
       
       {/* Recent orders */}
-      <Card>
+      <Card className="hover-lift transition-all">
         <CardHeader>
           <CardTitle>Recent Orders</CardTitle>
           <CardDescription>Latest orders from customers</CardDescription>
@@ -177,7 +184,7 @@ const Dashboard: React.FC = () => {
               </thead>
               <tbody>
                 {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b">
+                  <tr key={order.id} className="border-b hover:bg-muted/30 transition-colors">
                     <td className="py-3 px-4">#{order.id}</td>
                     <td className="py-3 px-4">{order.customer}</td>
                     <td className="py-3 px-4">{order.date}</td>
@@ -207,7 +214,7 @@ interface StatCardProps {
   title: string;
   value: string;
   description: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  icon: React.ComponentType;
   trend?: {
     value: string;
     positive: boolean;
@@ -216,7 +223,7 @@ interface StatCardProps {
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Icon, trend }) => {
   return (
-    <Card>
+    <Card className="hover-lift transition-all">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium">{title}</CardTitle>
         <Icon className="text-muted-foreground h-4 w-4" />

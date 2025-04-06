@@ -3,6 +3,7 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollToTop } from '@/components/ui/scroll-to-top';
 import { cn } from '@/lib/utils';
 
 interface MainLayoutProps {
@@ -29,6 +30,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         </main>
       </ScrollArea>
       <Footer />
+      <ScrollToTop />
     </div>
   );
 };

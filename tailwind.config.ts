@@ -87,18 +87,67 @@ export default {
 						opacity: "1",
 						transform: "translateX(0)"
 					}
+				},
+				"scale-in": {
+					"0%": {
+						opacity: "0",
+						transform: "scale(0.95)"
+					},
+					"100%": {
+						opacity: "1",
+						transform: "scale(1)"
+					}
+				},
+				"float": {
+					"0%, 100%": {
+						transform: "translateY(0)"
+					},
+					"50%": {
+						transform: "translateY(-5px)"
+					}
+				},
+				"pulse-light": {
+					"0%, 100%": {
+						opacity: "1"
+					},
+					"50%": {
+						opacity: "0.7"
+					}
+				},
+				"shimmer": {
+					"0%": {
+						backgroundPosition: "-200% 0"
+					},
+					"100%": {
+						backgroundPosition: "200% 0"
+					}
 				}
 			},
 			animation: {
 				"accordion-down": "accordion-down 0.2s ease-out",
 				"accordion-up": "accordion-up 0.2s ease-out",
 				"fade-in": "fade-in 0.3s ease-out",
-				"slide-in": "slide-in 0.3s ease-out"
+				"slide-in": "slide-in 0.3s ease-out",
+				"scale-in": "scale-in 0.2s ease-out",
+				"float": "float 3s ease-in-out infinite",
+				"pulse-light": "pulse-light 2s ease-in-out infinite",
+				"shimmer": "shimmer 2s linear infinite"
 			},
 			fontFamily: {
 				sans: ['Roboto', 'sans-serif'],
 				heading: ['Montserrat', 'sans-serif'],
-			}
+				display: ['Playfair Display', 'serif'],
+			},
+			boxShadow: {
+				'premium': '0px 10px 30px -5px rgba(0, 0, 0, 0.1)',
+				'premium-dark': '0px 10px 30px -5px rgba(0, 0, 0, 0.3)',
+				'premium-hover': '0px 20px 40px -5px rgba(0, 0, 0, 0.15)',
+				'premium-inner': 'inset 0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+			},
+			backgroundImage: {
+				'gradient-premium': 'linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)))',
+				'gradient-shimmer': 'linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],
