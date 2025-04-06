@@ -6,9 +6,25 @@ import {
   DollarSign, 
   Package, 
   ArrowUpRight, 
-  ArrowDownRight 
+  ArrowDownRight,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  LineChart,
+  Line,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
 const Dashboard: React.FC = () => {
   return (
@@ -50,6 +66,95 @@ const Dashboard: React.FC = () => {
           trend={{ value: '-3%', positive: false }}
           icon={Package}
         />
+      </div>
+      
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Sales Overview</CardTitle>
+            <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart
+                data={salesData}
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 20,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip formatter={(value) => `${value} RSD`} />
+                <Legend />
+                <Line type="monotone" dataKey="revenue" stroke="#8884d8" activeDot={{ r: 8 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader>
+            <CardTitle>Product Categories</CardTitle>
+            <CardDescription>Sales by product category</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={categoryData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {categoryData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => `${value} items`} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
+      
+      <div className="grid grid-cols-1 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Top Selling Products</CardTitle>
+            <CardDescription>Best performers this month</CardDescription>
+          </CardHeader>
+          <CardContent className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={topProductsData}
+                layout="vertical"
+                margin={{
+                  top: 5,
+                  right: 30,
+                  left: 120,
+                  bottom: 5,
+                }}
+              >
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis type="number" />
+                <YAxis type="category" dataKey="name" />
+                <Tooltip formatter={(value) => `${value} units`} />
+                <Legend />
+                <Bar dataKey="units" fill="#82ca9d" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
       
       {/* Recent orders */}
@@ -142,6 +247,37 @@ const recentOrders = [
   { id: '28739', customer: 'Stefan Nikolić', date: '05.04.2025', amount: '5,670', status: 'Pending' },
   { id: '28738', customer: 'Jelena Đorđević', date: '04.04.2025', amount: '3,290', status: 'Completed' },
   { id: '28737', customer: 'Milan Todorović', date: '04.04.2025', amount: '7,890', status: 'Processing' },
+];
+
+// Sample data for sales chart
+const salesData = [
+  { month: 'Nov', revenue: 154600 },
+  { month: 'Dec', revenue: 211400 },
+  { month: 'Jan', revenue: 178500 },
+  { month: 'Feb', revenue: 199300 },
+  { month: 'Mar', revenue: 235800 },
+  { month: 'Apr', revenue: 289500 },
+];
+
+// Sample data for categories pie chart
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF6347'];
+
+const categoryData = [
+  { name: 'Phone Cases', value: 245 },
+  { name: 'Screen Protectors', value: 167 },
+  { name: 'Chargers', value: 134 },
+  { name: 'Cables', value: 98 },
+  { name: 'Headphones', value: 76 },
+  { name: 'Other', value: 43 },
+];
+
+// Sample data for top products bar chart
+const topProductsData = [
+  { name: 'iPhone 14 Pro Case - Black', units: 67 },
+  { name: 'Samsung S23 Screen Protector', units: 54 },
+  { name: 'USB-C Fast Charger 65W', units: 42 },
+  { name: 'Bluetooth Earbuds', units: 38 },
+  { name: 'Lightning Cable - 2m', units: 31 },
 ];
 
 export default Dashboard;
