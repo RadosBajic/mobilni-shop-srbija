@@ -74,8 +74,8 @@ const Index: React.FC = () => {
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-medium mb-1">{feature.title[t.language]}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description[t.language]}</p>
+                  <h3 className="font-medium mb-1">{feature.title[t.currentLanguage]}</h3>
+                  <p className="text-sm text-muted-foreground">{feature.description[t.currentLanguage]}</p>
                 </div>
               </CardContent>
             </Card>

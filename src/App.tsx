@@ -17,6 +17,8 @@ import Dashboard from "./pages/Admin/Dashboard";
 import Products from "./pages/Admin/Products";
 import Categories from "./pages/Admin/Categories";
 import ImportExport from "./pages/Admin/ImportExport";
+import Banners from "./pages/Admin/Banners";
+import Settings from "./pages/Admin/Settings";
 
 const queryClient = new QueryClient();
 
@@ -38,7 +40,9 @@ const App = () => (
                 <Route path="dashboard" element={<Dashboard />} />
                 <Route path="products" element={<Products />} />
                 <Route path="categories" element={<Categories />} />
+                <Route path="banners" element={<Banners />} />
                 <Route path="import-export" element={<ImportExport />} />
+                <Route path="settings" element={<Settings />} />
                 {/* Other admin routes will be added here */}
               </Route>
               
