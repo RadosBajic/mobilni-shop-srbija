@@ -1,67 +1,65 @@
 
-import React, { useState, useEffect, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import React, { useEffect, useRef, useState } from 'react';
+import { useInView } from 'react-intersection-observer';
 
 interface AnimatedCounterProps {
   value: number;
   duration?: number;
-  className?: string;
+  decimals?: number;
   prefix?: string;
   suffix?: string;
-  formatter?: (value: number) => string;
+  className?: string;
 }
 
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   value,
-  duration = 1000,
-  className,
+  duration = 1500,
+  decimals = 0,
   prefix = '',
   suffix = '',
-  formatter = (val) => val.toString()
+  className = '',
 }) => {
   const [count, setCount] = useState(0);
-  const previousValueRef = useRef(0);
-  const startTimeRef = useRef<number | null>(null);
+  const countRef = useRef(0);
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
 
   useEffect(() => {
-    let animationFrameId: number;
-    previousValueRef.current = count;
-    startTimeRef.current = null;
+    if (inView) {
+      let startTime: number | null = null;
+      countRef.current = 0;
 
-    const animation = (timestamp: number) => {
-      if (startTimeRef.current === null) {
-        startTimeRef.current = timestamp;
-      }
+      const step = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const progress = Math.min((timestamp - startTime) / duration, 1);
+        
+        // Easing function - easeOutQuart
+        const eased = 1 - Math.pow(1 - progress, 4);
+        
+        countRef.current = eased * value;
+        setCount(countRef.current);
 
-      const progress = timestamp - startTimeRef.current;
-      const progressRatio = Math.min(progress / duration, 1);
-      
-      // Use easing function for a more natural animation
-      const easedProgress = 1 - Math.pow(1 - progressRatio, 3); // Cubic ease-out
-      
-      const nextCount = Math.floor(
-        previousValueRef.current + (value - previousValueRef.current) * easedProgress
-      );
-      
-      setCount(nextCount);
+        if (progress < 1) {
+          window.requestAnimationFrame(step);
+        }
+      };
 
-      if (progressRatio < 1) {
-        animationFrameId = requestAnimationFrame(animation);
-      } else {
-        setCount(value);
-      }
-    };
+      window.requestAnimationFrame(step);
+    }
+  }, [inView, value, duration]);
 
-    animationFrameId = requestAnimationFrame(animation);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [value, duration]);
+  const formattedCount = count.toLocaleString(undefined, {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
 
   return (
-    <span className={cn('tabular-nums', className)}>
-      {prefix}{formatter(count)}{suffix}
+    <span ref={ref} className={className}>
+      {prefix}{formattedCount}{suffix}
     </span>
   );
 };
+
+export default AnimatedCounter;
