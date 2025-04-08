@@ -12,10 +12,12 @@ import {
   LogOut, 
   ShoppingBag, 
   Menu,
-  X
+  X,
+  Image,
+  Mail
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAdminAuth, logout } from '@/utils/auth';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
@@ -26,6 +28,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
+import NotificationsDropdown from './NotificationsDropdown';
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -50,6 +53,8 @@ const AdminLayout: React.FC = () => {
     { icon: Package, label: 'Products', path: '/admin/products' },
     { icon: Tag, label: 'Categories', path: '/admin/categories' },
     { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
+    { icon: Image, label: 'Banners', path: '/admin/banners' },
+    { icon: Mail, label: 'Mail', path: '/admin/mail' },
     { icon: FileSpreadsheet, label: 'Import/Export', path: '/admin/import-export' },
     { icon: Users, label: 'Customers', path: '/admin/customers' },
     { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
@@ -146,10 +151,20 @@ const AdminLayout: React.FC = () => {
               <h1 className="text-lg font-bold">MobShop Admin</h1>
             </div>
             
-            <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut size={16} className="mr-2" />
-              Logout
-            </Button>
+            <div className="flex items-center gap-2">
+              <NotificationsDropdown />
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut size={16} className="mr-2" />
+                Logout
+              </Button>
+            </div>
+          </div>
+        </header>
+        
+        {/* Desktop header */}
+        <header className="hidden md:flex items-center justify-end bg-card border-b border-border p-4">
+          <div className="flex items-center gap-3">
+            <NotificationsDropdown />
           </div>
         </header>
         

@@ -1,15 +1,31 @@
 
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, CreditCard } from 'lucide-react';
+import { 
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage, 
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { useForm } from 'react-hook-form';
+import { createNotification } from '@/services/NotificationService';
 
 const Checkout: React.FC = () => {
   const { language } = useLanguage();
-  const { totalItems, totalPrice } = useCart();
+  const { totalItems, totalPrice, items, clearCart } = useCart();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { toast } = useToast();
+  const navigate = useNavigate();
   
   const translations = {
     checkout: {
@@ -19,10 +35,6 @@ const Checkout: React.FC = () => {
     backToCart: {
       sr: 'Nazad na korpu',
       en: 'Back to cart',
-    },
-    underDevelopment: {
-      sr: 'Stranica za plaćanje je u izradi',
-      en: 'Checkout page is under development',
     },
     itemsInCart: {
       sr: 'artikala u korpi',
@@ -35,33 +47,349 @@ const Checkout: React.FC = () => {
     currency: {
       sr: 'RSD',
       en: 'RSD',
+    },
+    placeOrder: {
+      sr: 'Naruči',
+      en: 'Place Order',
+    },
+    personalInfo: {
+      sr: 'Lični podaci',
+      en: 'Personal Information',
+    },
+    fullName: {
+      sr: 'Ime i prezime',
+      en: 'Full name',
+    },
+    email: {
+      sr: 'Email adresa',
+      en: 'Email address',
+    },
+    phone: {
+      sr: 'Broj telefona',
+      en: 'Phone number',
+    },
+    address: {
+      sr: 'Adresa',
+      en: 'Address',
+    },
+    city: {
+      sr: 'Grad',
+      en: 'City',
+    },
+    postalCode: {
+      sr: 'Poštanski broj',
+      en: 'Postal code',
+    },
+    paymentInfo: {
+      sr: 'Informacije o plaćanju',
+      en: 'Payment Information',
+    },
+    cardNumber: {
+      sr: 'Broj kartice',
+      en: 'Card number',
+    },
+    cardHolder: {
+      sr: 'Ime na kartici',
+      en: 'Cardholder name',
+    },
+    expiry: {
+      sr: 'Datum isteka',
+      en: 'Expiry date',
+    },
+    cvv: {
+      sr: 'CVV',
+      en: 'CVV',
+    },
+    orderSuccess: {
+      sr: 'Porudžbina uspešna',
+      en: 'Order Successful',
+    },
+    orderSuccessMessage: {
+      sr: 'Vaša porudžbina je uspešno primljena. Uskoro ćete dobiti email sa potvrdom.',
+      en: 'Your order has been successfully placed. You will receive a confirmation email shortly.',
+    },
+  };
+
+  const form = useForm({
+    defaultValues: {
+      fullName: '',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      postalCode: '',
+      cardNumber: '',
+      cardHolder: '',
+      expiry: '',
+      cvv: '',
+    },
+  });
+
+  const handleSubmit = async (data: any) => {
+    if (totalItems === 0) {
+      toast({
+        title: "Cart is empty",
+        description: "Add items to your cart before placing an order",
+        variant: "destructive",
+      });
+      return;
     }
+
+    setIsProcessing(true);
+
+    // Simulate order processing
+    setTimeout(async () => {
+      // In a real app, we would send this to a backend
+      const orderId = `ORD-${Math.floor(Math.random() * 10000)}`;
+      
+      // Create an admin notification for the new order
+      await createNotification(
+        'New Order Received', 
+        `Order #${orderId} has been placed for ${totalPrice} RSD`, 
+        'info',
+        '/admin/orders'
+      );
+
+      // Clear the cart
+      clearCart();
+      
+      // Show success toast
+      toast({
+        title: translations.orderSuccess[language],
+        description: translations.orderSuccessMessage[language],
+        variant: "default",
+      });
+      
+      // Redirect to home page
+      navigate('/');
+      
+      setIsProcessing(false);
+    }, 2000);
   };
 
   return (
     <MainLayout>
       <div className="container py-8 max-w-5xl mx-auto">
-        <div className="flex flex-col items-center justify-center py-16 text-center space-y-8">
-          <h1 className="text-3xl font-bold">{translations.checkout[language]}</h1>
-          
-          <div className="bg-card border rounded-lg shadow-sm p-6 max-w-md w-full">
-            <p className="text-xl mb-6">{translations.underDevelopment[language]}</p>
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="w-full md:w-2/3">
+            <h1 className="text-3xl font-bold mb-6">{translations.checkout[language]}</h1>
             
-            <div className="text-left space-y-3 mb-6">
-              <div className="text-muted-foreground">
-                {totalItems} {translations.itemsInCart[language]}
-              </div>
-              <div className="text-2xl font-bold">
-                {translations.total[language]} {totalPrice.toLocaleString()} {translations.currency[language]}
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-8">
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold">{translations.personalInfo[language]}</h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="fullName"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.fullName[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.email[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="john@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.phone[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="+1 234 567 890" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.address[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="123 Main St" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="city"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.city[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="New York" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="postalCode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.postalCode[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="10001" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-6">
+                  <h2 className="text-xl font-semibold">{translations.paymentInfo[language]}</h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="cardNumber"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>{translations.cardNumber[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="4111 1111 1111 1111" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cardHolder"
+                      render={({ field }) => (
+                        <FormItem className="col-span-2">
+                          <FormLabel>{translations.cardHolder[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="John Doe" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="expiry"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.expiry[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="MM/YY" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="cvv"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{translations.cvv[language]}</FormLabel>
+                          <FormControl>
+                            <Input placeholder="123" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between gap-4">
+                  <Button asChild variant="outline">
+                    <Link to="/cart" className="flex items-center gap-2">
+                      <ArrowLeft className="h-4 w-4" />
+                      {translations.backToCart[language]}
+                    </Link>
+                  </Button>
+                  
+                  <Button 
+                    type="submit" 
+                    className="gap-2"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                        {translations.placeOrder[language]}...
+                      </div>
+                    ) : (
+                      <>
+                        <CreditCard className="h-4 w-4" />
+                        {translations.placeOrder[language]}
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+          
+          <div className="w-full md:w-1/3">
+            <div className="bg-card border rounded-lg shadow-sm p-6 sticky top-8">
+              <h2 className="text-xl font-bold mb-4">{translations.checkout[language]}</h2>
+              
+              <div className="space-y-4">
+                <div className="text-muted-foreground">
+                  {totalItems} {translations.itemsInCart[language]}
+                </div>
+                
+                <div className="max-h-60 overflow-y-auto space-y-3">
+                  {items.map((item) => (
+                    <div key={item.id} className="flex items-center gap-3 text-sm">
+                      <div className="w-10 h-10 bg-muted rounded flex-shrink-0 flex items-center justify-center overflow-hidden">
+                        {item.image ? (
+                          <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="text-muted-foreground text-xs">No img</div>
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium">{item.name}</div>
+                        <div className="text-muted-foreground">{item.quantity} × {item.price.toLocaleString()} {translations.currency[language]}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="border-t pt-4 text-lg font-bold">
+                  {translations.total[language]} {totalPrice.toLocaleString()} {translations.currency[language]}
+                </div>
               </div>
             </div>
-            
-            <Button asChild className="w-full">
-              <Link to="/cart" className="flex items-center justify-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                {translations.backToCart[language]}
-              </Link>
-            </Button>
           </div>
         </div>
       </div>
