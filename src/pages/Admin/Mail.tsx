@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   Card,
@@ -13,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Send, Inbox, Archive, Trash, Edit } from "lucide-react";
+import { MailIcon, Send, Inbox, Archive, Trash, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface EmailType {
@@ -61,7 +60,7 @@ const mockEmails: EmailType[] = [
   }
 ];
 
-const Mail = () => {
+const MailPage = () => {
   const { toast } = useToast();
   const [emails, setEmails] = useState<EmailType[]>(mockEmails);
   const [activeTab, setActiveTab] = useState('inbox');
@@ -318,4 +317,4 @@ const Mail = () => {
   );
 };
 
-export default Mail;
+export default MailPage;

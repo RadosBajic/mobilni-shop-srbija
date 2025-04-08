@@ -28,7 +28,7 @@ import ImportExport from "./pages/Admin/ImportExport";
 import Banners from "./pages/Admin/Banners";
 import Settings from "./pages/Admin/Settings";
 import Customers from "./pages/Admin/Customers";
-import Mail from "./pages/Admin/Mail";
+import MailPage from "./pages/Admin/Mail";
 
 const queryClient = new QueryClient();
 
@@ -59,7 +59,7 @@ const App = () => (
                   <Route path="orders" element={<Orders />} />
                   <Route path="customers" element={<Customers />} />
                   <Route path="banners" element={<Banners />} />
-                  <Route path="mail" element={<Mail />} />
+                  <Route path="mail" element={<MailPage />} />
                   <Route path="import-export" element={<ImportExport />} />
                   <Route path="settings" element={<Settings />} />
                 </Route>
