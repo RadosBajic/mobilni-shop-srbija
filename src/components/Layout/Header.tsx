@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import CommandSearch from '@/components/Search/CommandSearch';
 import { useIsMobile } from '@/hooks/use-mobile';
+import Cart from '@/components/Shop/Cart';
 
 const Header: React.FC = () => {
   const { language, setLanguage, t } = useLanguage();
@@ -45,12 +46,7 @@ const Header: React.FC = () => {
           {/* Action buttons */}
           <div className="flex items-center space-x-2">
             {/* Cart button */}
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/cart">
-                <ShoppingCart size={20} />
-                <span className="sr-only">{t('cart')}</span>
-              </Link>
-            </Button>
+            <Cart />
 
             {/* Theme toggle */}
             <Button variant="ghost" size="icon" onClick={toggleTheme}>
@@ -100,7 +96,7 @@ const Header: React.FC = () => {
               </DropdownMenuContent>
             </DropdownMenu>
             
-            <Link to="/products" className="nav-link">{t('products')}</Link>
+            <Link to="/proizvodi" className="nav-link">{t('products')}</Link>
             <Link to="/about" className="nav-link">{t('about')}</Link>
             <Link to="/contact" className="nav-link">{t('contact')}</Link>
           </div>
@@ -116,7 +112,7 @@ const Header: React.FC = () => {
 
             {/* Mobile menu links */}
             <div className="flex flex-col space-y-2">
-              <Link to="/" className="nav-link">{t('home')}</Link>
+              <Link to="/" className="nav-link" onClick={() => setIsOpen(false)}>{t('home')}</Link>
               <div className="py-2 px-3">
                 <h3 className="font-medium mb-2">{t('categories')}</h3>
                 <div className="pl-3 flex flex-col space-y-2 text-sm">
@@ -125,18 +121,19 @@ const Header: React.FC = () => {
                       key={category.id}
                       to={`/category/${category.id}`}
                       className="nav-link"
+                      onClick={() => setIsOpen(false)}
                     >
                       {category.name[language]}
                     </Link>
                   ))}
-                  <Link to="/categories" className="nav-link font-medium text-primary">
+                  <Link to="/categories" className="nav-link font-medium text-primary" onClick={() => setIsOpen(false)}>
                     {t('viewAll')}
                   </Link>
                 </div>
               </div>
-              <Link to="/products" className="nav-link">{t('products')}</Link>
-              <Link to="/about" className="nav-link">{t('about')}</Link>
-              <Link to="/contact" className="nav-link">{t('contact')}</Link>
+              <Link to="/proizvodi" className="nav-link" onClick={() => setIsOpen(false)}>{t('products')}</Link>
+              <Link to="/about" className="nav-link" onClick={() => setIsOpen(false)}>{t('about')}</Link>
+              <Link to="/contact" className="nav-link" onClick={() => setIsOpen(false)}>{t('contact')}</Link>
             </div>
           </div>
         )}

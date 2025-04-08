@@ -5,6 +5,8 @@ import { ShoppingCart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 
 export interface Product {
   id: string;
@@ -26,6 +28,8 @@ interface ProductCardProps {
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const { language, t } = useLanguage();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
   
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat(language === 'sr' ? 'sr-RS' : 'en-US', {
@@ -35,9 +39,27 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     }).format(price);
   };
 
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addToCart({
+      id: product.id,
+      name: product.title[language],
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+    
+    toast({
+      title: language === 'sr' ? 'Proizvod dodat u korpu' : 'Product added to cart',
+      description: product.title[language],
+    });
+  };
+
   return (
     <div className="group bg-card rounded-lg overflow-hidden border border-border shadow-sm hover:shadow-md transition-all duration-200 card-hover">
-      <Link to={`/product/${product.id}`} className="block relative">
+      <Link to={`/proizvod/${product.id}`} className="block relative">
         {/* Product image */}
         <div className="aspect-square overflow-hidden bg-secondary/40">
           <img 
@@ -64,7 +86,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       {/* Product info */}
       <div className="p-4">
-        <Link to={`/product/${product.id}`} className="block">
+        <Link to={`/proizvod/${product.id}`} className="block">
           <h3 className="font-medium text-lg mb-2 line-clamp-2 group-hover:text-primary transition-colors">
             {product.title[language]}
           </h3>
@@ -79,7 +101,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
               </span>
             )}
           </div>
-          <Button size="sm" className="rounded-full" variant="outline">
+          <Button size="sm" className="rounded-full" variant="outline" onClick={handleAddToCart}>
             <ShoppingCart size={16} className="mr-1" />
             <span className="sr-only md:not-sr-only md:inline">{t('addToCart')}</span>
           </Button>

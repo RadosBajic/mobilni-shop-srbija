@@ -7,6 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Search, SlidersHorizontal, ChevronRight, ChevronDown, Star, Heart } from 'lucide-react';
+import { Search, SlidersHorizontal, ChevronRight, ChevronDown, Star, Heart, ShoppingCart } from 'lucide-react';
 
 // Mock products data
 const mockProducts = [
@@ -146,6 +149,10 @@ const Products: React.FC = () => {
   const [filterTag, setFilterTag] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('sve');
   
+  const { addToCart } = useCart();
+  const { language } = useLanguage();
+  const { toast } = useToast();
+
   // Filter products based on search, category, and tag
   const filteredProducts = mockProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -182,6 +189,21 @@ const Products: React.FC = () => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     // Additional search logic would be implemented here in a real app
+  };
+  
+  const handleAddToCart = (product: any) => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: 1
+    });
+    
+    toast({
+      title: language === 'sr' ? 'Proizvod dodat u korpu' : 'Product added to cart',
+      description: product.name,
+    });
   };
 
   return (
@@ -379,15 +401,31 @@ const Products: React.FC = () => {
                           )}
                         </div>
                         
-                        {product.stock === 0 ? (
-                          <Badge variant="outline" className="text-destructive">
-                            Nije na stanju
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline" className="text-primary">
-                            Na stanju
-                          </Badge>
-                        )}
+                        <div className="flex gap-2">
+                          {product.stock === 0 ? (
+                            <Badge variant="outline" className="text-destructive">
+                              Nije na stanju
+                            </Badge>
+                          ) : (
+                            <>
+                              <Badge variant="outline" className="text-primary">
+                                Na stanju
+                              </Badge>
+                              <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleAddToCart(product);
+                                }}
+                              >
+                                <ShoppingCart className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </Card>
