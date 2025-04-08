@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 // Define available languages
@@ -108,6 +107,92 @@ export const translations: Translations = {
   lightMode: {
     sr: 'Svetli režim',
     en: 'Light Mode',
+  },
+  // Admin panel
+  dashboard: {
+    sr: 'Kontrolna tabla',
+    en: 'Dashboard',
+  },
+  orders: {
+    sr: 'Porudžbine',
+    en: 'Orders',
+  },
+  customers: {
+    sr: 'Kupci',
+    en: 'Customers',
+  },
+  banners: {
+    sr: 'Baneri',
+    en: 'Banners',
+  },
+  mail: {
+    sr: 'Pošta',
+    en: 'Mail',
+  },
+  importExport: {
+    sr: 'Uvoz/Izvoz',
+    en: 'Import/Export',
+  },
+  settings: {
+    sr: 'Podešavanja',
+    en: 'Settings',
+  },
+  analytics: {
+    sr: 'Analitika',
+    en: 'Analytics',
+  },
+  language: {
+    sr: 'Jezik',
+    en: 'Language',
+  },
+  logout: {
+    sr: 'Odjava',
+    en: 'Logout',
+  },
+  // Mail related
+  compose: {
+    sr: 'Napiši',
+    en: 'Compose',
+  },
+  inbox: {
+    sr: 'Primljeno',
+    en: 'Inbox',
+  },
+  sent: {
+    sr: 'Poslato',
+    en: 'Sent',
+  },
+  drafts: {
+    sr: 'Nacrti',
+    en: 'Drafts',
+  },
+  trash: {
+    sr: 'Otpad',
+    en: 'Trash',
+  },
+  reply: {
+    sr: 'Odgovori',
+    en: 'Reply',
+  },
+  newMessage: {
+    sr: 'Nova poruka',
+    en: 'New Message',
+  },
+  to: {
+    sr: 'Za',
+    en: 'To',
+  },
+  subject: {
+    sr: 'Tema',
+    en: 'Subject',
+  },
+  send: {
+    sr: 'Pošalji',
+    en: 'Send',
+  },
+  cancel: {
+    sr: 'Otkaži',
+    en: 'Cancel',
   },
 };
 

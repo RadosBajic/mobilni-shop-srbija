@@ -14,6 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MailIcon, Send, Inbox, Archive, Trash, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface EmailType {
   id: string;
@@ -26,7 +27,6 @@ interface EmailType {
   folder: 'inbox' | 'sent' | 'draft' | 'trash';
 }
 
-// Mock email data
 const mockEmails: EmailType[] = [
   {
     id: '1',
@@ -62,6 +62,7 @@ const mockEmails: EmailType[] = [
 
 const MailPage = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [emails, setEmails] = useState<EmailType[]>(mockEmails);
   const [activeTab, setActiveTab] = useState('inbox');
   const [selectedEmail, setSelectedEmail] = useState<EmailType | null>(null);
@@ -151,10 +152,10 @@ const MailPage = () => {
   return (
     <div className="p-4 space-y-4">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Mail Service</h1>
+        <h1 className="text-2xl font-bold">{t('mail')}</h1>
         <Button onClick={handleCompose}>
           <Edit className="mr-2 h-4 w-4" />
-          Compose
+          {t('compose')}
         </Button>
       </div>
       

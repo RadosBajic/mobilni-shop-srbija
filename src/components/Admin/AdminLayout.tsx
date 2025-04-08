@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate, Link, Outlet } from 'react-router-dom';
 import { 
@@ -14,7 +13,10 @@ import {
   Menu,
   X,
   Image,
-  Mail
+  Mail,
+  Sun,
+  Moon,
+  Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -29,12 +31,17 @@ import {
 } from '@/components/ui/sheet';
 import { useIsMobile } from '@/hooks/use-mobile';
 import NotificationsDropdown from './NotificationsDropdown';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Switch } from '@/components/ui/switch';
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
+  const { isDarkMode, toggleTheme } = useTheme();
+  const { language, setLanguage, t } = useLanguage();
 
   // Check authentication on mount
   const { isAuthenticated, isLoading } = useAdminAuth();
@@ -42,23 +49,31 @@ const AdminLayout: React.FC = () => {
   const handleLogout = () => {
     logout();
     toast({
-      title: 'Logged out',
-      description: 'You have been logged out successfully',
+      title: t('logout'),
+      description: language === 'sr' ? 'Uspešno ste se odjavili' : 'You have been logged out successfully',
     });
     navigate('/admin/login');
   };
 
+  const toggleLanguage = () => {
+    setLanguage(language === 'sr' ? 'en' : 'sr');
+    toast({
+      title: language === 'sr' ? 'Language changed to English' : 'Jezik promenjen na srpski',
+      description: language === 'sr' ? 'The interface language is now English' : 'Jezik interfejsa je sada srpski',
+    });
+  };
+
   const navItems = [
-    { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-    { icon: Package, label: 'Products', path: '/admin/products' },
-    { icon: Tag, label: 'Categories', path: '/admin/categories' },
-    { icon: ShoppingBag, label: 'Orders', path: '/admin/orders' },
-    { icon: Image, label: 'Banners', path: '/admin/banners' },
-    { icon: Mail, label: 'Mail', path: '/admin/mail' },
-    { icon: FileSpreadsheet, label: 'Import/Export', path: '/admin/import-export' },
-    { icon: Users, label: 'Customers', path: '/admin/customers' },
-    { icon: BarChart3, label: 'Analytics', path: '/admin/analytics' },
-    { icon: Settings, label: 'Settings', path: '/admin/settings' },
+    { icon: LayoutDashboard, label: t('dashboard'), path: '/admin/dashboard' },
+    { icon: Package, label: t('products'), path: '/admin/products' },
+    { icon: Tag, label: t('categories'), path: '/admin/categories' },
+    { icon: ShoppingBag, label: t('orders'), path: '/admin/orders' },
+    { icon: Image, label: t('banners'), path: '/admin/banners' },
+    { icon: Mail, label: t('mail'), path: '/admin/mail' },
+    { icon: FileSpreadsheet, label: t('importExport'), path: '/admin/import-export' },
+    { icon: Users, label: t('customers'), path: '/admin/customers' },
+    { icon: BarChart3, label: t('analytics'), path: '/admin/analytics' },
+    { icon: Settings, label: t('settings'), path: '/admin/settings' },
   ];
 
   const Sidebar = () => (
@@ -99,14 +114,41 @@ const AdminLayout: React.FC = () => {
         </nav>
       </ScrollArea>
       
-      <div className="mt-auto p-4 border-t border-border/60">
+      <div className="mt-auto p-4 border-t border-border/60 space-y-3">
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center">
+            <Languages size={18} className="mr-2 text-muted-foreground" />
+            <span className="text-sm text-muted-foreground">{t('language')}</span>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={toggleLanguage}
+            className="text-sm font-medium"
+          >
+            {language === 'sr' ? 'EN' : 'SR'}
+          </Button>
+        </div>
+        
+        <div className="flex items-center justify-between px-3 py-2">
+          <div className="flex items-center">
+            {isDarkMode ? (
+              <Moon size={18} className="mr-2 text-muted-foreground" />
+            ) : (
+              <Sun size={18} className="mr-2 text-muted-foreground" />
+            )}
+            <span className="text-sm text-muted-foreground">{isDarkMode ? t('lightMode') : t('darkMode')}</span>
+          </div>
+          <Switch checked={isDarkMode} onCheckedChange={toggleTheme} />
+        </div>
+        
         <Button 
           variant="outline" 
           className="w-full justify-start text-muted-foreground"
           onClick={handleLogout}
         >
           <LogOut size={18} className="mr-3" />
-          Logout
+          {t('logout')}
         </Button>
       </div>
     </div>
@@ -155,7 +197,7 @@ const AdminLayout: React.FC = () => {
               <NotificationsDropdown />
               <Button variant="outline" size="sm" onClick={handleLogout}>
                 <LogOut size={16} className="mr-2" />
-                Logout
+                {t('logout')}
               </Button>
             </div>
           </div>
@@ -164,6 +206,16 @@ const AdminLayout: React.FC = () => {
         {/* Desktop header */}
         <header className="hidden md:flex items-center justify-end bg-card border-b border-border p-4">
           <div className="flex items-center gap-3">
+            {/* Theme toggle */}
+            <Button variant="ghost" size="icon" onClick={toggleTheme} title={isDarkMode ? t('lightMode') : t('darkMode')}>
+              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+            </Button>
+            
+            {/* Language toggle */}
+            <Button variant="ghost" onClick={toggleLanguage} className="text-sm font-medium">
+              {language === 'sr' ? 'EN' : 'SR'}
+            </Button>
+            
             <NotificationsDropdown />
           </div>
         </header>
