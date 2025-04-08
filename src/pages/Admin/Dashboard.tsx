@@ -7,7 +7,7 @@ import {
   Package, 
   ArrowUpRight, 
   ArrowDownRight,
-  Calendar
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -214,7 +214,7 @@ interface StatCardProps {
   title: string;
   value: string;
   description: string;
-  icon: React.ComponentType;
+  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
   trend?: {
     value: string;
     positive: boolean;
@@ -288,3 +288,4 @@ const topProductsData = [
 ];
 
 export default Dashboard;
+
