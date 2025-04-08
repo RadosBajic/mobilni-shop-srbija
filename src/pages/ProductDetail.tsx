@@ -1,9 +1,9 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,6 +23,8 @@ import {
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useCart } from '@/contexts/CartContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Mock product data
 const mockProduct = {
@@ -113,10 +115,32 @@ const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const { addToCart } = useCart();
+  const { toast } = useToast();
+  const { language } = useLanguage();
 
   // In a real app, we would fetch the product by ID
   // For now, we'll just use our mock data
   const product = mockProduct;
+
+  const translations = {
+    addToCart: {
+      sr: 'Dodaj u korpu',
+      en: 'Add to Cart',
+    },
+    addedToCart: {
+      sr: 'Proizvod dodat u korpu',
+      en: 'Product added to cart',
+    },
+    inStock: {
+      sr: 'Na stanju',
+      en: 'In Stock',
+    },
+    outOfStock: {
+      sr: 'Nije na stanju',
+      en: 'Out of Stock',
+    },
+  };
 
   const incrementQuantity = () => {
     if (quantity < product.stock) {
@@ -128,6 +152,20 @@ const ProductDetail: React.FC = () => {
     if (quantity > 1) {
       setQuantity(quantity - 1);
     }
+  };
+
+  const handleAddToCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0],
+    });
+    
+    toast({
+      title: translations.addedToCart[language],
+      description: product.name,
+    });
   };
 
   return (
@@ -227,12 +265,12 @@ const ProductDetail: React.FC = () => {
                 {product.stock > 0 ? (
                   <Badge variant="outline" className="bg-green-50 text-green-700 dark:bg-green-900/30 dark:text-green-400 flex items-center gap-1">
                     <Check className="h-3 w-3" />
-                    Na stanju
+                    {translations.inStock[language]}
                   </Badge>
                 ) : (
                   <Badge variant="outline" className="bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400 flex items-center gap-1">
                     <AlertCircle className="h-3 w-3" />
-                    Nije na stanju
+                    {translations.outOfStock[language]}
                   </Badge>
                 )}
                 <span className="text-sm text-muted-foreground">
@@ -278,9 +316,14 @@ const ProductDetail: React.FC = () => {
                   </button>
                 </div>
                 
-                <Button size="lg" className="flex-1 hover-scale">
+                <Button 
+                  size="lg" 
+                  className="flex-1 hover-scale"
+                  onClick={handleAddToCart}
+                  disabled={product.stock <= 0}
+                >
                   <ShoppingCart className="mr-2 h-5 w-5" />
-                  Dodaj u korpu
+                  {translations.addToCart[language]}
                 </Button>
                 
                 <Button variant="outline" size="icon" className="hover-scale">
@@ -370,7 +413,23 @@ const ProductDetail: React.FC = () => {
                   <h3 className="font-medium line-clamp-2 mb-2">{item.name}</h3>
                   <div className="flex justify-between items-center">
                     <span className="font-bold">{item.price.toLocaleString()} RSD</span>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="rounded-full"
+                      onClick={() => {
+                        addToCart({
+                          id: item.id,
+                          name: item.name,
+                          price: item.price,
+                          image: item.image,
+                        });
+                        toast({
+                          title: translations.addedToCart[language],
+                          description: item.name,
+                        });
+                      }}
+                    >
                       <ShoppingCart className="h-4 w-4" />
                     </Button>
                   </div>

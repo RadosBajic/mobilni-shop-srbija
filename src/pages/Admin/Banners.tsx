@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Edit, 
@@ -9,7 +8,7 @@ import {
   ImagePlus,
   Save,
   ArrowLeft,
-  Link,
+  Link as LinkIcon,
   ExternalLink
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,6 +16,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/components/ui/use-toast';
 import {
   Table,
   TableBody,
@@ -41,97 +41,209 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
-
-// Mock banners data
-const mockBanners = [
-  {
-    id: 'b1',
-    title: 'Spring Sale',
-    description: 'Save up to 50% on selected items',
-    image: 'https://images.unsplash.com/photo-1585298723682-7115561c51b7?q=80&w=300&auto=format&fit=crop',
-    targetUrl: '/promotions/spring-sale',
-    isActive: true,
-    position: 'hero',
-    order: 1,
-  },
-  {
-    id: 'b2',
-    title: 'New Arrivals',
-    description: 'Check out our latest products',
-    image: 'https://images.unsplash.com/photo-1616763355548-1b606f439f86?q=80&w=300&auto=format&fit=crop',
-    targetUrl: '/new-arrivals',
-    isActive: true,
-    position: 'hero',
-    order: 2,
-  },
-  {
-    id: 'b3',
-    title: 'Free Shipping',
-    description: 'On all orders over 5000 RSD',
-    image: 'https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?q=80&w=300&auto=format&fit=crop',
-    targetUrl: '/shipping-info',
-    isActive: true,
-    position: 'promo',
-    order: 1,
-  },
-];
-
-// Mock promotions data
-const mockPromotions = [
-  {
-    id: 'p1',
-    title: 'iPhone Accessories',
-    description: 'Premium cases, chargers, and more',
-    image: 'https://images.unsplash.com/photo-1605464375649-e3a730196d39?q=80&w=300&auto=format&fit=crop',
-    targetUrl: '/categories/iphone-accessories',
-    isActive: true,
-    position: 'home',
-    order: 1,
-  },
-  {
-    id: 'p2',
-    title: 'Samsung Collection',
-    description: 'Exclusive accessories for Galaxy devices',
-    image: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?q=80&w=300&auto=format&fit=crop',
-    targetUrl: '/categories/samsung-accessories',
-    isActive: true,
-    position: 'home',
-    order: 2,
-  },
-];
+import { BannerService } from '@/services/BannerService';
+import { BannerType, PromotionType } from '@/types/banners';
 
 const Banners: React.FC = () => {
   const [activeTab, setActiveTab] = useState<string>('banners');
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState<any>(null);
+  const [banners, setBanners] = useState<BannerType[]>([]);
+  const [promotions, setPromotions] = useState<PromotionType[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const handleEdit = (item: any) => {
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const fetchedBanners = await BannerService.getBanners();
+      const fetchedPromotions = await BannerService.getPromotions();
+      
+      setBanners(fetchedBanners);
+      setPromotions(fetchedPromotions);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load data. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = (item: BannerType | PromotionType) => {
     setCurrentItem(item);
     setIsEditModalOpen(true);
   };
 
-  const handleSave = () => {
-    // In a real app, this would save the changes to a database
-    console.log('Saving changes for:', currentItem);
-    setIsEditModalOpen(false);
-    setCurrentItem(null);
+  const handleSave = async () => {
+    if (!currentItem) return;
+    
+    try {
+      if (currentItem.id.startsWith('b')) {
+        // It's a banner
+        await BannerService.updateBanner(currentItem.id, currentItem);
+        setBanners(prev => prev.map(b => b.id === currentItem.id ? currentItem : b));
+      } else if (currentItem.id.startsWith('p')) {
+        // It's a promotion
+        await BannerService.updatePromotion(currentItem.id, currentItem);
+        setPromotions(prev => prev.map(p => p.id === currentItem.id ? currentItem : p));
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Changes saved successfully.',
+      });
+      
+      setIsEditModalOpen(false);
+      setCurrentItem(null);
+    } catch (error) {
+      console.error('Error saving changes:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save changes. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleDelete = (id: string) => {
-    // In a real app, this would delete the item from a database
-    console.log('Deleting item with ID:', id);
+  const handleDelete = async (id: string) => {
+    try {
+      if (id.startsWith('b')) {
+        // It's a banner
+        await BannerService.deleteBanner(id);
+        setBanners(prev => prev.filter(b => b.id !== id));
+      } else if (id.startsWith('p')) {
+        // It's a promotion
+        await BannerService.deletePromotion(id);
+        setPromotions(prev => prev.filter(p => p.id !== id));
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Item deleted successfully.',
+      });
+    } catch (error) {
+      console.error('Error deleting item:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to delete item. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleMoveUp = (id: string) => {
-    // In a real app, this would update the order in a database
-    console.log('Moving item up:', id);
+  const handleMoveUp = async (id: string) => {
+    try {
+      if (id.startsWith('b')) {
+        // It's a banner
+        const index = banners.findIndex(b => b.id === id);
+        if (index <= 0) return; // Already at the top
+        
+        const currentBanner = banners[index];
+        const prevBanner = banners[index - 1];
+        
+        // Swap orders
+        const newOrder = prevBanner.order;
+        const prevOrder = currentBanner.order;
+        
+        await BannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
+        await BannerService.updateBanner(prevBanner.id, { ...prevBanner, order: prevOrder });
+        
+        // Update local state
+        const updatedBanners = [...banners];
+        updatedBanners[index] = { ...currentBanner, order: newOrder };
+        updatedBanners[index - 1] = { ...prevBanner, order: prevOrder };
+        setBanners(updatedBanners.sort((a, b) => a.order - b.order));
+      } else if (id.startsWith('p')) {
+        // It's a promotion
+        const index = promotions.findIndex(p => p.id === id);
+        if (index <= 0) return; // Already at the top
+        
+        const currentPromo = promotions[index];
+        const prevPromo = promotions[index - 1];
+        
+        // Swap orders
+        const newOrder = prevPromo.order;
+        const prevOrder = currentPromo.order;
+        
+        await BannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
+        await BannerService.updatePromotion(prevPromo.id, { ...prevPromo, order: prevOrder });
+        
+        // Update local state
+        const updatedPromotions = [...promotions];
+        updatedPromotions[index] = { ...currentPromo, order: newOrder };
+        updatedPromotions[index - 1] = { ...prevPromo, order: prevOrder };
+        setPromotions(updatedPromotions.sort((a, b) => a.order - b.order));
+      }
+    } catch (error) {
+      console.error('Error moving item up:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reorder items. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleMoveDown = (id: string) => {
-    // In a real app, this would update the order in a database
-    console.log('Moving item down:', id);
+  const handleMoveDown = async (id: string) => {
+    try {
+      if (id.startsWith('b')) {
+        // It's a banner
+        const index = banners.findIndex(b => b.id === id);
+        if (index >= banners.length - 1) return; // Already at the bottom
+        
+        const currentBanner = banners[index];
+        const nextBanner = banners[index + 1];
+        
+        // Swap orders
+        const newOrder = nextBanner.order;
+        const nextOrder = currentBanner.order;
+        
+        await BannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
+        await BannerService.updateBanner(nextBanner.id, { ...nextBanner, order: nextOrder });
+        
+        // Update local state
+        const updatedBanners = [...banners];
+        updatedBanners[index] = { ...currentBanner, order: newOrder };
+        updatedBanners[index + 1] = { ...nextBanner, order: nextOrder };
+        setBanners(updatedBanners.sort((a, b) => a.order - b.order));
+      } else if (id.startsWith('p')) {
+        // It's a promotion
+        const index = promotions.findIndex(p => p.id === id);
+        if (index >= promotions.length - 1) return; // Already at the bottom
+        
+        const currentPromo = promotions[index];
+        const nextPromo = promotions[index + 1];
+        
+        // Swap orders
+        const newOrder = nextPromo.order;
+        const nextOrder = currentPromo.order;
+        
+        await BannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
+        await BannerService.updatePromotion(nextPromo.id, { ...nextPromo, order: nextOrder });
+        
+        // Update local state
+        const updatedPromotions = [...promotions];
+        updatedPromotions[index] = { ...currentPromo, order: newOrder };
+        updatedPromotions[index + 1] = { ...nextPromo, order: nextOrder };
+        setPromotions(updatedPromotions.sort((a, b) => a.order - b.order));
+      }
+    } catch (error) {
+      console.error('Error moving item down:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to reorder items. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -151,291 +263,300 @@ const Banners: React.FC = () => {
           <TabsTrigger value="promotions">Promotions</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="banners" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Hero Banners</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Order</TableHead>
-                    <TableHead className="w-32">Image</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-28">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockBanners.filter(b => b.position === 'hero').map((banner) => (
-                    <TableRow key={banner.id}>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveUp(banner.id)}
-                          >
-                            <MoveUp className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveDown(banner.id)}
-                          >
-                            <MoveDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
-                          <img 
-                            src={banner.image} 
-                            alt={banner.title} 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="font-medium">{banner.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-2">
-                          {banner.description}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Link className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">{banner.targetUrl}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={banner.isActive ? 'default' : 'secondary'}>
-                          {banner.isActive ? 'Active' : 'Hidden'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(banner)}
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => handleDelete(banner.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Promo Banners</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Order</TableHead>
-                    <TableHead className="w-32">Image</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-28">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockBanners.filter(b => b.position === 'promo').map((banner) => (
-                    <TableRow key={banner.id}>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveUp(banner.id)}
-                          >
-                            <MoveUp className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveDown(banner.id)}
-                          >
-                            <MoveDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
-                          <img 
-                            src={banner.image} 
-                            alt={banner.title} 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="font-medium">{banner.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-2">
-                          {banner.description}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Link className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">{banner.targetUrl}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={banner.isActive ? 'default' : 'secondary'}>
-                          {banner.isActive ? 'Active' : 'Hidden'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(banner)}
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => handleDelete(banner.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="promotions" className="space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>Home Page Promotions</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-12">Order</TableHead>
-                    <TableHead className="w-32">Image</TableHead>
-                    <TableHead>Details</TableHead>
-                    <TableHead>URL</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-28">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {mockPromotions.filter(p => p.position === 'home').map((promotion) => (
-                    <TableRow key={promotion.id}>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveUp(promotion.id)}
-                          >
-                            <MoveUp className="h-4 w-4" />
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-7 w-7"
-                            onClick={() => handleMoveDown(promotion.id)}
-                          >
-                            <MoveDown className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
-                          <img 
-                            src={promotion.image} 
-                            alt={promotion.title} 
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="font-medium">{promotion.title}</div>
-                        <div className="text-xs text-muted-foreground line-clamp-2">
-                          {promotion.description}
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-xs">
-                        <div className="flex items-center text-xs text-muted-foreground">
-                          <Link className="h-3 w-3 mr-1 flex-shrink-0" />
-                          <span className="truncate">{promotion.targetUrl}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={promotion.isActive ? 'default' : 'secondary'}>
-                          {promotion.isActive ? 'Active' : 'Hidden'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8"
-                            onClick={() => handleEdit(promotion)}
-                          >
-                            <Edit className="h-4 w-4" />
-                            <span className="sr-only">Edit</span>
-                          </Button>
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-8 w-8 text-destructive"
-                            onClick={() => handleDelete(promotion.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            <span className="sr-only">Delete</span>
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {loading ? (
+          <div className="py-12 text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-primary border-r-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        ) : (
+          <>
+            <TabsContent value="banners" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Hero Banners</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">Order</TableHead>
+                        <TableHead className="w-32">Image</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>URL</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-28">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {banners.filter(b => b.position === 'hero').map((banner) => (
+                        <TableRow key={banner.id}>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveUp(banner.id)}
+                              >
+                                <MoveUp className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveDown(banner.id)}
+                              >
+                                <MoveDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
+                              <img 
+                                src={banner.image} 
+                                alt={banner.title.en} 
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="font-medium">{banner.title.en}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {banner.description.en}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <LinkIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{banner.targetUrl}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={banner.isActive ? 'default' : 'secondary'}>
+                              {banner.isActive ? 'Active' : 'Hidden'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleEdit(banner)}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => handleDelete(banner.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Promo Banners</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">Order</TableHead>
+                        <TableHead className="w-32">Image</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>URL</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-28">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {banners.filter(b => b.position === 'promo').map((banner) => (
+                        <TableRow key={banner.id}>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveUp(banner.id)}
+                              >
+                                <MoveUp className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveDown(banner.id)}
+                              >
+                                <MoveDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
+                              <img 
+                                src={banner.image} 
+                                alt={banner.title.en} 
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="font-medium">{banner.title.en}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {banner.description.en}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <LinkIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{banner.targetUrl}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={banner.isActive ? 'default' : 'secondary'}>
+                              {banner.isActive ? 'Active' : 'Hidden'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleEdit(banner)}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => handleDelete(banner.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+            
+            <TabsContent value="promotions" className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle>Home Page Promotions</CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-12">Order</TableHead>
+                        <TableHead className="w-32">Image</TableHead>
+                        <TableHead>Details</TableHead>
+                        <TableHead>URL</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="w-28">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {promotions.filter(p => p.position === 'home').map((promotion) => (
+                        <TableRow key={promotion.id}>
+                          <TableCell>
+                            <div className="flex gap-1">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveUp(promotion.id)}
+                              >
+                                <MoveUp className="h-4 w-4" />
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7"
+                                onClick={() => handleMoveDown(promotion.id)}
+                              >
+                                <MoveDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="h-20 w-32 rounded-md bg-secondary overflow-hidden">
+                              <img 
+                                src={promotion.image} 
+                                alt={promotion.title.en} 
+                                className="h-full w-full object-cover"
+                              />
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="font-medium">{promotion.title.en}</div>
+                            <div className="text-xs text-muted-foreground line-clamp-2">
+                              {promotion.description.en}
+                            </div>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <div className="flex items-center text-xs text-muted-foreground">
+                              <LinkIcon className="h-3 w-3 mr-1 flex-shrink-0" />
+                              <span className="truncate">{promotion.targetUrl}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={promotion.isActive ? 'default' : 'secondary'}>
+                              {promotion.isActive ? 'Active' : 'Hidden'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8"
+                                onClick={() => handleEdit(promotion)}
+                              >
+                                <Edit className="h-4 w-4" />
+                                <span className="sr-only">Edit</span>
+                              </Button>
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-8 w-8 text-destructive"
+                                onClick={() => handleDelete(promotion.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Delete</span>
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
       
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
@@ -452,20 +573,51 @@ const Banners: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="title">Title</Label>
+                    <Label htmlFor="title_en">Title (English)</Label>
                     <Input 
-                      id="title" 
-                      value={currentItem.title} 
-                      onChange={(e) => setCurrentItem({...currentItem, title: e.target.value})}
+                      id="title_en" 
+                      value={currentItem.title.en} 
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem, 
+                        title: { ...currentItem.title, en: e.target.value }
+                      })}
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="description">Description</Label>
+                    <Label htmlFor="title_sr">Title (Serbian)</Label>
+                    <Input 
+                      id="title_sr" 
+                      value={currentItem.title.sr} 
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem, 
+                        title: { ...currentItem.title, sr: e.target.value }
+                      })}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description_en">Description (English)</Label>
                     <Textarea 
-                      id="description" 
-                      value={currentItem.description}
-                      onChange={(e) => setCurrentItem({...currentItem, description: e.target.value})}
+                      id="description_en" 
+                      value={currentItem.description.en}
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem, 
+                        description: { ...currentItem.description, en: e.target.value }
+                      })}
+                      rows={3}
+                    />
+                  </div>
+                  
+                  <div>
+                    <Label htmlFor="description_sr">Description (Serbian)</Label>
+                    <Textarea 
+                      id="description_sr" 
+                      value={currentItem.description.sr}
+                      onChange={(e) => setCurrentItem({
+                        ...currentItem, 
+                        description: { ...currentItem.description, sr: e.target.value }
+                      })}
                       rows={3}
                     />
                   </div>
@@ -492,10 +644,17 @@ const Banners: React.FC = () => {
                       value={currentItem.position}
                       onChange={(e) => setCurrentItem({...currentItem, position: e.target.value})}
                     >
-                      <option value="hero">Hero Slider</option>
-                      <option value="promo">Promo Banner</option>
-                      <option value="home">Home Page</option>
-                      <option value="category">Category Page</option>
+                      {currentItem.id.startsWith('b') ? (
+                        <>
+                          <option value="hero">Hero Slider</option>
+                          <option value="promo">Promo Banner</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="home">Home Page</option>
+                          <option value="category">Category Page</option>
+                        </>
+                      )}
                     </select>
                   </div>
                   
@@ -516,7 +675,7 @@ const Banners: React.FC = () => {
                       <div className="relative group">
                         <img 
                           src={currentItem.image} 
-                          alt={currentItem.title} 
+                          alt={currentItem.title.en} 
                           className="mx-auto max-h-[200px] object-contain rounded-md"
                         />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-md">

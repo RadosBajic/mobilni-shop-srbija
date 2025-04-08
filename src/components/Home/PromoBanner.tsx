@@ -1,66 +1,73 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { BannerService } from '@/services/BannerService';
+import { BannerType } from '@/types/banners';
 
 const PromoBanner: React.FC = () => {
   const { language } = useLanguage();
-  
-  const title = {
-    sr: 'Specijalna ponuda',
-    en: 'Special Offer',
-  };
-  
-  const subtitle = {
-    sr: 'Popust do 30% na odabrane proizvode',
-    en: 'Up to 30% off on selected products',
-  };
-  
-  const description = {
-    sr: 'Ograničeno vreme - ne propustite priliku da nabavite najbolju opremu po sjajnim cenama.',
-    en: 'Limited time - don\'t miss the chance to get the best gear at great prices.',
-  };
-  
-  const buttonText = {
-    sr: 'Pogledaj ponudu',
-    en: 'Shop Now',
-  };
-  
+  const [banner, setBanner] = useState<BannerType | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPromoBanner = async () => {
+      try {
+        const promoBanners = await BannerService.getBanners('promo');
+        if (promoBanners.length > 0) {
+          setBanner(promoBanners[0]); // Get the first promo banner
+        }
+      } catch (error) {
+        console.error('Failed to fetch promo banner:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPromoBanner();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-32 bg-muted/20 flex items-center justify-center my-16">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!banner) {
+    return null; // Don't show anything if there's no promo banner
+  }
+
   return (
-    <section className="py-12">
+    <div className="bg-muted/10 my-16 py-8">
       <div className="container">
-        <div className="relative overflow-hidden rounded-2xl">
-          {/* Background */}
-          <div 
-            className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1570891836654-d4961a7b6929?q=80&w=1200&auto=format&fit=crop)' }}
-          >
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-primary/60"></div>
-          </div>
-          
-          {/* Content */}
-          <div className="relative z-10 py-12 px-6 md:py-16 md:px-12 lg:px-16 text-white">
-            <div className="max-w-xl">
-              <h2 className="text-sm md:text-base uppercase tracking-wider mb-2">
-                {title[language]}
-              </h2>
-              <h3 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">
-                {subtitle[language]}
-              </h3>
-              <p className="text-white/90 text-lg mb-8 max-w-lg">
-                {description[language]}
-              </p>
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90">
-                <Link to="/promotions">
-                  {buttonText[language]}
-                </Link>
-              </Button>
+        <div 
+          className="rounded-lg overflow-hidden relative bg-cover bg-center h-48 md:h-64"
+          style={{ backgroundImage: `url(${banner.image})` }}
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary/20"></div>
+          <div className="absolute inset-0 flex items-center">
+            <div className="container px-4 md:px-6">
+              <div className="max-w-xl text-white">
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">
+                  {banner.title[language]}
+                </h3>
+                <p className="mb-4 md:text-lg text-white/80">
+                  {banner.description[language]}
+                </p>
+                <Button variant="secondary" asChild>
+                  <Link to={banner.targetUrl}>
+                    {language === 'sr' ? 'Saznaj više' : 'Learn More'}
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
   );
 };
 
