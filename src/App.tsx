@@ -18,7 +18,7 @@ import Contact from "./pages/Contact";
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminLayout from "./components/Admin/AdminLayout";
 import Dashboard from "./pages/Admin/Dashboard";
-import Products as AdminProducts from "./pages/Admin/Products";
+import { default as AdminProducts } from "./pages/Admin/Products";
 import Categories from "./pages/Admin/Categories";
 import Orders from "./pages/Admin/Orders";
 import ImportExport from "./pages/Admin/ImportExport";
