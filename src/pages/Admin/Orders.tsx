@@ -164,7 +164,7 @@ const Orders: React.FC = () => {
       case 'processing':
         return 'secondary';
       case 'pending':
-        return 'warning';
+        return 'outline'; // Changed from 'warning' to 'outline'
       case 'cancelled':
         return 'destructive';
       default:

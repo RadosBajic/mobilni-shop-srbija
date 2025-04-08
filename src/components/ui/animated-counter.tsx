@@ -9,6 +9,7 @@ interface AnimatedCounterProps {
   prefix?: string;
   suffix?: string;
   className?: string;
+  formatter?: (value: number) => string;
 }
 
 export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
@@ -18,6 +19,7 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
   prefix = '',
   suffix = '',
   className = '',
+  formatter,
 }) => {
   const [count, setCount] = useState(0);
   const countRef = useRef(0);
@@ -50,10 +52,12 @@ export const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
     }
   }, [inView, value, duration]);
 
-  const formattedCount = count.toLocaleString(undefined, {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
+  const formattedCount = formatter 
+    ? formatter(count)
+    : count.toLocaleString(undefined, {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals,
+      });
 
   return (
     <span ref={ref} className={className}>
