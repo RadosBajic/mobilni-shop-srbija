@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -103,8 +102,7 @@ const ProductDetail: React.FC = () => {
       id: product.id,
       name: product.name[language],
       price: product.price,
-      image: product.images[0],
-      quantity: quantity
+      image: product.images[0]
     });
     
     toast({

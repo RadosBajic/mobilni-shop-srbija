@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
@@ -47,8 +46,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       id: product.id,
       name: product.title[language],
       price: product.price,
-      image: product.image,
-      quantity: 1
+      image: product.image
     });
     
     toast({
