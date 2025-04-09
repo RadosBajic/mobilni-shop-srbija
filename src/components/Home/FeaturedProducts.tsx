@@ -8,6 +8,7 @@ import PremiumProductCard from '@/components/Products/PremiumProductCard';
 import { ProductService } from '@/services/ProductService';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
 interface FeaturedProductsProps {
   title?: string;
@@ -15,6 +16,7 @@ interface FeaturedProductsProps {
   premiumCards?: boolean;
   newArrivals?: boolean;
   limit?: number;
+  className?: string;
 }
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
@@ -22,7 +24,8 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
   viewAllLink = '/proizvodi',
   premiumCards = false,
   newArrivals = false,
-  limit = 4
+  limit = 4,
+  className = ''
 }) => {
   const { language, t } = useLanguage();
   const [products, setProducts] = useState<Product[]>([]);
@@ -53,8 +56,23 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
     ? (language === 'sr' ? 'Nove Ponude' : 'New Arrivals')
     : (language === 'sr' ? 'Izdvojeni Proizvodi' : 'Featured Products');
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="py-10">
+    <div className={`py-10 ${className}`}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-primary">
           {title || defaultTitle}
@@ -79,15 +97,22 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
           ))}
         </div>
       ) : products.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        <motion.div 
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+          variants={container}
+          initial="hidden"
+          animate="show"
+        >
           {products.map((product) => (
-            premiumCards ? (
-              <PremiumProductCard key={product.id} product={product} />
-            ) : (
-              <ProductCard key={product.id} product={product} />
-            )
+            <motion.div key={product.id} variants={item}>
+              {premiumCards ? (
+                <PremiumProductCard product={product} />
+              ) : (
+                <ProductCard product={product} />
+              )}
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       ) : (
         <div className="text-center py-10 bg-muted/20 rounded-lg">
           <p className="text-muted-foreground">

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from './button';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface ScrollToTopProps {
   threshold?: number;
@@ -36,18 +37,29 @@ export const ScrollToTop: React.FC<ScrollToTopProps> = ({
   };
 
   return (
-    <Button
-      onClick={scrollToTop}
-      aria-label="Scroll to top"
-      variant="outline"
-      size="icon"
-      className={cn(
-        'fixed bottom-6 right-6 rounded-full shadow-md transition-all duration-300 z-50',
-        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-10 pointer-events-none',
-        className
+    <AnimatePresence>
+      {isVisible && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.2 }}
+          className="fixed bottom-6 right-6 z-50"
+        >
+          <Button
+            onClick={scrollToTop}
+            aria-label="Scroll to top"
+            variant="default"
+            size="icon"
+            className={cn(
+              'rounded-full shadow-lg bg-primary hover:bg-primary/90',
+              className
+            )}
+          >
+            <ChevronUp size={20} />
+          </Button>
+        </motion.div>
       )}
-    >
-      <ChevronUp size={20} />
-    </Button>
+    </AnimatePresence>
   );
 };
