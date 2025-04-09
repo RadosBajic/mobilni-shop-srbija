@@ -19,11 +19,14 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { useForm } from 'react-hook-form';
 import { createNotification } from '@/services/NotificationService';
+import { Captcha } from '@/components/ui/captcha';
+import { ScrollToTop } from '@/components/ui/scroll-to-top';
 
 const Checkout: React.FC = () => {
   const { language } = useLanguage();
   const { totalItems, totalPrice, items, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -80,25 +83,17 @@ const Checkout: React.FC = () => {
       sr: 'Poštanski broj',
       en: 'Postal code',
     },
-    paymentInfo: {
-      sr: 'Informacije o plaćanju',
-      en: 'Payment Information',
+    captchaVerification: {
+      sr: 'Verifikacija',
+      en: 'Verification',
     },
-    cardNumber: {
-      sr: 'Broj kartice',
-      en: 'Card number',
+    captchaInfo: {
+      sr: 'Molimo vas unesite kod sa slike da dokažete da niste robot',
+      en: 'Please enter the code from the image to prove you are not a robot',
     },
-    cardHolder: {
-      sr: 'Ime na kartici',
-      en: 'Cardholder name',
-    },
-    expiry: {
-      sr: 'Datum isteka',
-      en: 'Expiry date',
-    },
-    cvv: {
-      sr: 'CVV',
-      en: 'CVV',
+    captchaNotVerified: {
+      sr: 'Molimo vas verifikujte CAPTCHA pre naručivanja',
+      en: 'Please verify the CAPTCHA before placing your order',
     },
     orderSuccess: {
       sr: 'Porudžbina uspešna',
@@ -118,10 +113,6 @@ const Checkout: React.FC = () => {
       address: '',
       city: '',
       postalCode: '',
-      cardNumber: '',
-      cardHolder: '',
-      expiry: '',
-      cvv: '',
     },
   });
 
@@ -130,6 +121,14 @@ const Checkout: React.FC = () => {
       toast({
         title: "Cart is empty",
         description: "Add items to your cart before placing an order",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!isCaptchaVerified) {
+      toast({
+        title: translations.captchaNotVerified[language],
         variant: "destructive",
       });
       return;
@@ -266,66 +265,13 @@ const Checkout: React.FC = () => {
                   </div>
                 </div>
                 
-                <div className="space-y-6">
-                  <h2 className="text-xl font-semibold">{translations.paymentInfo[language]}</h2>
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">{translations.captchaVerification[language]}</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {translations.captchaInfo[language]}
+                  </p>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
-                      name="cardNumber"
-                      render={({ field }) => (
-                        <FormItem className="col-span-2">
-                          <FormLabel>{translations.cardNumber[language]}</FormLabel>
-                          <FormControl>
-                            <Input placeholder="4111 1111 1111 1111" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="cardHolder"
-                      render={({ field }) => (
-                        <FormItem className="col-span-2">
-                          <FormLabel>{translations.cardHolder[language]}</FormLabel>
-                          <FormControl>
-                            <Input placeholder="John Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="expiry"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{translations.expiry[language]}</FormLabel>
-                          <FormControl>
-                            <Input placeholder="MM/YY" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={form.control}
-                      name="cvv"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>{translations.cvv[language]}</FormLabel>
-                          <FormControl>
-                            <Input placeholder="123" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
+                  <Captcha onVerify={setIsCaptchaVerified} />
                 </div>
 
                 <div className="flex flex-col sm:flex-row justify-between gap-4">
@@ -339,7 +285,7 @@ const Checkout: React.FC = () => {
                   <Button 
                     type="submit" 
                     className="gap-2"
-                    disabled={isProcessing}
+                    disabled={isProcessing || !isCaptchaVerified}
                   >
                     {isProcessing ? (
                       <div className="flex items-center gap-2">
@@ -393,6 +339,7 @@ const Checkout: React.FC = () => {
           </div>
         </div>
       </div>
+      <ScrollToTop />
     </MainLayout>
   );
 };
