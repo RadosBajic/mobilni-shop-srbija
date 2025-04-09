@@ -8,7 +8,9 @@ import PromoBanner from '@/components/Home/PromoBanner';
 import PromotionsGrid from '@/components/Home/PromotionsGrid';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
-import { Cpu, ShieldCheck, TruckIcon, Headphones } from 'lucide-react';
+import { Cpu, ShieldCheck, TruckIcon, Headphones, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
 
 const Index: React.FC = () => {
   const { t, language } = useLanguage();
@@ -85,7 +87,12 @@ const Index: React.FC = () => {
       </div>
       
       {/* Category banners */}
-      <CategoryBanner />
+      <div className="container mt-12">
+        <h2 className="text-2xl font-bold mb-6 text-primary">
+          {language === 'sr' ? 'Kategorije' : 'Categories'}
+        </h2>
+        <CategoryBanner />
+      </div>
       
       {/* Promotions grid */}
       <div className="container">
@@ -107,9 +114,29 @@ const Index: React.FC = () => {
       <div className="container">
         <FeaturedProducts 
           newArrivals={true}
-          viewAllLink="/new-arrivals" 
+          viewAllLink="/proizvodi?new=true" 
           title={language === 'sr' ? 'Novi Proizvodi' : 'New Arrivals'}
         />
+      </div>
+      
+      {/* CTA Section */}
+      <div className="container py-16">
+        <div className="bg-primary/5 rounded-xl p-10 text-center">
+          <h2 className="text-3xl font-bold mb-4">
+            {language === 'sr' ? 'Spremni da kupujete?' : 'Ready to shop?'}
+          </h2>
+          <p className="text-muted-foreground mb-8 max-w-xl mx-auto">
+            {language === 'sr' 
+              ? 'Pregledajte našu kompletnu kolekciju proizvoda i pronađite ono što vam je potrebno.' 
+              : 'Browse our complete collection of products and find what you need.'}
+          </p>
+          <Button asChild size="lg" className="px-8">
+            <Link to="/proizvodi" className="flex items-center">
+              {language === 'sr' ? 'Svi proizvodi' : 'All Products'}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
     </MainLayout>
   );

@@ -7,6 +7,7 @@ import ProductCard from '@/components/Products/ProductCard';
 import PremiumProductCard from '@/components/Products/PremiumProductCard';
 import { ProductService } from '@/services/ProductService';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FeaturedProductsProps {
   title?: string;
@@ -55,13 +56,13 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
   return (
     <div className="py-10">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">
+        <h2 className="text-2xl font-bold text-primary">
           {title || defaultTitle}
         </h2>
         {viewAllLink && (
-          <Link to={viewAllLink} className="flex items-center text-primary hover:underline text-sm font-medium">
+          <Link to={viewAllLink} className="flex items-center text-primary hover:underline text-sm font-medium group">
             {language === 'sr' ? 'Vidi sve' : 'View all'} 
-            <ChevronRight className="w-4 h-4 ml-1" />
+            <ChevronRight className="w-4 h-4 ml-1 transition-transform group-hover:translate-x-1" />
           </Link>
         )}
       </div>
@@ -69,10 +70,15 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {[...Array(limit)].map((_, i) => (
-            <div key={i} className="h-80 bg-muted/20 rounded-lg animate-pulse"></div>
+            <div key={i} className="space-y-3">
+              <Skeleton className="h-48 w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full rounded" />
+            </div>
           ))}
         </div>
-      ) : (
+      ) : products.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (
             premiumCards ? (
@@ -81,6 +87,12 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
               <ProductCard key={product.id} product={product} />
             )
           ))}
+        </div>
+      ) : (
+        <div className="text-center py-10 bg-muted/20 rounded-lg">
+          <p className="text-muted-foreground">
+            {language === 'sr' ? 'Nema dostupnih proizvoda.' : 'No products available.'}
+          </p>
         </div>
       )}
     </div>
