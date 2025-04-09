@@ -6,6 +6,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { AnimatedCounter } from '@/components/ui/animated-counter';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCart } from '@/contexts/CartContext';
+import { useToast } from '@/hooks/use-toast';
 import { Product } from './ProductCard';
 
 interface PremiumProductCardProps {
@@ -18,6 +20,8 @@ const PremiumProductCard: React.FC<PremiumProductCardProps> = ({
   withAnimations = true 
 }) => {
   const { language } = useLanguage();
+  const { addToCart } = useCart();
+  const { toast } = useToast();
   const [isHovered, setIsHovered] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
 
@@ -25,6 +29,23 @@ const PremiumProductCard: React.FC<PremiumProductCardProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setIsFavorite(!isFavorite);
+  };
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    addToCart({
+      id: product.id,
+      name: product.title[language],
+      price: product.price,
+      image: product.image
+    });
+    
+    toast({
+      title: language === 'sr' ? 'Proizvod dodat u korpu' : 'Product added to cart',
+      description: product.title[language],
+    });
   };
 
   const formatPrice = (price: number) => {
@@ -39,7 +60,7 @@ const PremiumProductCard: React.FC<PremiumProductCardProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <Link to={`/product/${product.id}`} className="block">
+      <Link to={`/proizvod/${product.id}`} className="block">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-muted">
           <img 
@@ -72,10 +93,14 @@ const PremiumProductCard: React.FC<PremiumProductCardProps> = ({
           {/* Product badges */}
           <div className="absolute top-2 left-2 flex flex-col gap-2">
             {product.isNew && (
-              <Badge className="bg-primary hover:bg-primary/90">New</Badge>
+              <Badge className="bg-primary hover:bg-primary/90">
+                {language === 'sr' ? 'Novo' : 'New'}
+              </Badge>
             )}
             {product.isOnSale && (
-              <Badge className="bg-accent hover:bg-accent/90">Sale</Badge>
+              <Badge className="bg-accent hover:bg-accent/90">
+                {language === 'sr' ? 'Akcija' : 'Sale'}
+              </Badge>
             )}
           </div>
         </div>
@@ -114,9 +139,9 @@ const PremiumProductCard: React.FC<PremiumProductCardProps> = ({
           <div className={`absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-background/90 via-background/60 to-transparent transition-transform duration-300 ${
             isHovered ? 'translate-y-0' : 'translate-y-full'
           }`}>
-            <Button className="w-full gap-2 shadow-sm">
+            <Button className="w-full gap-2 shadow-sm" onClick={handleAddToCart}>
               <ShoppingCart className="h-4 w-4" />
-              Add to Cart
+              {language === 'sr' ? 'Dodaj u korpu' : 'Add to Cart'}
             </Button>
           </div>
         )}

@@ -1,94 +1,89 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
+import { Product } from '@/components/Products/ProductCard';
+import ProductCard from '@/components/Products/ProductCard';
+import PremiumProductCard from '@/components/Products/PremiumProductCard';
+import { ProductService } from '@/services/ProductService';
 import { useLanguage } from '@/contexts/LanguageContext';
-import ProductCard, { Product } from '../Products/ProductCard';
-
-// Sample featured products data
-const featuredProducts: Product[] = [
-  {
-    id: '1',
-    title: {
-      sr: 'iPhone 14 Pro silikonska maska - crna',
-      en: 'iPhone 14 Pro Silicone Case - Black',
-    },
-    price: 2499,
-    oldPrice: 2999,
-    image: 'https://images.unsplash.com/photo-1613588718956-c2e80305bf61?q=80&w=400&auto=format&fit=crop',
-    category: 'phone-cases',
-    isOnSale: true,
-  },
-  {
-    id: '2',
-    title: {
-      sr: 'Samsung Galaxy S23 Ultra staklena zaštita ekrana',
-      en: 'Samsung Galaxy S23 Ultra Glass Screen Protector',
-    },
-    price: 1499,
-    image: 'https://images.unsplash.com/photo-1600541519467-937869997e34?q=80&w=400&auto=format&fit=crop',
-    category: 'screen-protectors',
-  },
-  {
-    id: '3',
-    title: {
-      sr: 'Bežične Bluetooth slušalice sa mikrofonom',
-      en: 'Wireless Bluetooth Earbuds with Microphone',
-    },
-    price: 4999,
-    oldPrice: 5999,
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?q=80&w=400&auto=format&fit=crop',
-    category: 'headphones',
-    isNew: true,
-    isOnSale: true,
-  },
-  {
-    id: '4',
-    title: {
-      sr: 'Brzi punjač USB-C 65W',
-      en: 'Fast Charger USB-C 65W',
-    },
-    price: 3499,
-    image: 'https://images.unsplash.com/photo-1628815113969-0487917e8b76?q=80&w=400&auto=format&fit=crop',
-    category: 'chargers',
-    isNew: true,
-  },
-];
 
 interface FeaturedProductsProps {
   title?: string;
   viewAllLink?: string;
+  premiumCards?: boolean;
+  newArrivals?: boolean;
+  limit?: number;
 }
 
-const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ 
-  title, 
-  viewAllLink = '/products',
+const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
+  title,
+  viewAllLink = '/proizvodi',
+  premiumCards = false,
+  newArrivals = false,
+  limit = 4
 }) => {
-  const { t } = useLanguage();
-  
+  const { language, t } = useLanguage();
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        let data: Product[];
+        if (newArrivals) {
+          data = await ProductService.getNewArrivals(limit);
+        } else {
+          data = await ProductService.getFeaturedProducts(limit);
+        }
+        setProducts(data);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [newArrivals, limit]);
+
+  const defaultTitle = newArrivals 
+    ? (language === 'sr' ? 'Nove Ponude' : 'New Arrivals')
+    : (language === 'sr' ? 'Izdvojeni Proizvodi' : 'Featured Products');
+
   return (
-    <section className="py-12">
-      <div className="container">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold">
-            {title || t('featuredProducts')}
-          </h2>
-          <Link 
-            to={viewAllLink}
-            className="flex items-center text-primary hover:underline font-medium"
-          >
-            {t('viewAll')}
-            <ChevronRight size={18} className="ml-1" />
+    <div className="py-10">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">
+          {title || defaultTitle}
+        </h2>
+        {viewAllLink && (
+          <Link to={viewAllLink} className="flex items-center text-primary hover:underline text-sm font-medium">
+            {language === 'sr' ? 'Vidi sve' : 'View all'} 
+            <ChevronRight className="w-4 h-4 ml-1" />
           </Link>
-        </div>
-        
+        )}
+      </div>
+
+      {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-          {featuredProducts.map(product => (
-            <ProductCard key={product.id} product={product} />
+          {[...Array(limit)].map((_, i) => (
+            <div key={i} className="h-80 bg-muted/20 rounded-lg animate-pulse"></div>
           ))}
         </div>
-      </div>
-    </section>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {products.map((product) => (
+            premiumCards ? (
+              <PremiumProductCard key={product.id} product={product} />
+            ) : (
+              <ProductCard key={product.id} product={product} />
+            )
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

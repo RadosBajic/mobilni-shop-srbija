@@ -5,6 +5,7 @@ import HeroSlider from '@/components/Home/HeroSlider';
 import CategoryBanner from '@/components/Home/CategoryBanner';
 import FeaturedProducts from '@/components/Home/FeaturedProducts';
 import PromoBanner from '@/components/Home/PromoBanner';
+import PromotionsGrid from '@/components/Home/PromotionsGrid';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Cpu, ShieldCheck, TruckIcon, Headphones } from 'lucide-react';
@@ -86,9 +87,17 @@ const Index: React.FC = () => {
       {/* Category banners */}
       <CategoryBanner />
       
+      {/* Promotions grid */}
+      <div className="container">
+        <PromotionsGrid position="home" limit={2} />
+      </div>
+      
       {/* Featured products */}
       <div className="container">
-        <FeaturedProducts />
+        <FeaturedProducts 
+          premiumCards={true} 
+          title={language === 'sr' ? 'Izdvojene Ponude' : 'Featured Offers'}
+        />
       </div>
       
       {/* Promo banner */}
@@ -97,8 +106,9 @@ const Index: React.FC = () => {
       {/* New arrivals */}
       <div className="container">
         <FeaturedProducts 
-          title={t('newArrivals')} 
+          newArrivals={true}
           viewAllLink="/new-arrivals" 
+          title={language === 'sr' ? 'Novi Proizvodi' : 'New Arrivals'}
         />
       </div>
     </MainLayout>
