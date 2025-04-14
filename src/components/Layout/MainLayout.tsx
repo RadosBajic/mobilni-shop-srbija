@@ -2,35 +2,21 @@
 import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { ScrollToTop } from '@/components/ui/scroll-to-top';
-import { cn } from '@/lib/utils';
+import { SupabaseStatus } from '@/components/SupabaseStatus';
 
 interface MainLayoutProps {
   children: React.ReactNode;
-  className?: string;
-  fullWidth?: boolean;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ 
-  children, 
-  className,
-  fullWidth = false
-}) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <ScrollArea className="flex-1">
-        <main className={cn(
-          "flex-grow py-6",
-          fullWidth ? "" : "container",
-          className
-        )}>
-          {children}
-        </main>
-      </ScrollArea>
+      <main className="flex-grow">
+        <SupabaseStatus />
+        {children}
+      </main>
       <Footer />
-      <ScrollToTop />
     </div>
   );
 };

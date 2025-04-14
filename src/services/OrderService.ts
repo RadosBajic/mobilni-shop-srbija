@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface OrderItem {
@@ -30,7 +29,6 @@ export interface Order {
   updatedAt: string;
 }
 
-// Type for order creation
 export type CreateOrderData = Omit<Order, 'id' | 'createdAt' | 'updatedAt'>;
 
 export const OrderService = {
@@ -59,7 +57,6 @@ export const OrderService = {
         throw error;
       }
       
-      // Map the Supabase response to our Order interface
       return {
         id: data.id,
         customerId: data.customer_id,
@@ -94,7 +91,6 @@ export const OrderService = {
         throw error;
       }
       
-      // Map the Supabase response to our Order interface
       return data.map(order => ({
         id: order.id,
         customerId: order.customer_id,
@@ -128,13 +124,11 @@ export const OrderService = {
       if (error) {
         console.error('Error fetching order by ID:', error);
         if (error.code === 'PGRST116') {
-          // "No rows returned" error - order not found
           return null;
         }
         throw error;
       }
       
-      // Map the Supabase response to our Order interface
       return {
         id: data.id,
         customerId: data.customer_id,

@@ -1,40 +1,56 @@
-
-import React from 'react';
-import { 
-  ShoppingCart, 
-  Users, 
-  DollarSign, 
-  Package, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  Calendar as CalendarIcon
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { setupDatabase } from '@/utils/setupDatabase';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
+  const { language } = useLanguage();
+  const [databaseReady, setDatabaseReady] = useState<boolean | null>(null);
+  
+  useEffect(() => {
+    const checkDatabase = async () => {
+      const isReady = await setupDatabase();
+      setDatabaseReady(isReady);
+    };
+    
+    checkDatabase();
+  }, []);
+  
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <div className="text-sm text-muted-foreground">
-          Last updated: {new Date().toLocaleDateString()}
-        </div>
-      </div>
+    <div className="space-y-6">
+      <h1 className="text-2xl font-bold">
+        {language === 'sr' ? 'Kontrolna tabla' : 'Dashboard'}
+      </h1>
+      
+      {databaseReady === false && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>
+            {language === 'sr' ? 'Baza podataka nije spremna' : 'Database Not Ready'}
+          </AlertTitle>
+          <AlertDescription>
+            {language === 'sr' 
+              ? 'Potrebne tabele nisu pronađene u bazi podataka. Pokrenite SQL skriptu za kreiranje tabela.'
+              : 'Required tables were not found in the database. Please run the SQL script to create tables.'}
+          </AlertDescription>
+        </Alert>
+      )}
+      
+      {databaseReady === true && (
+        <Alert variant="default" className="border-green-500 mb-4">
+          <CheckCircle className="h-4 w-4 text-green-500" />
+          <AlertTitle>
+            {language === 'sr' ? 'Baza podataka je spremna' : 'Database Ready'}
+          </AlertTitle>
+          <AlertDescription>
+            {language === 'sr' 
+              ? 'Sve potrebne tabele su pronađene u bazi podataka.'
+              : 'All required tables were found in the database.'}
+          </AlertDescription>
+        </Alert>
+      )}
       
       {/* Stat cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -288,4 +304,3 @@ const topProductsData = [
 ];
 
 export default Dashboard;
-
