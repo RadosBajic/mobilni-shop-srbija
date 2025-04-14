@@ -47,95 +47,144 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext';
 
 // Mock product data
-const mockProducts = [
+const mockProducts: ProductFormData[] = [
   {
     id: 'p1',
     name: 'iPhone 14 Pro silikonska maska - crna',
+    nameSr: 'iPhone 14 Pro silikonska maska - crna',
+    nameEn: 'iPhone 14 Pro silicone case - black',
     sku: 'IP14P-CASE-BLK',
-    category: 'Maske za telefone',
+    category: 'phone-cases',
     price: 2499,
     stock: 45,
     status: 'active',
+    description: 'Kvalitetna silikonska maska za iPhone 14 Pro',
+    descriptionSr: 'Kvalitetna silikonska maska za iPhone 14 Pro',
+    descriptionEn: 'Quality silicone case for iPhone 14 Pro',
     image: 'https://images.unsplash.com/photo-1613588718956-c2e80305bf61?q=80&w=100&auto=format&fit=crop',
+    isNew: true,
+    isOnSale: true,
   },
   {
     id: 'p2',
     name: 'Samsung Galaxy S23 Ultra staklena zaštita ekrana',
+    nameSr: 'Samsung Galaxy S23 Ultra staklena zaštita ekrana',
+    nameEn: 'Samsung Galaxy S23 Ultra glass screen protector',
     sku: 'SGS23U-SCRN',
-    category: 'Zaštita ekrana',
+    category: 'screen-protectors',
     price: 1499,
     stock: 32,
     status: 'active',
+    description: 'Zaštitno staklo za Samsung Galaxy S23 Ultra',
+    descriptionSr: 'Zaštitno staklo za Samsung Galaxy S23 Ultra',
+    descriptionEn: 'Protective glass for Samsung Galaxy S23 Ultra',
     image: 'https://images.unsplash.com/photo-1600541519467-937869997e34?q=80&w=100&auto=format&fit=crop',
+    isNew: true,
+    isOnSale: false,
   },
   {
     id: 'p3',
     name: 'Bežične Bluetooth slušalice sa mikrofonom',
+    nameSr: 'Bežične Bluetooth slušalice sa mikrofonom',
+    nameEn: 'Wireless Bluetooth headphones with microphone',
     sku: 'BT-EARBUD-BLK',
-    category: 'Slušalice',
+    category: 'headphones',
     price: 4999,
     stock: 18,
     status: 'active',
+    description: 'Bežične slušalice sa Bluetooth tehnologijom',
+    descriptionSr: 'Bežične slušalice sa Bluetooth tehnologijom',
+    descriptionEn: 'Wireless headphones with Bluetooth technology',
     image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?q=80&w=100&auto=format&fit=crop',
+    isNew: false,
+    isOnSale: true,
   },
   {
     id: 'p4',
     name: 'Brzi punjač USB-C 65W',
+    nameSr: 'Brzi punjač USB-C 65W',
+    nameEn: 'Fast charger USB-C 65W',
     sku: 'CHR-USB-C-65',
-    category: 'Punjači',
+    category: 'chargers',
     price: 3499,
     stock: 27,
     status: 'active',
+    description: 'Brzi punjač sa USB-C priključkom',
+    descriptionSr: 'Brzi punjač sa USB-C priključkom',
+    descriptionEn: 'Fast charger with USB-C connector',
     image: 'https://images.unsplash.com/photo-1628815113969-0487917e8b76?q=80&w=100&auto=format&fit=crop',
+    isNew: false,
+    isOnSale: false,
   },
   {
     id: 'p5',
     name: 'Premium Lightning kabl - 2m',
+    nameSr: 'Premium Lightning kabl - 2m',
+    nameEn: 'Premium Lightning cable - 2m',
     sku: 'CBL-LIGHT-2M',
-    category: 'Kablovi',
+    category: 'cables',
     price: 1299,
     stock: 0,
     status: 'outOfStock',
+    description: 'Premium Lightning kabl dužine 2 metra',
+    descriptionSr: 'Premium Lightning kabl dužine 2 metra',
+    descriptionEn: 'Premium Lightning cable 2 meters long',
     image: 'https://images.unsplash.com/photo-1606292943133-cc1b0ff0e295?q=80&w=100&auto=format&fit=crop',
+    isNew: false,
+    isOnSale: true,
   },
   {
     id: 'p6',
     name: 'Xiaomi Redmi Note 12 transparentna maska',
+    nameSr: 'Xiaomi Redmi Note 12 transparentna maska',
+    nameEn: 'Xiaomi Redmi Note 12 transparent case',
     sku: 'XRM12-CASE-CLR',
-    category: 'Maske za telefone',
+    category: 'phone-cases',
     price: 1199,
     stock: 12,
     status: 'active',
+    description: 'Transparentna maska za Xiaomi Redmi Note 12',
+    descriptionSr: 'Transparentna maska za Xiaomi Redmi Note 12',
+    descriptionEn: 'Transparent case for Xiaomi Redmi Note 12',
     image: 'https://images.unsplash.com/photo-1609388449750-b504ef6d27f4?q=80&w=100&auto=format&fit=crop',
+    isNew: true,
+    isOnSale: false,
   },
   {
     id: 'p7',
     name: 'Zaštitno staklo za Apple Watch',
+    nameSr: 'Zaštitno staklo za Apple Watch',
+    nameEn: 'Protective glass for Apple Watch',
     sku: 'AW-SCRN-42MM',
-    category: 'Zaštita ekrana',
+    category: 'screen-protectors',
     price: 1299,
     stock: 0,
     status: 'draft',
+    description: 'Zaštitno staklo za Apple Watch',
+    descriptionSr: 'Zaštitno staklo za Apple Watch',
+    descriptionEn: 'Protective glass for Apple Watch',
     image: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?q=80&w=100&auto=format&fit=crop',
+    isNew: false,
+    isOnSale: true,
   },
 ];
 
 interface ProductFormData {
   id?: string;
   name: string;
-  nameSr?: string;
-  nameEn?: string;
+  nameSr: string;
+  nameEn: string;
   sku: string;
   category: string;
   price: number;
   oldPrice?: number | null;
   stock: number;
   status: 'active' | 'outOfStock' | 'draft';
-  description?: string;
-  descriptionSr?: string;
-  descriptionEn?: string;
-  isNew?: boolean;
-  isOnSale?: boolean;
+  description: string;
+  descriptionSr: string;
+  descriptionEn: string;
+  isNew: boolean;
+  isOnSale: boolean;
   image: string;
 }
 

@@ -51,7 +51,29 @@ type TranslationKey =
   | 'cancel'
   | 'confirmDelete'
   | 'areYouSure'
-  | 'thisCannotBeUndone';
+  | 'thisCannotBeUndone'
+  // Additional keys for Footer
+  | 'footerAbout'
+  | 'quickLinks'
+  | 'about'
+  | 'contactUs'
+  | 'newsletter'
+  | 'newsletterText'
+  | 'emailAddress'
+  | 'subscribe'
+  | 'allRightsReserved'
+  | 'privacyPolicy'
+  | 'termsOfService'
+  // Additional keys for Header
+  | 'viewAll'
+  // Additional keys for Search
+  | 'noResults'
+  | 'product'
+  | 'category'
+  | 'pages'
+  | 'page'
+  // Additional keys for Admin
+  | 'compose';
 
 type Translations = {
   [key in TranslationKey]: {
@@ -264,6 +286,82 @@ const translations: Translations = {
   thisCannotBeUndone: {
     sr: 'Ova akcija ne može biti poništena.',
     en: 'This action cannot be undone.',
+  },
+  // Additional translations for Footer
+  footerAbout: {
+    sr: 'Vaš pouzdani izvor opreme za mobilne telefone.',
+    en: 'Your reliable source for mobile phone accessories.',
+  },
+  quickLinks: {
+    sr: 'Brzi linkovi',
+    en: 'Quick Links',
+  },
+  about: {
+    sr: 'O nama',
+    en: 'About',
+  },
+  contactUs: {
+    sr: 'Kontaktirajte nas',
+    en: 'Contact Us',
+  },
+  newsletter: {
+    sr: 'Bilten',
+    en: 'Newsletter',
+  },
+  newsletterText: {
+    sr: 'Prijavite se na naš newsletter za najnovije ponude i akcije.',
+    en: 'Subscribe to our newsletter for the latest offers and promotions.',
+  },
+  emailAddress: {
+    sr: 'Email adresa',
+    en: 'Email address',
+  },
+  subscribe: {
+    sr: 'Prijavi se',
+    en: 'Subscribe',
+  },
+  allRightsReserved: {
+    sr: 'Sva prava zadržana',
+    en: 'All Rights Reserved',
+  },
+  privacyPolicy: {
+    sr: 'Politika privatnosti',
+    en: 'Privacy Policy',
+  },
+  termsOfService: {
+    sr: 'Uslovi korišćenja',
+    en: 'Terms of Service',
+  },
+  // Additional translations for Header
+  viewAll: {
+    sr: 'Pogledaj sve',
+    en: 'View All',
+  },
+  // Additional translations for Search
+  noResults: {
+    sr: 'Nema rezultata',
+    en: 'No Results',
+  },
+  product: {
+    sr: 'Proizvod',
+    en: 'Product',
+  },
+  category: {
+    sr: 'Kategorija',
+    en: 'Category',
+  },
+  pages: {
+    sr: 'Stranice',
+    en: 'Pages',
+  },
+  page: {
+    sr: 'Stranica',
+    en: 'Page',
+  },
+  // Additional translations for Admin
+  compose: {
+    sr: 'Sastavi',
+    en: 'Compose',
   },
 };
 
