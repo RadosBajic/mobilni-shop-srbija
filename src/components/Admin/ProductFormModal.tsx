@@ -36,7 +36,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { X, Upload } from 'lucide-react';
 
 // Define types for our form
-interface ProductFormData {
+export interface ProductFormData {
   id?: string;
   name: string;
   nameSr: string;
@@ -146,7 +146,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
       ...values,
       name: language === 'sr' ? values.nameSr : values.nameEn,
       description: language === 'sr' ? values.descriptionSr : values.descriptionEn,
-      id: product.id,
+      id: product.id
     };
     
     onSave(productData);

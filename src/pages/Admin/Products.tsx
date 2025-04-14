@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
   Search, 
@@ -32,7 +32,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis } from '@/components/ui/pagination';
-import { ProductFormModal } from '@/components/Admin/ProductFormModal';
+import { ProductFormModal, ProductFormData } from '@/components/Admin/ProductFormModal';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -44,149 +44,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from '@/contexts/LanguageContext';
-
-// Mock product data
-const mockProducts: ProductFormData[] = [
-  {
-    id: 'p1',
-    name: 'iPhone 14 Pro silikonska maska - crna',
-    nameSr: 'iPhone 14 Pro silikonska maska - crna',
-    nameEn: 'iPhone 14 Pro silicone case - black',
-    sku: 'IP14P-CASE-BLK',
-    category: 'phone-cases',
-    price: 2499,
-    stock: 45,
-    status: 'active',
-    description: 'Kvalitetna silikonska maska za iPhone 14 Pro',
-    descriptionSr: 'Kvalitetna silikonska maska za iPhone 14 Pro',
-    descriptionEn: 'Quality silicone case for iPhone 14 Pro',
-    image: 'https://images.unsplash.com/photo-1613588718956-c2e80305bf61?q=80&w=100&auto=format&fit=crop',
-    isNew: true,
-    isOnSale: true,
-  },
-  {
-    id: 'p2',
-    name: 'Samsung Galaxy S23 Ultra staklena zaštita ekrana',
-    nameSr: 'Samsung Galaxy S23 Ultra staklena zaštita ekrana',
-    nameEn: 'Samsung Galaxy S23 Ultra glass screen protector',
-    sku: 'SGS23U-SCRN',
-    category: 'screen-protectors',
-    price: 1499,
-    stock: 32,
-    status: 'active',
-    description: 'Zaštitno staklo za Samsung Galaxy S23 Ultra',
-    descriptionSr: 'Zaštitno staklo za Samsung Galaxy S23 Ultra',
-    descriptionEn: 'Protective glass for Samsung Galaxy S23 Ultra',
-    image: 'https://images.unsplash.com/photo-1600541519467-937869997e34?q=80&w=100&auto=format&fit=crop',
-    isNew: true,
-    isOnSale: false,
-  },
-  {
-    id: 'p3',
-    name: 'Bežične Bluetooth slušalice sa mikrofonom',
-    nameSr: 'Bežične Bluetooth slušalice sa mikrofonom',
-    nameEn: 'Wireless Bluetooth headphones with microphone',
-    sku: 'BT-EARBUD-BLK',
-    category: 'headphones',
-    price: 4999,
-    stock: 18,
-    status: 'active',
-    description: 'Bežične slušalice sa Bluetooth tehnologijom',
-    descriptionSr: 'Bežične slušalice sa Bluetooth tehnologijom',
-    descriptionEn: 'Wireless headphones with Bluetooth technology',
-    image: 'https://images.unsplash.com/photo-1606220588913-b3aacb4d2f46?q=80&w=100&auto=format&fit=crop',
-    isNew: false,
-    isOnSale: true,
-  },
-  {
-    id: 'p4',
-    name: 'Brzi punjač USB-C 65W',
-    nameSr: 'Brzi punjač USB-C 65W',
-    nameEn: 'Fast charger USB-C 65W',
-    sku: 'CHR-USB-C-65',
-    category: 'chargers',
-    price: 3499,
-    stock: 27,
-    status: 'active',
-    description: 'Brzi punjač sa USB-C priključkom',
-    descriptionSr: 'Brzi punjač sa USB-C priključkom',
-    descriptionEn: 'Fast charger with USB-C connector',
-    image: 'https://images.unsplash.com/photo-1628815113969-0487917e8b76?q=80&w=100&auto=format&fit=crop',
-    isNew: false,
-    isOnSale: false,
-  },
-  {
-    id: 'p5',
-    name: 'Premium Lightning kabl - 2m',
-    nameSr: 'Premium Lightning kabl - 2m',
-    nameEn: 'Premium Lightning cable - 2m',
-    sku: 'CBL-LIGHT-2M',
-    category: 'cables',
-    price: 1299,
-    stock: 0,
-    status: 'outOfStock',
-    description: 'Premium Lightning kabl dužine 2 metra',
-    descriptionSr: 'Premium Lightning kabl dužine 2 metra',
-    descriptionEn: 'Premium Lightning cable 2 meters long',
-    image: 'https://images.unsplash.com/photo-1606292943133-cc1b0ff0e295?q=80&w=100&auto=format&fit=crop',
-    isNew: false,
-    isOnSale: true,
-  },
-  {
-    id: 'p6',
-    name: 'Xiaomi Redmi Note 12 transparentna maska',
-    nameSr: 'Xiaomi Redmi Note 12 transparentna maska',
-    nameEn: 'Xiaomi Redmi Note 12 transparent case',
-    sku: 'XRM12-CASE-CLR',
-    category: 'phone-cases',
-    price: 1199,
-    stock: 12,
-    status: 'active',
-    description: 'Transparentna maska za Xiaomi Redmi Note 12',
-    descriptionSr: 'Transparentna maska za Xiaomi Redmi Note 12',
-    descriptionEn: 'Transparent case for Xiaomi Redmi Note 12',
-    image: 'https://images.unsplash.com/photo-1609388449750-b504ef6d27f4?q=80&w=100&auto=format&fit=crop',
-    isNew: true,
-    isOnSale: false,
-  },
-  {
-    id: 'p7',
-    name: 'Zaštitno staklo za Apple Watch',
-    nameSr: 'Zaštitno staklo za Apple Watch',
-    nameEn: 'Protective glass for Apple Watch',
-    sku: 'AW-SCRN-42MM',
-    category: 'screen-protectors',
-    price: 1299,
-    stock: 0,
-    status: 'draft',
-    description: 'Zaštitno staklo za Apple Watch',
-    descriptionSr: 'Zaštitno staklo za Apple Watch',
-    descriptionEn: 'Protective glass for Apple Watch',
-    image: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?q=80&w=100&auto=format&fit=crop',
-    isNew: false,
-    isOnSale: true,
-  },
-];
-
-interface ProductFormData {
-  id?: string;
-  name: string;
-  nameSr: string;
-  nameEn: string;
-  sku: string;
-  category: string;
-  price: number;
-  oldPrice?: number | null;
-  stock: number;
-  status: 'active' | 'outOfStock' | 'draft';
-  description: string;
-  descriptionSr: string;
-  descriptionEn: string;
-  isNew: boolean;
-  isOnSale: boolean;
-  image: string;
-}
+import { ProductService, AdminProduct } from '@/services/ProductService';
 
 const Products: React.FC = () => {
   const { toast } = useToast();
@@ -194,21 +55,47 @@ const Products: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
-  const [products, setProducts] = useState<ProductFormData[]>(mockProducts);
+  const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
+  const [importData, setImportData] = useState('');
   const [currentProduct, setCurrentProduct] = useState<ProductFormData | null>(null);
   
+  // Load products on component mount
+  useEffect(() => {
+    loadProducts();
+  }, []);
+  
+  // Load all products from the service
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const allProducts = await ProductService.getAdminProducts();
+      setProducts(allProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' ? 'Greška pri učitavanju proizvoda' : 'Error loading products',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   const filteredProducts = products.filter(product => 
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.title[language].toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search logic would be implemented here in a real app
+    // Search is already applied as we type
     console.log('Searching for:', searchTerm);
   };
   
@@ -233,72 +120,244 @@ const Products: React.FC = () => {
     setIsAddProductModalOpen(true);
   };
   
-  const handleEditProduct = (product: ProductFormData) => {
-    setCurrentProduct(product);
+  const handleEditProduct = (product: AdminProduct) => {
+    // Convert AdminProduct to ProductFormData format
+    const productFormData: ProductFormData = {
+      id: product.id,
+      name: product.title[language],
+      nameSr: product.title.sr,
+      nameEn: product.title.en,
+      sku: product.sku,
+      category: product.category,
+      price: product.price,
+      oldPrice: product.oldPrice || null,
+      stock: product.stock,
+      status: product.status,
+      description: product.description || '',
+      descriptionSr: product.descriptionSr || '',
+      descriptionEn: product.descriptionEn || '',
+      isNew: product.isNew,
+      isOnSale: product.isOnSale,
+      image: product.image
+    };
+    
+    setCurrentProduct(productFormData);
     setIsEditProductModalOpen(true);
   };
   
-  const handleDeleteProduct = (product: ProductFormData) => {
-    setCurrentProduct(product);
+  const handleDeleteProduct = (product: AdminProduct) => {
+    // Convert AdminProduct to ProductFormData format
+    const productFormData: ProductFormData = {
+      id: product.id,
+      name: product.title[language],
+      nameSr: product.title.sr,
+      nameEn: product.title.en,
+      sku: product.sku,
+      category: product.category,
+      price: product.price,
+      oldPrice: product.oldPrice || null,
+      stock: product.stock,
+      status: product.status,
+      description: product.description || '',
+      descriptionSr: product.descriptionSr || '',
+      descriptionEn: product.descriptionEn || '',
+      isNew: product.isNew,
+      isOnSale: product.isOnSale,
+      image: product.image
+    };
+    
+    setCurrentProduct(productFormData);
     setIsDeleteDialogOpen(true);
   };
   
-  const confirmDeleteProduct = () => {
+  const confirmDeleteProduct = async () => {
     if (currentProduct?.id) {
-      // Filter out the product to be deleted
-      setProducts(prevProducts => 
-        prevProducts.filter(p => p.id !== currentProduct.id)
-      );
-      
-      // Remove from selected products if it was selected
-      setSelectedProducts(prev => 
-        prev.filter(id => id !== currentProduct.id)
-      );
-      
-      toast({
-        title: language === 'sr' ? 'Proizvod obrisan' : 'Product Deleted',
-        description: language === 'sr' 
-          ? `Proizvod "${currentProduct.name}" je uspešno obrisan.` 
-          : `Product "${currentProduct.name}" has been successfully deleted.`,
-      });
+      try {
+        // Delete the product using the service
+        const success = await ProductService.deleteProduct(currentProduct.id);
+        
+        if (success) {
+          // Remove from selected products if it was selected
+          setSelectedProducts(prev => 
+            prev.filter(id => id !== currentProduct.id)
+          );
+          
+          toast({
+            title: language === 'sr' ? 'Proizvod obrisan' : 'Product Deleted',
+            description: language === 'sr' 
+              ? `Proizvod "${currentProduct.name}" je uspešno obrisan.` 
+              : `Product "${currentProduct.name}" has been successfully deleted.`,
+          });
+          
+          // Reload products to refresh the list
+          loadProducts();
+        }
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast({
+          title: language === 'sr' ? 'Greška' : 'Error',
+          description: language === 'sr' 
+            ? `Greška pri brisanju proizvoda "${currentProduct.name}".` 
+            : `Error deleting product "${currentProduct.name}".`,
+          variant: 'destructive'
+        });
+      }
     }
     setIsDeleteDialogOpen(false);
     setCurrentProduct(null);
   };
   
-  const handleSaveProduct = (productData: ProductFormData) => {
-    if (productData.id) {
-      // Update existing product
-      setProducts(prevProducts => 
-        prevProducts.map(p => 
-          p.id === productData.id ? { ...productData } : p
-        )
-      );
-    } else {
-      // Add new product with a generated ID
-      const newProduct = {
-        ...productData,
-        id: `p${products.length + 1}`,
-      };
-      setProducts(prevProducts => [...prevProducts, newProduct]);
+  const handleSaveProduct = async (productData: ProductFormData) => {
+    try {
+      if (productData.id) {
+        // Update existing product
+        await ProductService.updateProduct(productData.id, productData);
+        toast({
+          title: language === 'sr' ? 'Proizvod ažuriran' : 'Product Updated',
+          description: language === 'sr' 
+            ? `Proizvod "${productData.name}" je uspešno ažuriran.` 
+            : `Product "${productData.name}" has been successfully updated.`,
+        });
+      } else {
+        // Add new product
+        await ProductService.createProduct(productData);
+        toast({
+          title: language === 'sr' ? 'Proizvod dodat' : 'Product Added',
+          description: language === 'sr' 
+            ? `Proizvod "${productData.name}" je uspešno dodat.` 
+            : `Product "${productData.name}" has been successfully added.`,
+        });
+      }
+      
+      // Reload products to refresh the list
+      loadProducts();
+    } catch (error) {
+      console.error('Error saving product:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' 
+          ? `Greška pri čuvanju proizvoda "${productData.name}".` 
+          : `Error saving product "${productData.name}".`,
+        variant: 'destructive'
+      });
     }
   };
   
   // Handle bulk delete
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedProducts.length > 0) {
-      setProducts(prevProducts => 
-        prevProducts.filter(p => !selectedProducts.includes(p.id || ''))
-      );
+      try {
+        // Delete multiple products using the service
+        const success = await ProductService.bulkDeleteProducts(selectedProducts);
+        
+        if (success) {
+          toast({
+            title: language === 'sr' ? 'Proizvodi obrisani' : 'Products Deleted',
+            description: language === 'sr' 
+              ? `${selectedProducts.length} proizvoda je uspešno obrisano.` 
+              : `${selectedProducts.length} products have been successfully deleted.`,
+          });
+          
+          setSelectedProducts([]);
+          
+          // Reload products to refresh the list
+          loadProducts();
+        }
+      } catch (error) {
+        console.error('Error deleting products:', error);
+        toast({
+          title: language === 'sr' ? 'Greška' : 'Error',
+          description: language === 'sr' 
+            ? 'Greška pri brisanju proizvoda.' 
+            : 'Error deleting products.',
+          variant: 'destructive'
+        });
+      }
+    }
+  };
+  
+  // Handle export products
+  const handleExportProducts = async () => {
+    try {
+      const exportData = await ProductService.exportProducts();
+      
+      // Create a Blob with the export data
+      const blob = new Blob([exportData], { type: 'application/json' });
+      
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(blob);
+      
+      // Create a download link and click it
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'products-export.json';
+      document.body.appendChild(a);
+      a.click();
+      
+      // Clean up
+      URL.revokeObjectURL(url);
+      document.body.removeChild(a);
       
       toast({
-        title: language === 'sr' ? 'Proizvodi obrisani' : 'Products Deleted',
+        title: language === 'sr' ? 'Izvoz uspešan' : 'Export Successful',
         description: language === 'sr' 
-          ? `${selectedProducts.length} proizvoda je uspešno obrisano.` 
-          : `${selectedProducts.length} products have been successfully deleted.`,
+          ? 'Proizvodi su uspešno izvezeni.' 
+          : 'Products have been successfully exported.',
       });
+    } catch (error) {
+      console.error('Error exporting products:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' 
+          ? 'Greška pri izvozu proizvoda.' 
+          : 'Error exporting products.',
+        variant: 'destructive'
+      });
+    }
+  };
+  
+  // Handle import products
+  const handleOpenImportDialog = () => {
+    setImportData('');
+    setIsImportDialogOpen(true);
+  };
+  
+  const handleImportProducts = async () => {
+    if (!importData.trim()) {
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' 
+          ? 'Unesite podatke za uvoz.' 
+          : 'Please enter import data.',
+        variant: 'destructive'
+      });
+      return;
+    }
+    
+    try {
+      const success = await ProductService.importProducts(importData);
       
-      setSelectedProducts([]);
+      if (success) {
+        toast({
+          title: language === 'sr' ? 'Uvoz uspešan' : 'Import Successful',
+          description: language === 'sr' 
+            ? 'Proizvodi su uspešno uvezeni.' 
+            : 'Products have been successfully imported.',
+        });
+        
+        // Reload products to refresh the list
+        loadProducts();
+        setIsImportDialogOpen(false);
+      }
+    } catch (error) {
+      console.error('Error importing products:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' 
+          ? 'Greška pri uvozu proizvoda. Proverite format podataka.' 
+          : 'Error importing products. Please check the data format.',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -308,11 +367,21 @@ const Products: React.FC = () => {
         <h1 className="text-2xl font-bold">{language === 'sr' ? 'Proizvodi' : 'Products'}</h1>
         
         <div className="flex flex-wrap gap-2">
-          <Button variant="outline" size="sm" className="flex items-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleOpenImportDialog}
+          >
             <FileUp className="mr-2 h-4 w-4" />
             {language === 'sr' ? 'Uvezi' : 'Import'}
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleExportProducts}
+          >
             <FileDown className="mr-2 h-4 w-4" />
             {language === 'sr' ? 'Izvezi' : 'Export'}
           </Button>
@@ -422,7 +491,13 @@ const Products: React.FC = () => {
               </TableHeader>
               
               <TableBody>
-                {filteredProducts.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      {language === 'sr' ? 'Učitavanje proizvoda...' : 'Loading products...'}
+                    </TableCell>
+                  </TableRow>
+                ) : filteredProducts.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
                       {language === 'sr' ? 'Nema pronađenih proizvoda' : 'No products found'}
@@ -443,12 +518,12 @@ const Products: React.FC = () => {
                         <div className="h-10 w-10 rounded-md bg-secondary overflow-hidden">
                           <img 
                             src={product.image} 
-                            alt={product.name} 
+                            alt={product.title[language]} 
                             className="h-full w-full object-cover"
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell className="font-medium">{product.title[language]}</TableCell>
                       <TableCell>{product.sku}</TableCell>
                       <TableCell>{product.category}</TableCell>
                       <TableCell className="text-right">{product.price.toLocaleString()} RSD</TableCell>
@@ -583,6 +658,45 @@ const Products: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      
+      {/* Import Dialog */}
+      <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {language === 'sr' ? 'Uvezi proizvode' : 'Import Products'}
+            </DialogTitle>
+            <DialogDescription>
+              {language === 'sr' 
+                ? 'Unesite JSON podatke za uvoz proizvoda.' 
+                : 'Enter JSON data to import products.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <Textarea
+              className="min-h-[200px] font-mono text-sm"
+              placeholder={language === 'sr' ? 'Zalepite JSON podatke ovde...' : 'Paste JSON data here...'}
+              value={importData}
+              onChange={(e) => setImportData(e.target.value)}
+            />
+            <p className="text-sm text-muted-foreground">
+              {language === 'sr' 
+                ? 'Podaci moraju biti u ispravnom JSON formatu.' 
+                : 'Data must be in valid JSON format.'}
+            </p>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setIsImportDialogOpen(false)}>
+              {language === 'sr' ? 'Otkaži' : 'Cancel'}
+            </Button>
+            <Button type="button" onClick={handleImportProducts}>
+              {language === 'sr' ? 'Uvezi' : 'Import'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

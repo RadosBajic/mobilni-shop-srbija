@@ -1,3 +1,4 @@
+
 import { Product } from '@/components/Products/ProductCard';
 
 // Mock products data
@@ -129,6 +130,36 @@ const adminProducts: AdminProduct[] = products.map(product => ({
   descriptionEn: 'Product description goes here',
 }));
 
+// Function to convert ProductFormData to Product
+const convertFormDataToProduct = (formData: any): Product => {
+  return {
+    id: formData.id || `p${products.length + 1}`,
+    title: {
+      sr: formData.nameSr,
+      en: formData.nameEn
+    },
+    price: formData.price,
+    oldPrice: formData.oldPrice || null,
+    image: formData.image || 'https://images.unsplash.com/photo-1613588718956-c2e80305bf61?q=80&w=500&auto=format&fit=crop',
+    category: formData.category,
+    isNew: formData.isNew,
+    isOnSale: formData.isOnSale
+  };
+};
+
+// Function to convert ProductFormData to AdminProduct
+const convertFormDataToAdminProduct = (formData: any): AdminProduct => {
+  return {
+    ...convertFormDataToProduct(formData),
+    sku: formData.sku,
+    stock: formData.stock,
+    status: formData.status,
+    description: formData.description || '',
+    descriptionSr: formData.descriptionSr || '',
+    descriptionEn: formData.descriptionEn || ''
+  };
+};
+
 // This would be an actual API service in a real app
 export const ProductService = {
   getProducts: (
@@ -251,46 +282,64 @@ export const ProductService = {
     });
   },
   
-  createProduct: (product: Partial<AdminProduct>): Promise<AdminProduct> => {
+  createProduct: (formData: any): Promise<AdminProduct> => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const newProduct = {
-          ...product,
-          id: `p${products.length + 1}`,
-        } as AdminProduct;
+        // Create product ID if not provided
+        const newId = formData.id || `p${products.length + 1}`;
         
-        adminProducts.push(newProduct);
+        // Create product object for both arrays
+        const newProduct = convertFormDataToProduct({
+          ...formData,
+          id: newId
+        });
+        
+        const newAdminProduct = convertFormDataToAdminProduct({
+          ...formData,
+          id: newId
+        });
+        
+        // Add to both arrays
         products.push(newProduct);
+        adminProducts.push(newAdminProduct);
         
-        resolve(newProduct);
+        console.log('Created new product:', newProduct);
+        console.log('Current products:', products);
+        
+        resolve(newAdminProduct);
       }, 300);
     });
   },
   
-  updateProduct: (id: string, product: Partial<AdminProduct>): Promise<AdminProduct> => {
+  updateProduct: (id: string, formData: any): Promise<AdminProduct> => {
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const index = adminProducts.findIndex(p => p.id === id);
+        // Find the product in admin products
+        const adminIndex = adminProducts.findIndex(p => p.id === id);
         
-        if (index === -1) {
+        if (adminIndex === -1) {
           reject(new Error('Product not found'));
           return;
         }
         
-        const updatedProduct = {
-          ...adminProducts[index],
-          ...product,
+        // Update the admin product
+        const updatedAdminProduct = {
+          ...adminProducts[adminIndex],
+          ...convertFormDataToAdminProduct({...formData, id})
         };
         
-        adminProducts[index] = updatedProduct;
+        adminProducts[adminIndex] = updatedAdminProduct;
         
-        // Also update in the regular products array
+        // Find and update the product in regular products array
         const productIndex = products.findIndex(p => p.id === id);
         if (productIndex !== -1) {
-          products[productIndex] = updatedProduct;
+          products[productIndex] = convertFormDataToProduct({...formData, id});
         }
         
-        resolve(updatedProduct);
+        console.log('Updated product:', updatedAdminProduct);
+        console.log('Current products:', products);
+        
+        resolve(updatedAdminProduct);
       }, 300);
     });
   },
@@ -315,6 +364,9 @@ export const ProductService = {
           const filteredProducts = products.filter(p => p.id !== id);
           products.length = 0;
           products.push(...filteredProducts);
+          
+          console.log('Deleted product with ID:', id);
+          console.log('Current products:', products);
         }
         
         resolve(success);
@@ -335,6 +387,9 @@ export const ProductService = {
         
         products.length = 0;
         products.push(...filteredProducts);
+        
+        console.log('Deleted products with IDs:', ids);
+        console.log('Current products:', products);
         
         resolve(true);
       }, 300);
@@ -368,6 +423,59 @@ export const ProductService = {
         
         product.status = status;
         resolve(true);
+      }, 300);
+    });
+  },
+  
+  exportProducts: (): Promise<string> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Create a JSON string of all products
+        const exportData = JSON.stringify(adminProducts, null, 2);
+        
+        // In a real application, this would trigger a file download
+        // For now, we just return the JSON string
+        resolve(exportData);
+      }, 300);
+    });
+  },
+  
+  importProducts: (data: string): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        try {
+          // Parse the imported data
+          const importedProducts = JSON.parse(data) as AdminProduct[];
+          
+          if (!Array.isArray(importedProducts)) {
+            reject(new Error('Invalid import data format'));
+            return;
+          }
+          
+          // Replace the current products with imported products
+          adminProducts.length = 0;
+          adminProducts.push(...importedProducts);
+          
+          // Update the regular products array as well
+          products.length = 0;
+          products.push(...importedProducts.map(p => ({
+            id: p.id,
+            title: p.title,
+            price: p.price,
+            oldPrice: p.oldPrice,
+            image: p.image,
+            category: p.category,
+            isNew: p.isNew,
+            isOnSale: p.isOnSale
+          })));
+          
+          console.log('Imported products:', importedProducts);
+          console.log('Current products:', products);
+          
+          resolve(true);
+        } catch (error) {
+          reject(new Error('Failed to parse import data'));
+        }
       }, 300);
     });
   }
