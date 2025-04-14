@@ -141,12 +141,24 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   // Handle form submission
   const onSubmit = (values: z.infer<typeof productFormSchema>) => {
-    // Construct the full product data
+    // Construct the full product data - ensuring all required properties are set
     const productData: ProductFormData = {
-      ...values,
+      id: product.id,
       name: language === 'sr' ? values.nameSr : values.nameEn,
+      nameSr: values.nameSr,
+      nameEn: values.nameEn,
+      sku: values.sku,
+      category: values.category,
+      price: values.price,
+      oldPrice: values.oldPrice,
+      stock: values.stock,
+      status: values.status,
       description: language === 'sr' ? values.descriptionSr : values.descriptionEn,
-      id: product.id
+      descriptionSr: values.descriptionSr || '',
+      descriptionEn: values.descriptionEn || '',
+      isNew: values.isNew,
+      isOnSale: values.isOnSale,
+      image: values.image || ''
     };
     
     onSave(productData);
