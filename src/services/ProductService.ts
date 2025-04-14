@@ -1,4 +1,3 @@
-
 import { Product } from '@/components/Products/ProductCard';
 
 // Mock products data
@@ -108,6 +107,27 @@ const products: Product[] = [
     isOnSale: false,
   }
 ];
+
+// Extended product interface with admin fields
+export interface AdminProduct extends Product {
+  sku: string;
+  stock: number;
+  status: 'active' | 'outOfStock' | 'draft';
+  description?: string;
+  descriptionSr?: string;
+  descriptionEn?: string;
+}
+
+// Convert products to admin format
+const adminProducts: AdminProduct[] = products.map(product => ({
+  ...product,
+  sku: `SKU-${product.id}`,
+  stock: Math.floor(Math.random() * 100),
+  status: product.oldPrice ? 'active' : (Math.random() > 0.8 ? 'draft' : 'active'),
+  description: 'Product description goes here',
+  descriptionSr: 'Opis proizvoda ide ovde',
+  descriptionEn: 'Product description goes here',
+}));
 
 // This would be an actual API service in a real app
 export const ProductService = {
@@ -219,6 +239,135 @@ export const ProductService = {
         }
         
         resolve(related);
+      }, 300);
+    });
+  },
+  
+  getAdminProducts: (): Promise<AdminProduct[]> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve([...adminProducts]);
+      }, 300);
+    });
+  },
+  
+  createProduct: (product: Partial<AdminProduct>): Promise<AdminProduct> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const newProduct = {
+          ...product,
+          id: `p${products.length + 1}`,
+        } as AdminProduct;
+        
+        adminProducts.push(newProduct);
+        products.push(newProduct);
+        
+        resolve(newProduct);
+      }, 300);
+    });
+  },
+  
+  updateProduct: (id: string, product: Partial<AdminProduct>): Promise<AdminProduct> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const index = adminProducts.findIndex(p => p.id === id);
+        
+        if (index === -1) {
+          reject(new Error('Product not found'));
+          return;
+        }
+        
+        const updatedProduct = {
+          ...adminProducts[index],
+          ...product,
+        };
+        
+        adminProducts[index] = updatedProduct;
+        
+        // Also update in the regular products array
+        const productIndex = products.findIndex(p => p.id === id);
+        if (productIndex !== -1) {
+          products[productIndex] = updatedProduct;
+        }
+        
+        resolve(updatedProduct);
+      }, 300);
+    });
+  },
+  
+  deleteProduct: (id: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const initialLength = adminProducts.length;
+        
+        // Filter out the product with the given id
+        const filteredAdminProducts = adminProducts.filter(p => p.id !== id);
+        
+        // If the length has changed, we found and removed the product
+        const success = filteredAdminProducts.length < initialLength;
+        
+        if (success) {
+          // Update the adminProducts array
+          adminProducts.length = 0;
+          adminProducts.push(...filteredAdminProducts);
+          
+          // Also update the regular products array
+          const filteredProducts = products.filter(p => p.id !== id);
+          products.length = 0;
+          products.push(...filteredProducts);
+        }
+        
+        resolve(success);
+      }, 300);
+    });
+  },
+  
+  bulkDeleteProducts: (ids: string[]): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        // Filter out products with the given ids
+        const filteredAdminProducts = adminProducts.filter(p => !ids.includes(p.id));
+        const filteredProducts = products.filter(p => !ids.includes(p.id));
+        
+        // Update the arrays
+        adminProducts.length = 0;
+        adminProducts.push(...filteredAdminProducts);
+        
+        products.length = 0;
+        products.push(...filteredProducts);
+        
+        resolve(true);
+      }, 300);
+    });
+  },
+  
+  getProductStatus: (id: string): Promise<'active' | 'outOfStock' | 'draft'> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const product = adminProducts.find(p => p.id === id);
+        
+        if (!product) {
+          reject(new Error('Product not found'));
+          return;
+        }
+        
+        resolve(product.status);
+      }, 300);
+    });
+  },
+  
+  updateProductStatus: (id: string, status: 'active' | 'outOfStock' | 'draft'): Promise<boolean> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const product = adminProducts.find(p => p.id === id);
+        
+        if (!product) {
+          reject(new Error('Product not found'));
+          return;
+        }
+        
+        product.status = status;
+        resolve(true);
       }, 300);
     });
   }

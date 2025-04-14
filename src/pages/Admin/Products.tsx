@@ -32,6 +32,19 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationEllipsis } from '@/components/ui/pagination';
+import { ProductFormModal } from '@/components/Admin/ProductFormModal';
+import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // Mock product data
 const mockProducts = [
@@ -107,12 +120,38 @@ const mockProducts = [
   },
 ];
 
+interface ProductFormData {
+  id?: string;
+  name: string;
+  nameSr?: string;
+  nameEn?: string;
+  sku: string;
+  category: string;
+  price: number;
+  oldPrice?: number | null;
+  stock: number;
+  status: 'active' | 'outOfStock' | 'draft';
+  description?: string;
+  descriptionSr?: string;
+  descriptionEn?: string;
+  isNew?: boolean;
+  isOnSale?: boolean;
+  image: string;
+}
+
 const Products: React.FC = () => {
+  const { toast } = useToast();
+  const { language, t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
+  const [products, setProducts] = useState<ProductFormData[]>(mockProducts);
+  const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
+  const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [currentProduct, setCurrentProduct] = useState<ProductFormData | null>(null);
   
-  const filteredProducts = mockProducts.filter(product => 
+  const filteredProducts = products.filter(product => 
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
@@ -136,27 +175,105 @@ const Products: React.FC = () => {
     if (selectedProducts.length === filteredProducts.length) {
       setSelectedProducts([]);
     } else {
-      setSelectedProducts(filteredProducts.map(p => p.id));
+      setSelectedProducts(filteredProducts.map(p => p.id || ''));
+    }
+  };
+  
+  const handleAddProduct = () => {
+    setCurrentProduct(null);
+    setIsAddProductModalOpen(true);
+  };
+  
+  const handleEditProduct = (product: ProductFormData) => {
+    setCurrentProduct(product);
+    setIsEditProductModalOpen(true);
+  };
+  
+  const handleDeleteProduct = (product: ProductFormData) => {
+    setCurrentProduct(product);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDeleteProduct = () => {
+    if (currentProduct?.id) {
+      // Filter out the product to be deleted
+      setProducts(prevProducts => 
+        prevProducts.filter(p => p.id !== currentProduct.id)
+      );
+      
+      // Remove from selected products if it was selected
+      setSelectedProducts(prev => 
+        prev.filter(id => id !== currentProduct.id)
+      );
+      
+      toast({
+        title: language === 'sr' ? 'Proizvod obrisan' : 'Product Deleted',
+        description: language === 'sr' 
+          ? `Proizvod "${currentProduct.name}" je uspešno obrisan.` 
+          : `Product "${currentProduct.name}" has been successfully deleted.`,
+      });
+    }
+    setIsDeleteDialogOpen(false);
+    setCurrentProduct(null);
+  };
+  
+  const handleSaveProduct = (productData: ProductFormData) => {
+    if (productData.id) {
+      // Update existing product
+      setProducts(prevProducts => 
+        prevProducts.map(p => 
+          p.id === productData.id ? { ...productData } : p
+        )
+      );
+    } else {
+      // Add new product with a generated ID
+      const newProduct = {
+        ...productData,
+        id: `p${products.length + 1}`,
+      };
+      setProducts(prevProducts => [...prevProducts, newProduct]);
+    }
+  };
+  
+  // Handle bulk delete
+  const handleDeleteSelected = () => {
+    if (selectedProducts.length > 0) {
+      setProducts(prevProducts => 
+        prevProducts.filter(p => !selectedProducts.includes(p.id || ''))
+      );
+      
+      toast({
+        title: language === 'sr' ? 'Proizvodi obrisani' : 'Products Deleted',
+        description: language === 'sr' 
+          ? `${selectedProducts.length} proizvoda je uspešno obrisano.` 
+          : `${selectedProducts.length} products have been successfully deleted.`,
+      });
+      
+      setSelectedProducts([]);
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-2xl font-bold">Products</h1>
+        <h1 className="text-2xl font-bold">{language === 'sr' ? 'Proizvodi' : 'Products'}</h1>
         
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" className="flex items-center">
             <FileUp className="mr-2 h-4 w-4" />
-            Import
+            {language === 'sr' ? 'Uvezi' : 'Import'}
           </Button>
           <Button variant="outline" size="sm" className="flex items-center">
             <FileDown className="mr-2 h-4 w-4" />
-            Export
+            {language === 'sr' ? 'Izvezi' : 'Export'}
           </Button>
-          <Button size="sm" className="flex items-center">
+          <Button 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleAddProduct}
+          >
             <Plus className="mr-2 h-4 w-4" />
-            Add Product
+            {language === 'sr' ? 'Dodaj proizvod' : 'Add Product'}
           </Button>
         </div>
       </div>
@@ -170,7 +287,7 @@ const Products: React.FC = () => {
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     type="text"
-                    placeholder="Search products..."
+                    placeholder={language === 'sr' ? "Pretraži proizvode..." : "Search products..."}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="pl-10 w-full"
@@ -182,32 +299,52 @@ const Products: React.FC = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center">
                     <Filter className="mr-2 h-4 w-4" />
-                    Filter
+                    {language === 'sr' ? 'Filter' : 'Filter'}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Filter By</DropdownMenuLabel>
+                  <DropdownMenuLabel>{language === 'sr' ? 'Filtriraj po' : 'Filter By'}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
                     <Check className="mr-2 h-4 w-4" />
-                    Active
+                    {language === 'sr' ? 'Aktivno' : 'Active'}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Check className="mr-2 h-4 w-4 opacity-0" />
-                    Out of Stock
+                    {language === 'sr' ? 'Nema na stanju' : 'Out of Stock'}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Check className="mr-2 h-4 w-4 opacity-0" />
-                    Draft
+                    {language === 'sr' ? 'Nacrt' : 'Draft'}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    Reset Filters
+                    {language === 'sr' ? 'Resetuj filtere' : 'Reset Filters'}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
+          
+          {/* Selected products actions */}
+          {selectedProducts.length > 0 && (
+            <div className="p-2 bg-muted/50 border-b flex items-center justify-between">
+              <div className="text-sm pl-2">
+                {language === 'sr' 
+                  ? `${selectedProducts.length} proizvoda izabrano` 
+                  : `${selectedProducts.length} products selected`}
+              </div>
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={handleDeleteSelected}
+                className="flex items-center"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {language === 'sr' ? 'Obriši izabrano' : 'Delete Selected'}
+              </Button>
+            </div>
+          )}
           
           {/* Products table */}
           <div className="overflow-x-auto">
@@ -225,75 +362,89 @@ const Products: React.FC = () => {
                     </div>
                   </TableHead>
                   <TableHead className="w-14"></TableHead>
-                  <TableHead>Product</TableHead>
+                  <TableHead>{language === 'sr' ? 'Proizvod' : 'Product'}</TableHead>
                   <TableHead>SKU</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead className="text-right">Stock</TableHead>
-                  <TableHead className="text-right">Status</TableHead>
+                  <TableHead>{language === 'sr' ? 'Kategorija' : 'Category'}</TableHead>
+                  <TableHead className="text-right">{language === 'sr' ? 'Cena' : 'Price'}</TableHead>
+                  <TableHead className="text-right">{language === 'sr' ? 'Stanje' : 'Stock'}</TableHead>
+                  <TableHead className="text-right">{language === 'sr' ? 'Status' : 'Status'}</TableHead>
                   <TableHead className="w-20"></TableHead>
                 </TableRow>
               </TableHeader>
               
               <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-gray-300 text-primary focus:ring-primary"
-                        checked={selectedProducts.includes(product.id)}
-                        onChange={() => toggleProductSelection(product.id)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <div className="h-10 w-10 rounded-md bg-secondary overflow-hidden">
-                        <img 
-                          src={product.image} 
-                          alt={product.name} 
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.sku}</TableCell>
-                    <TableCell>{product.category}</TableCell>
-                    <TableCell className="text-right">{product.price.toLocaleString()} RSD</TableCell>
-                    <TableCell className="text-right">{product.stock}</TableCell>
-                    <TableCell className="text-right">
-                      <Badge variant={
-                        product.status === 'active' ? 'default' :
-                        product.status === 'outOfStock' ? 'destructive' : 'secondary'
-                      }>
-                        {product.status === 'active' ? 'Active' :
-                         product.status === 'outOfStock' ? 'Out of Stock' : 'Draft'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <span className="sr-only">Open menu</span>
-                            <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
-                              <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
-                            </svg>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:text-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                {filteredProducts.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                      {language === 'sr' ? 'Nema pronađenih proizvoda' : 'No products found'}
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  filteredProducts.map((product) => (
+                    <TableRow key={product.id} className="group">
+                      <TableCell>
+                        <input 
+                          type="checkbox" 
+                          className="rounded border-gray-300 text-primary focus:ring-primary"
+                          checked={selectedProducts.includes(product.id || '')}
+                          onChange={() => toggleProductSelection(product.id || '')}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="h-10 w-10 rounded-md bg-secondary overflow-hidden">
+                          <img 
+                            src={product.image} 
+                            alt={product.name} 
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{product.name}</TableCell>
+                      <TableCell>{product.sku}</TableCell>
+                      <TableCell>{product.category}</TableCell>
+                      <TableCell className="text-right">{product.price.toLocaleString()} RSD</TableCell>
+                      <TableCell className="text-right">{product.stock}</TableCell>
+                      <TableCell className="text-right">
+                        <Badge variant={
+                          product.status === 'active' ? 'default' :
+                          product.status === 'outOfStock' ? 'destructive' : 'secondary'
+                        }>
+                          {product.status === 'active' 
+                            ? language === 'sr' ? 'Aktivno' : 'Active'
+                            : product.status === 'outOfStock' 
+                              ? language === 'sr' ? 'Nema na stanju' : 'Out of Stock'
+                              : language === 'sr' ? 'Nacrt' : 'Draft'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <span className="sr-only">Open menu</span>
+                              <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-4 w-4">
+                                <path d="M3.625 7.5C3.625 8.12132 3.12132 8.625 2.5 8.625C1.87868 8.625 1.375 8.12132 1.375 7.5C1.375 6.87868 1.87868 6.375 2.5 6.375C3.12132 6.375 3.625 6.87868 3.625 7.5ZM8.625 7.5C8.625 8.12132 8.12132 8.625 7.5 8.625C6.87868 8.625 6.375 8.12132 6.375 7.5C6.375 6.87868 6.87868 6.375 7.5 6.375C8.12132 6.375 8.625 6.87868 8.625 7.5ZM13.625 7.5C13.625 8.12132 13.1213 8.625 12.5 8.625C11.8787 8.625 11.375 8.12132 11.375 7.5C11.375 6.87868 11.8787 6.375 12.5 6.375C13.1213 6.375 13.625 6.87868 13.625 7.5Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                              </svg>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditProduct(product)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              {language === 'sr' ? 'Izmeni' : 'Edit'}
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleDeleteProduct(product)}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              {language === 'sr' ? 'Obriši' : 'Delete'}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -304,7 +455,7 @@ const Products: React.FC = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationLink href="#" aria-label="Previous page">
-                    Previous
+                    {language === 'sr' ? 'Prethodna' : 'Previous'}
                   </PaginationLink>
                 </PaginationItem>
                 <PaginationItem>
@@ -327,7 +478,7 @@ const Products: React.FC = () => {
                 </PaginationItem>
                 <PaginationItem>
                   <PaginationLink href="#" aria-label="Next page">
-                    Next
+                    {language === 'sr' ? 'Sledeća' : 'Next'}
                   </PaginationLink>
                 </PaginationItem>
               </PaginationContent>
@@ -335,6 +486,54 @@ const Products: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+      
+      {/* Add Product Modal */}
+      <ProductFormModal
+        open={isAddProductModalOpen}
+        onOpenChange={setIsAddProductModalOpen}
+        onSave={handleSaveProduct}
+        isEditing={false}
+      />
+      
+      {/* Edit Product Modal */}
+      <ProductFormModal
+        open={isEditProductModalOpen}
+        onOpenChange={setIsEditProductModalOpen}
+        onSave={handleSaveProduct}
+        product={currentProduct || undefined}
+        isEditing={true}
+      />
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {language === 'sr' ? 'Potvrdi brisanje' : 'Confirm Deletion'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'sr' 
+                ? `Da li ste sigurni da želite da obrišete proizvod "${currentProduct?.name}"?` 
+                : `Are you sure you want to delete the product "${currentProduct?.name}"?`}
+              <br />
+              {language === 'sr' 
+                ? 'Ova radnja je nepovratna.' 
+                : 'This action cannot be undone.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === 'sr' ? 'Otkaži' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDeleteProduct}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {language === 'sr' ? 'Obriši' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

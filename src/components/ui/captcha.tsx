@@ -4,17 +4,20 @@ import { RefreshCw, Volume2, VolumeX } from 'lucide-react';
 import { Button } from './button';
 import { Input } from './input';
 import { Label } from './label';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CaptchaProps {
   onVerify: (verified: boolean) => void;
 }
 
 export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
+  const { language } = useLanguage();
   const [captchaText, setCaptchaText] = useState<string>('');
   const [userInput, setUserInput] = useState<string>('');
   const [isVerified, setIsVerified] = useState<boolean>(false);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const generateCaptcha = () => {
     // Generate a random string of 6 characters (letters and numbers)
@@ -28,6 +31,11 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
     setUserInput('');
     setIsVerified(false);
     onVerify(false);
+    
+    // Focus the input after generating a new CAPTCHA
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
   };
 
   useEffect(() => {
@@ -46,6 +54,13 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
     const verified = userInput.toLowerCase() === captchaText.toLowerCase();
     setIsVerified(verified);
     onVerify(verified);
+    
+    // If not verified, generate a new CAPTCHA
+    if (!verified && userInput.length > 0) {
+      setTimeout(() => {
+        generateCaptcha();
+      }, 1000);
+    }
   };
 
   const playAudioCaptcha = () => {
@@ -54,6 +69,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
     // Stop any existing audio
     if (isPlaying) {
       audioRef.current.pause();
+      window.speechSynthesis.cancel();
       setIsPlaying(false);
       return;
     }
@@ -92,7 +108,9 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <Label htmlFor="captcha">CAPTCHA</Label>
+        <Label htmlFor="captcha">
+          {language === 'sr' ? 'CAPTCHA' : 'CAPTCHA'}
+        </Label>
         <div className="flex space-x-1">
           <Button 
             type="button" 
@@ -100,10 +118,13 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
             size="icon" 
             onClick={generateCaptcha}
             className="h-6 w-6"
-            title="Generate new CAPTCHA"
+            title={language === 'sr' ? 'Generiši novi CAPTCHA' : 'Generate new CAPTCHA'}
+            aria-label={language === 'sr' ? 'Generiši novi CAPTCHA' : 'Generate new CAPTCHA'}
           >
             <RefreshCw className="h-3 w-3" />
-            <span className="sr-only">Regenerate CAPTCHA</span>
+            <span className="sr-only">
+              {language === 'sr' ? 'Osveži CAPTCHA' : 'Refresh CAPTCHA'}
+            </span>
           </Button>
           
           <Button
@@ -112,10 +133,19 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
             size="icon"
             onClick={playAudioCaptcha}
             className="h-6 w-6"
-            title={isPlaying ? "Stop audio" : "Listen to CAPTCHA"}
+            title={isPlaying 
+              ? language === 'sr' ? 'Zaustavi zvuk' : 'Stop audio' 
+              : language === 'sr' ? 'Slušaj CAPTCHA' : 'Listen to CAPTCHA'}
+            aria-label={isPlaying 
+              ? language === 'sr' ? 'Zaustavi zvuk' : 'Stop audio' 
+              : language === 'sr' ? 'Slušaj CAPTCHA' : 'Listen to CAPTCHA'}
           >
             {isPlaying ? <VolumeX className="h-3 w-3" /> : <Volume2 className="h-3 w-3" />}
-            <span className="sr-only">{isPlaying ? "Stop audio CAPTCHA" : "Listen to CAPTCHA"}</span>
+            <span className="sr-only">
+              {isPlaying 
+                ? language === 'sr' ? 'Zaustavi zvučni CAPTCHA' : 'Stop audio CAPTCHA' 
+                : language === 'sr' ? 'Slušaj CAPTCHA' : 'Listen to CAPTCHA'}
+            </span>
           </Button>
         </div>
       </div>
@@ -132,6 +162,7 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
             minWidth: '140px',
             textAlign: 'center'
           }}
+          aria-hidden="true" // Hide from screen readers since we provide an audio alternative
         >
           {/* Add improved noise pattern */}
           <div className="absolute inset-0" style={{ 
@@ -167,7 +198,8 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
           <Input 
             type="text" 
             id="captcha"
-            placeholder="Enter the code" 
+            ref={inputRef}
+            placeholder={language === 'sr' ? "Unesite kod" : "Enter the code"}
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             className="w-full"
@@ -176,6 +208,9 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
                 handleVerify();
               }
             }}
+            aria-label={language === 'sr' 
+              ? "Unesite CAPTCHA kod koji vidite ili čujete" 
+              : "Enter the CAPTCHA code that you see or hear"}
           />
         </div>
         
@@ -186,13 +221,13 @@ export const Captcha: React.FC<CaptchaProps> = ({ onVerify }) => {
           className="flex-shrink-0"
           disabled={userInput.length === 0}
         >
-          Verify
+          {language === 'sr' ? 'Potvrdi' : 'Verify'}
         </Button>
       </div>
       
       {isVerified && (
-        <div className="text-sm text-green-600 font-medium">
-          ✓ CAPTCHA verified
+        <div className="text-sm text-green-600 font-medium" role="status">
+          ✓ {language === 'sr' ? 'CAPTCHA potvrđen' : 'CAPTCHA verified'}
         </div>
       )}
     </div>
