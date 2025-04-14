@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -47,7 +46,8 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ProductService, AdminProduct } from '@/services/ProductService';
+import { AdminProduct } from '@/services/ProductService';
+import { SupabaseProductService } from '@/services/SupabaseProductService';
 
 const Products: React.FC = () => {
   const { toast } = useToast();
@@ -64,16 +64,14 @@ const Products: React.FC = () => {
   const [importData, setImportData] = useState('');
   const [currentProduct, setCurrentProduct] = useState<ProductFormData | null>(null);
   
-  // Load products on component mount
   useEffect(() => {
     loadProducts();
   }, []);
   
-  // Load all products from the service
   const loadProducts = async () => {
     setLoading(true);
     try {
-      const allProducts = await ProductService.getAdminProducts();
+      const allProducts = await SupabaseProductService.getAdminProducts();
       setProducts(allProducts);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -95,7 +93,6 @@ const Products: React.FC = () => {
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is already applied as we type
     console.log('Searching for:', searchTerm);
   };
   
@@ -121,7 +118,6 @@ const Products: React.FC = () => {
   };
   
   const handleEditProduct = (product: AdminProduct) => {
-    // Convert AdminProduct to ProductFormData format
     const productFormData: ProductFormData = {
       id: product.id,
       name: product.title[language],
@@ -146,7 +142,6 @@ const Products: React.FC = () => {
   };
   
   const handleDeleteProduct = (product: AdminProduct) => {
-    // Convert AdminProduct to ProductFormData format
     const productFormData: ProductFormData = {
       id: product.id,
       name: product.title[language],
@@ -173,11 +168,9 @@ const Products: React.FC = () => {
   const confirmDeleteProduct = async () => {
     if (currentProduct?.id) {
       try {
-        // Delete the product using the service
-        const success = await ProductService.deleteProduct(currentProduct.id);
+        const success = await SupabaseProductService.deleteProduct(currentProduct.id);
         
         if (success) {
-          // Remove from selected products if it was selected
           setSelectedProducts(prev => 
             prev.filter(id => id !== currentProduct.id)
           );
@@ -189,7 +182,6 @@ const Products: React.FC = () => {
               : `Product "${currentProduct.name}" has been successfully deleted.`,
           });
           
-          // Reload products to refresh the list
           loadProducts();
         }
       } catch (error) {
@@ -210,8 +202,7 @@ const Products: React.FC = () => {
   const handleSaveProduct = async (productData: ProductFormData) => {
     try {
       if (productData.id) {
-        // Update existing product
-        await ProductService.updateProduct(productData.id, productData);
+        await SupabaseProductService.updateProduct(productData.id, productData);
         toast({
           title: language === 'sr' ? 'Proizvod ažuriran' : 'Product Updated',
           description: language === 'sr' 
@@ -219,8 +210,7 @@ const Products: React.FC = () => {
             : `Product "${productData.name}" has been successfully updated.`,
         });
       } else {
-        // Add new product
-        await ProductService.createProduct(productData);
+        await SupabaseProductService.createProduct(productData);
         toast({
           title: language === 'sr' ? 'Proizvod dodat' : 'Product Added',
           description: language === 'sr' 
@@ -229,7 +219,6 @@ const Products: React.FC = () => {
         });
       }
       
-      // Reload products to refresh the list
       loadProducts();
     } catch (error) {
       console.error('Error saving product:', error);
@@ -243,12 +232,10 @@ const Products: React.FC = () => {
     }
   };
   
-  // Handle bulk delete
   const handleDeleteSelected = async () => {
     if (selectedProducts.length > 0) {
       try {
-        // Delete multiple products using the service
-        const success = await ProductService.bulkDeleteProducts(selectedProducts);
+        const success = await SupabaseProductService.bulkDeleteProducts(selectedProducts);
         
         if (success) {
           toast({
@@ -260,7 +247,6 @@ const Products: React.FC = () => {
           
           setSelectedProducts([]);
           
-          // Reload products to refresh the list
           loadProducts();
         }
       } catch (error) {
@@ -276,25 +262,20 @@ const Products: React.FC = () => {
     }
   };
   
-  // Handle export products
   const handleExportProducts = async () => {
     try {
-      const exportData = await ProductService.exportProducts();
+      const exportData = await SupabaseProductService.exportProducts();
       
-      // Create a Blob with the export data
       const blob = new Blob([exportData], { type: 'application/json' });
       
-      // Create a URL for the Blob
       const url = URL.createObjectURL(blob);
       
-      // Create a download link and click it
       const a = document.createElement('a');
       a.href = url;
       a.download = 'products-export.json';
       document.body.appendChild(a);
       a.click();
       
-      // Clean up
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
       
@@ -316,7 +297,6 @@ const Products: React.FC = () => {
     }
   };
   
-  // Handle import products
   const handleOpenImportDialog = () => {
     setImportData('');
     setIsImportDialogOpen(true);
@@ -335,7 +315,7 @@ const Products: React.FC = () => {
     }
     
     try {
-      const success = await ProductService.importProducts(importData);
+      const success = await SupabaseProductService.importProducts(importData);
       
       if (success) {
         toast({
@@ -345,7 +325,6 @@ const Products: React.FC = () => {
             : 'Products have been successfully imported.',
         });
         
-        // Reload products to refresh the list
         loadProducts();
         setIsImportDialogOpen(false);
       }
@@ -444,7 +423,6 @@ const Products: React.FC = () => {
             </div>
           </div>
           
-          {/* Selected products actions */}
           {selectedProducts.length > 0 && (
             <div className="p-2 bg-muted/50 border-b flex items-center justify-between">
               <div className="text-sm pl-2">
@@ -464,7 +442,6 @@ const Products: React.FC = () => {
             </div>
           )}
           
-          {/* Products table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -573,7 +550,6 @@ const Products: React.FC = () => {
             </Table>
           </div>
           
-          {/* Pagination */}
           <div className="p-4 border-t">
             <Pagination>
               <PaginationContent>
@@ -611,7 +587,6 @@ const Products: React.FC = () => {
         </CardContent>
       </Card>
       
-      {/* Add Product Modal */}
       <ProductFormModal
         open={isAddProductModalOpen}
         onOpenChange={setIsAddProductModalOpen}
@@ -619,7 +594,6 @@ const Products: React.FC = () => {
         isEditing={false}
       />
       
-      {/* Edit Product Modal */}
       <ProductFormModal
         open={isEditProductModalOpen}
         onOpenChange={setIsEditProductModalOpen}
@@ -628,7 +602,6 @@ const Products: React.FC = () => {
         isEditing={true}
       />
       
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -659,7 +632,6 @@ const Products: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       
-      {/* Import Dialog */}
       <Dialog open={isImportDialogOpen} onOpenChange={setIsImportDialogOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>

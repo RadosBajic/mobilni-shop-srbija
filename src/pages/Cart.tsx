@@ -1,16 +1,20 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, Trash2 } from 'lucide-react';
 import MainLayout from '@/components/Layout/MainLayout';
 import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
+import { SupabaseProductService } from '@/services/SupabaseProductService';
 
 const Cart: React.FC = () => {
-  const { items, removeFromCart, updateQuantity, totalItems, totalPrice } = useCart();
+  const { items, removeFromCart, updateQuantity, totalItems, totalPrice, clearCart } = useCart();
   const { language } = useLanguage();
+  const { toast } = useToast();
+  const navigate = useNavigate();
 
   const translations = {
     cart: {
@@ -60,6 +64,55 @@ const Cart: React.FC = () => {
     currency: {
       sr: 'RSD',
       en: 'RSD',
+    }
+  };
+
+  // This function checks if all products in the cart are still available and have enough stock
+  const verifyCartItems = async () => {
+    try {
+      const productIds = items.map(item => item.id);
+      const products = await SupabaseProductService.getProductsByIds(productIds);
+      
+      // Create a map of products by ID for easier access
+      const productMap = new Map(products.map(p => [p.id, p]));
+      
+      // Check if all products in the cart are still available
+      const unavailableItems = items.filter(item => !productMap.has(item.id));
+      if (unavailableItems.length > 0) {
+        // Some products are no longer available
+        toast({
+          title: language === 'sr' ? 'Proizvodi nisu dostupni' : 'Products unavailable',
+          description: language === 'sr' 
+            ? 'Neki proizvodi u vašoj korpi više nisu dostupni.' 
+            : 'Some products in your cart are no longer available.',
+          variant: 'destructive'
+        });
+        
+        // Remove unavailable items from cart
+        unavailableItems.forEach(item => removeFromCart(item.id));
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error verifying cart items:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' 
+          ? 'Došlo je do greške pri verifikaciji proizvoda.' 
+          : 'An error occurred while verifying your cart items.',
+        variant: 'destructive'
+      });
+      return false;
+    }
+  };
+
+  const handleCheckout = async () => {
+    // First verify that all items are still available
+    const isValid = await verifyCartItems();
+    
+    if (isValid) {
+      navigate('/checkout');
     }
   };
 
@@ -181,8 +234,12 @@ const Cart: React.FC = () => {
                   </div>
                 </div>
                 
-                <Button className="w-full" size="lg" asChild>
-                  <Link to="/checkout">{translations.checkout[language]}</Link>
+                <Button 
+                  className="w-full" 
+                  size="lg" 
+                  onClick={handleCheckout}
+                >
+                  {translations.checkout[language]}
                 </Button>
               </div>
             </div>
