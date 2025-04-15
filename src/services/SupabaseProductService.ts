@@ -113,7 +113,6 @@ export const SupabaseProductService = {
   
   getFeaturedProducts: async (limit = 4): Promise<Product[]> => {
     try {
-      // Featured products are those that are on sale or new
       const { data, error } = await supabase
         .from('products')
         .select('*')
