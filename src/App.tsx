@@ -59,7 +59,6 @@ const App = () => {
   const [isSupabaseReady, setIsSupabaseReady] = useState<boolean>(false);
 
   useEffect(() => {
-    // Check if Supabase is configured on component mount
     const checkSupabase = () => {
       const configured = isSupabaseConfigured();
       setIsSupabaseReady(configured);
@@ -96,8 +95,12 @@ const App = () => {
                     <Route path="/auth/login" element={<Login />} />
                     <Route path="/auth/register" element={<Register />} />
                     
+                    {/* Admin auth route */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    
                     {/* Protected admin routes */}
-                    <Route path="/admin" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+                    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                    <Route path="/admin/*" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
                       <Route path="dashboard" element={<Dashboard />} />
                       <Route path="products" element={<AdminProducts />} />
                       <Route path="categories" element={<Categories />} />

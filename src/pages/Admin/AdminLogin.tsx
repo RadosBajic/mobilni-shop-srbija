@@ -1,41 +1,32 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useToast } from '@/components/ui/use-toast';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-
-const ADMIN_USERNAME = 'admin';
-const ADMIN_PASSWORD = 'password123';
+import { AdminAuthService } from '@/services/AdminAuthService';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const { login, isAuthenticated } = AdminAuthService.useAdminAuth();
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    // If already authenticated, redirect to dashboard
+    if (isAuthenticated()) {
+      navigate('/admin/dashboard');
+    }
+  }, [navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-      // Store authentication state
-      localStorage.setItem('adminAuthenticated', 'true');
-      
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome to the Admin Panel',
-      });
-      
+    const success = await login(username, password);
+    if (success) {
       navigate('/admin/dashboard');
-    } else {
-      toast({
-        title: 'Login Failed',
-        description: 'Invalid username or password',
-        variant: 'destructive',
-      });
     }
     
     setIsLoading(false);
@@ -46,7 +37,12 @@ const AdminLogin: React.FC = () => {
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Admin Login</CardTitle>
-          <CardDescription>Sign in to access the admin panel</CardDescription>
+          <CardDescription>
+            Sign in to access the admin panel
+            <div className="mt-2 text-xs text-muted-foreground">
+              Demo credentials: admin / password123
+            </div>
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-6">
