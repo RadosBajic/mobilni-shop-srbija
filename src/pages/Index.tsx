@@ -1,4 +1,3 @@
-
 import React from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import HeroSlider from '@/components/Home/HeroSlider';
@@ -198,6 +197,7 @@ const Index: React.FC = () => {
           </div>
         </div>
       </MainLayout>
+      <Link to="/admin/login" className="text-sm text-muted-foreground hover:text-primary">Admin Login</Link>
     </>
   );
 };

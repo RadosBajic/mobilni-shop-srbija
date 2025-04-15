@@ -19,8 +19,7 @@ import {
   Languages
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { useAdminAuth, logout } from '@/utils/auth';
+import { useToast } from '@/components/ui/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Sheet,
@@ -34,6 +33,7 @@ import NotificationsDropdown from './NotificationsDropdown';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Switch } from '@/components/ui/switch';
+import { AdminAuthService } from '@/services/AdminAuthService';
 
 const AdminLayout: React.FC = () => {
   const navigate = useNavigate();
@@ -42,16 +42,10 @@ const AdminLayout: React.FC = () => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = React.useState(false);
   const { isDarkMode, toggleTheme } = useTheme();
   const { language, setLanguage, t } = useLanguage();
-
-  // Check authentication on mount
-  const { isAuthenticated, isLoading } = useAdminAuth();
+  const { logout } = AdminAuthService.useAdminAuth();
 
   const handleLogout = () => {
     logout();
-    toast({
-      title: t('logout'),
-      description: language === 'sr' ? 'Uspešno ste se odjavili' : 'You have been logged out successfully',
-    });
     navigate('/admin/login');
   };
 
@@ -153,18 +147,6 @@ const AdminLayout: React.FC = () => {
       </div>
     </div>
   );
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) {
-    return null; // The useAdminAuth hook will redirect if not authenticated
-  }
 
   return (
     <div className="min-h-screen flex bg-background">

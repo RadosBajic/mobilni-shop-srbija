@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { isSupabaseConfigured } from "@/lib/supabase";
+import { AdminAuthService } from "@/services/AdminAuthService";
 
 // Public pages
 import Index from "./pages/Index";
@@ -40,7 +42,7 @@ import Register from "./pages/Auth/Register";
 
 const queryClient = new QueryClient();
 
-// Protected Route component
+// Protected Route component for regular users
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
   
@@ -50,6 +52,32 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   
   if (!user) {
     return <Navigate to="/auth/login" />;
+  }
+  
+  return <>{children}</>;
+};
+
+// Protected Route component for admin users
+const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  
+  useEffect(() => {
+    const checkAuth = () => {
+      const authenticated = AdminAuthService.isAuthenticated();
+      setIsAuthenticated(authenticated);
+      setIsLoading(false);
+    };
+    
+    checkAuth();
+  }, []);
+  
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" />;
   }
   
   return <>{children}</>;
@@ -95,12 +123,19 @@ const App = () => {
                     <Route path="/auth/login" element={<Login />} />
                     <Route path="/auth/register" element={<Register />} />
                     
-                    {/* Admin auth route */}
+                    {/* Admin auth route - this should NOT be protected */}
                     <Route path="/admin/login" element={<AdminLogin />} />
                     
                     {/* Protected admin routes */}
                     <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                    <Route path="/admin/*" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
+                    <Route 
+                      path="/admin/*" 
+                      element={
+                        <AdminProtectedRoute>
+                          <AdminLayout />
+                        </AdminProtectedRoute>
+                      }
+                    >
                       <Route path="dashboard" element={<Dashboard />} />
                       <Route path="products" element={<AdminProducts />} />
                       <Route path="categories" element={<Categories />} />
