@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { BannerType, PromotionType } from '@/types/banners';
 
@@ -30,13 +29,13 @@ export const SupabaseBannerService = {
         sr: banner.description_sr,
         en: banner.description_en
       },
-      image: banner.image,
-      targetUrl: banner.target_url,
-      isActive: banner.is_active,
+      image: banner.image || '',
+      targetUrl: banner.target_url || '',
+      isActive: banner.is_active || false,
       position: banner.position as 'hero' | 'promo',
       order: banner.order,
-      startDate: banner.start_date,
-      endDate: banner.end_date
+      startDate: banner.start_date || undefined,
+      endDate: banner.end_date || undefined
     }));
   },
 
@@ -63,13 +62,13 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'hero' | 'promo',
       order: data.order,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 
@@ -107,13 +106,13 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'hero' | 'promo',
       order: data.order,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 
@@ -158,13 +157,13 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'hero' | 'promo',
       order: data.order,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 
@@ -209,14 +208,14 @@ export const SupabaseBannerService = {
         sr: promo.description_sr,
         en: promo.description_en
       },
-      image: promo.image,
-      targetUrl: promo.target_url,
-      isActive: promo.is_active,
+      image: promo.image || '',
+      targetUrl: promo.target_url || '',
+      isActive: promo.is_active || false,
       position: promo.position as 'home' | 'category',
       order: promo.order,
       discount: promo.discount,
-      startDate: promo.start_date,
-      endDate: promo.end_date
+      startDate: promo.start_date || undefined,
+      endDate: promo.end_date || undefined
     }));
   },
 
@@ -243,14 +242,14 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'home' | 'category',
       order: data.order,
       discount: data.discount,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 
@@ -289,14 +288,14 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'home' | 'category',
       order: data.order,
       discount: data.discount,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 
@@ -342,14 +341,14 @@ export const SupabaseBannerService = {
         sr: data.description_sr,
         en: data.description_en
       },
-      image: data.image,
-      targetUrl: data.target_url,
-      isActive: data.is_active,
+      image: data.image || '',
+      targetUrl: data.target_url || '',
+      isActive: data.is_active || false,
       position: data.position as 'home' | 'category',
       order: data.order,
       discount: data.discount,
-      startDate: data.start_date,
-      endDate: data.end_date
+      startDate: data.start_date || undefined,
+      endDate: data.end_date || undefined
     };
   },
 

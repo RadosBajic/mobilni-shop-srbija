@@ -14,11 +14,13 @@ export type Database = {
           created_at: string | null
           description_en: string | null
           description_sr: string | null
+          end_date: string | null
           id: string
           image: string | null
           is_active: boolean | null
           order: number
           position: string
+          start_date: string | null
           target_url: string | null
           title_en: string
           title_sr: string
@@ -28,11 +30,13 @@ export type Database = {
           created_at?: string | null
           description_en?: string | null
           description_sr?: string | null
+          end_date?: string | null
           id?: string
           image?: string | null
           is_active?: boolean | null
           order: number
           position: string
+          start_date?: string | null
           target_url?: string | null
           title_en: string
           title_sr: string
@@ -42,11 +46,13 @@ export type Database = {
           created_at?: string | null
           description_en?: string | null
           description_sr?: string | null
+          end_date?: string | null
           id?: string
           image?: string | null
           is_active?: boolean | null
           order?: number
           position?: string
+          start_date?: string | null
           target_url?: string | null
           title_en?: string
           title_sr?: string
@@ -243,11 +249,13 @@ export type Database = {
           description_en: string | null
           description_sr: string | null
           discount: number | null
+          end_date: string | null
           id: string
           image: string | null
           is_active: boolean | null
           order: number
           position: string
+          start_date: string | null
           target_url: string | null
           title_en: string
           title_sr: string
@@ -258,11 +266,13 @@ export type Database = {
           description_en?: string | null
           description_sr?: string | null
           discount?: number | null
+          end_date?: string | null
           id?: string
           image?: string | null
           is_active?: boolean | null
           order: number
           position: string
+          start_date?: string | null
           target_url?: string | null
           title_en: string
           title_sr: string
@@ -273,11 +283,13 @@ export type Database = {
           description_en?: string | null
           description_sr?: string | null
           discount?: number | null
+          end_date?: string | null
           id?: string
           image?: string | null
           is_active?: boolean | null
           order?: number
           position?: string
+          start_date?: string | null
           target_url?: string | null
           title_en?: string
           title_sr?: string
