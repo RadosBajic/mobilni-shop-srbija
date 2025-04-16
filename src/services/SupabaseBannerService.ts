@@ -4,7 +4,7 @@ import { BannerType, PromotionType } from '@/types/banners';
 
 export const SupabaseBannerService = {
   // Banner methods
-  getBanners: async (position?: string): Promise<BannerType[]> => {
+  getBanners: async (position?: 'hero' | 'promo'): Promise<BannerType[]> => {
     let query = supabase.from('banners').select('*');
     
     if (position) {
@@ -33,8 +33,10 @@ export const SupabaseBannerService = {
       image: banner.image,
       targetUrl: banner.target_url,
       isActive: banner.is_active,
-      position: banner.position,
-      order: banner.order
+      position: banner.position as 'hero' | 'promo',
+      order: banner.order,
+      startDate: banner.start_date,
+      endDate: banner.end_date
     }));
   },
 
@@ -64,8 +66,10 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
-      order: data.order
+      position: data.position as 'hero' | 'promo',
+      order: data.order,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
@@ -81,7 +85,9 @@ export const SupabaseBannerService = {
         target_url: banner.targetUrl,
         is_active: banner.isActive,
         position: banner.position,
-        order: banner.order
+        order: banner.order,
+        start_date: banner.startDate,
+        end_date: banner.endDate
       })
       .select()
       .single();
@@ -104,8 +110,10 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
-      order: data.order
+      position: data.position as 'hero' | 'promo',
+      order: data.order,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
@@ -125,6 +133,8 @@ export const SupabaseBannerService = {
     if (updates.isActive !== undefined) updateData.is_active = updates.isActive;
     if (updates.position) updateData.position = updates.position;
     if (updates.order !== undefined) updateData.order = updates.order;
+    if (updates.startDate) updateData.start_date = updates.startDate;
+    if (updates.endDate) updateData.end_date = updates.endDate;
 
     const { data, error } = await supabase
       .from('banners')
@@ -151,8 +161,10 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
-      order: data.order
+      position: data.position as 'hero' | 'promo',
+      order: data.order,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
@@ -171,7 +183,7 @@ export const SupabaseBannerService = {
   },
 
   // Promotion methods
-  getPromotions: async (position?: string): Promise<PromotionType[]> => {
+  getPromotions: async (position?: 'home' | 'category'): Promise<PromotionType[]> => {
     let query = supabase.from('promotions').select('*');
     
     if (position) {
@@ -200,9 +212,11 @@ export const SupabaseBannerService = {
       image: promo.image,
       targetUrl: promo.target_url,
       isActive: promo.is_active,
-      position: promo.position,
+      position: promo.position as 'home' | 'category',
       order: promo.order,
-      discount: promo.discount
+      discount: promo.discount,
+      startDate: promo.start_date,
+      endDate: promo.end_date
     }));
   },
 
@@ -232,9 +246,11 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
+      position: data.position as 'home' | 'category',
       order: data.order,
-      discount: data.discount
+      discount: data.discount,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
@@ -251,7 +267,9 @@ export const SupabaseBannerService = {
         is_active: promotion.isActive,
         position: promotion.position,
         order: promotion.order,
-        discount: promotion.discount
+        discount: promotion.discount,
+        start_date: promotion.startDate,
+        end_date: promotion.endDate
       })
       .select()
       .single();
@@ -274,9 +292,11 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
+      position: data.position as 'home' | 'category',
       order: data.order,
-      discount: data.discount
+      discount: data.discount,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
@@ -297,6 +317,8 @@ export const SupabaseBannerService = {
     if (updates.position) updateData.position = updates.position;
     if (updates.order !== undefined) updateData.order = updates.order;
     if (updates.discount !== undefined) updateData.discount = updates.discount;
+    if (updates.startDate) updateData.start_date = updates.startDate;
+    if (updates.endDate) updateData.end_date = updates.endDate;
 
     const { data, error } = await supabase
       .from('promotions')
@@ -323,9 +345,11 @@ export const SupabaseBannerService = {
       image: data.image,
       targetUrl: data.target_url,
       isActive: data.is_active,
-      position: data.position,
+      position: data.position as 'home' | 'category',
       order: data.order,
-      discount: data.discount
+      discount: data.discount,
+      startDate: data.start_date,
+      endDate: data.end_date
     };
   },
 
