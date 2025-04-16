@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Calendar, 
@@ -121,7 +122,7 @@ const Orders: React.FC = () => {
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case 'completed':
+      case 'delivered':
         return 'default';
       case 'processing':
         return 'secondary';
@@ -182,7 +183,7 @@ const Orders: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Orders</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
@@ -266,8 +267,8 @@ const Orders: React.FC = () => {
                             <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'processing')}>
                               Mark as Processing
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'completed')}>
-                              Mark as Completed
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'delivered')}>
+                              Mark as Delivered
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handlePaymentStatusUpdate(order.id, 'paid')}>
                               Mark as Paid
