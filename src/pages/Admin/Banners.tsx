@@ -38,11 +38,10 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { BannerService } from '@/services/BannerService';
+import { SupabaseBannerService } from '@/services/SupabaseBannerService';
 import { BannerType, PromotionType } from '@/types/banners';
 
 const Banners: React.FC = () => {
@@ -61,8 +60,8 @@ const Banners: React.FC = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const fetchedBanners = await BannerService.getBanners();
-      const fetchedPromotions = await BannerService.getPromotions();
+      const fetchedBanners = await SupabaseBannerService.getBanners();
+      const fetchedPromotions = await SupabaseBannerService.getPromotions();
       
       setBanners(fetchedBanners);
       setPromotions(fetchedPromotions);
@@ -89,11 +88,11 @@ const Banners: React.FC = () => {
     try {
       if (currentItem.id.startsWith('b')) {
         // It's a banner
-        await BannerService.updateBanner(currentItem.id, currentItem);
+        await SupabaseBannerService.updateBanner(currentItem.id, currentItem);
         setBanners(prev => prev.map(b => b.id === currentItem.id ? currentItem : b));
-      } else if (currentItem.id.startsWith('p')) {
+      } else {
         // It's a promotion
-        await BannerService.updatePromotion(currentItem.id, currentItem);
+        await SupabaseBannerService.updatePromotion(currentItem.id, currentItem);
         setPromotions(prev => prev.map(p => p.id === currentItem.id ? currentItem : p));
       }
       
@@ -118,11 +117,11 @@ const Banners: React.FC = () => {
     try {
       if (id.startsWith('b')) {
         // It's a banner
-        await BannerService.deleteBanner(id);
+        await SupabaseBannerService.deleteBanner(id);
         setBanners(prev => prev.filter(b => b.id !== id));
-      } else if (id.startsWith('p')) {
+      } else {
         // It's a promotion
-        await BannerService.deletePromotion(id);
+        await SupabaseBannerService.deletePromotion(id);
         setPromotions(prev => prev.filter(p => p.id !== id));
       }
       
@@ -145,7 +144,7 @@ const Banners: React.FC = () => {
       if (id.startsWith('b')) {
         // It's a banner
         const index = banners.findIndex(b => b.id === id);
-        if (index <= 0) return; // Already at the top
+        if (index <= 0) return;
         
         const currentBanner = banners[index];
         const prevBanner = banners[index - 1];
@@ -154,18 +153,18 @@ const Banners: React.FC = () => {
         const newOrder = prevBanner.order;
         const prevOrder = currentBanner.order;
         
-        await BannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
-        await BannerService.updateBanner(prevBanner.id, { ...prevBanner, order: prevOrder });
+        await SupabaseBannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
+        await SupabaseBannerService.updateBanner(prevBanner.id, { ...prevBanner, order: prevOrder });
         
         // Update local state
         const updatedBanners = [...banners];
         updatedBanners[index] = { ...currentBanner, order: newOrder };
         updatedBanners[index - 1] = { ...prevBanner, order: prevOrder };
         setBanners(updatedBanners.sort((a, b) => a.order - b.order));
-      } else if (id.startsWith('p')) {
+      } else {
         // It's a promotion
         const index = promotions.findIndex(p => p.id === id);
-        if (index <= 0) return; // Already at the top
+        if (index <= 0) return;
         
         const currentPromo = promotions[index];
         const prevPromo = promotions[index - 1];
@@ -174,8 +173,8 @@ const Banners: React.FC = () => {
         const newOrder = prevPromo.order;
         const prevOrder = currentPromo.order;
         
-        await BannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
-        await BannerService.updatePromotion(prevPromo.id, { ...prevPromo, order: prevOrder });
+        await SupabaseBannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
+        await SupabaseBannerService.updatePromotion(prevPromo.id, { ...prevPromo, order: prevOrder });
         
         // Update local state
         const updatedPromotions = [...promotions];
@@ -198,7 +197,7 @@ const Banners: React.FC = () => {
       if (id.startsWith('b')) {
         // It's a banner
         const index = banners.findIndex(b => b.id === id);
-        if (index >= banners.length - 1) return; // Already at the bottom
+        if (index >= banners.length - 1) return;
         
         const currentBanner = banners[index];
         const nextBanner = banners[index + 1];
@@ -207,18 +206,18 @@ const Banners: React.FC = () => {
         const newOrder = nextBanner.order;
         const nextOrder = currentBanner.order;
         
-        await BannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
-        await BannerService.updateBanner(nextBanner.id, { ...nextBanner, order: nextOrder });
+        await SupabaseBannerService.updateBanner(currentBanner.id, { ...currentBanner, order: newOrder });
+        await SupabaseBannerService.updateBanner(nextBanner.id, { ...nextBanner, order: nextOrder });
         
         // Update local state
         const updatedBanners = [...banners];
         updatedBanners[index] = { ...currentBanner, order: newOrder };
         updatedBanners[index + 1] = { ...nextBanner, order: nextOrder };
         setBanners(updatedBanners.sort((a, b) => a.order - b.order));
-      } else if (id.startsWith('p')) {
+      } else {
         // It's a promotion
         const index = promotions.findIndex(p => p.id === id);
-        if (index >= promotions.length - 1) return; // Already at the bottom
+        if (index >= promotions.length - 1) return;
         
         const currentPromo = promotions[index];
         const nextPromo = promotions[index + 1];
@@ -227,8 +226,8 @@ const Banners: React.FC = () => {
         const newOrder = nextPromo.order;
         const nextOrder = currentPromo.order;
         
-        await BannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
-        await BannerService.updatePromotion(nextPromo.id, { ...nextPromo, order: nextOrder });
+        await SupabaseBannerService.updatePromotion(currentPromo.id, { ...currentPromo, order: newOrder });
+        await SupabaseBannerService.updatePromotion(nextPromo.id, { ...nextPromo, order: nextOrder });
         
         // Update local state
         const updatedPromotions = [...promotions];

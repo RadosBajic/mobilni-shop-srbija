@@ -9,6 +9,51 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      banners: {
+        Row: {
+          created_at: string | null
+          description_en: string | null
+          description_sr: string | null
+          id: string
+          image: string | null
+          is_active: boolean | null
+          order: number
+          position: string
+          target_url: string | null
+          title_en: string
+          title_sr: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description_en?: string | null
+          description_sr?: string | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          order: number
+          position: string
+          target_url?: string | null
+          title_en: string
+          title_sr: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description_en?: string | null
+          description_sr?: string | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          order?: number
+          position?: string
+          target_url?: string | null
+          title_en?: string
+          title_sr?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -186,6 +231,54 @@ export type Database = {
           sku?: string
           status?: string
           stock?: number
+          title_en?: string
+          title_sr?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      promotions: {
+        Row: {
+          created_at: string | null
+          description_en: string | null
+          description_sr: string | null
+          discount: number | null
+          id: string
+          image: string | null
+          is_active: boolean | null
+          order: number
+          position: string
+          target_url: string | null
+          title_en: string
+          title_sr: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description_en?: string | null
+          description_sr?: string | null
+          discount?: number | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          order: number
+          position: string
+          target_url?: string | null
+          title_en: string
+          title_sr: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description_en?: string | null
+          description_sr?: string | null
+          discount?: number | null
+          id?: string
+          image?: string | null
+          is_active?: boolean | null
+          order?: number
+          position?: string
+          target_url?: string | null
           title_en?: string
           title_sr?: string
           updated_at?: string | null
