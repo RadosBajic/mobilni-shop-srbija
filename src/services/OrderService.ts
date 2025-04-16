@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 
 export interface OrderItem {
@@ -205,6 +204,140 @@ export const OrderService = {
       return true;
     } catch (error) {
       console.error('Error in deleteOrder:', error);
+      throw error;
+    }
+  },
+  
+  updateOrderNotes: async (id: string, notes: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ notes, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      
+      if (error) {
+        console.error('Error updating order notes:', error);
+        throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in updateOrderNotes:', error);
+      throw error;
+    }
+  },
+  
+  getOrdersByStatus: async (status: Order['status']): Promise<Order[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('status', status)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching orders by status:', error);
+        throw error;
+      }
+      
+      return data.map(order => ({
+        id: order.id,
+        customerId: order.customer_id,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        customerPhone: order.customer_phone,
+        shippingAddress: order.shipping_address,
+        items: order.items,
+        totalAmount: order.total_amount,
+        status: order.status,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        notes: order.notes,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at
+      }));
+    } catch (error) {
+      console.error('Error in getOrdersByStatus:', error);
+      throw error;
+    }
+  },
+  
+  getOrdersByDateRange: async (startDate: Date, endDate: Date): Promise<Order[]> => {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .gte('created_at', startDate.toISOString())
+        .lte('created_at', endDate.toISOString())
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching orders by date range:', error);
+        throw error;
+      }
+      
+      return data.map(order => ({
+        id: order.id,
+        customerId: order.customer_id,
+        customerName: order.customer_name,
+        customerEmail: order.customer_email,
+        customerPhone: order.customer_phone,
+        shippingAddress: order.shipping_address,
+        items: order.items,
+        totalAmount: order.total_amount,
+        status: order.status,
+        paymentMethod: order.payment_method,
+        paymentStatus: order.payment_status,
+        notes: order.notes,
+        createdAt: order.created_at,
+        updatedAt: order.updated_at
+      }));
+    } catch (error) {
+      console.error('Error in getOrdersByDateRange:', error);
+      throw error;
+    }
+  },
+  
+  bulkUpdateOrderStatus: async (ids: string[], status: Order['status']): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          status, 
+          updated_at: new Date().toISOString() 
+        })
+        .in('id', ids);
+      
+      if (error) {
+        console.error('Error bulk updating order status:', error);
+        throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in bulkUpdateOrderStatus:', error);
+      throw error;
+    }
+  },
+  
+  bulkUpdatePaymentStatus: async (ids: string[], paymentStatus: Order['paymentStatus']): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          payment_status: paymentStatus, 
+          updated_at: new Date().toISOString() 
+        })
+        .in('id', ids);
+      
+      if (error) {
+        console.error('Error bulk updating payment status:', error);
+        throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error in bulkUpdatePaymentStatus:', error);
       throw error;
     }
   }

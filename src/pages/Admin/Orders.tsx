@@ -1,13 +1,11 @@
-
 import React, { useState } from 'react';
 import { 
   Calendar, 
-  Search, 
-  Filter,
-  FileDown,
+  Search,
   Eye,
   Printer,
-  ChevronDown
+  ChevronDown,
+  FileDown
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,119 +42,83 @@ import {
   PaginationEllipsis 
 } from '@/components/ui/pagination';
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
-
-// Mock data for orders
-const mockOrders = [
-  {
-    id: 'ORD-28741',
-    customer: 'Marko Petrović',
-    date: '06.04.2025',
-    items: 3,
-    total: 12890,
-    payment: 'card',
-    status: 'completed',
-    shipping: 'Belgrade, Serbia',
-    products: [
-      { id: 'p1', name: 'iPhone 14 Pro Case - Black', quantity: 1, price: 2499 },
-      { id: 'p2', name: 'USB-C Fast Charger 65W', quantity: 1, price: 3499 },
-      { id: 'p3', name: 'Lightning Cable - 2m', quantity: 1, price: 1299 },
-    ]
-  },
-  {
-    id: 'ORD-28740',
-    customer: 'Ana Jovanović',
-    date: '05.04.2025',
-    items: 2,
-    total: 8450,
-    payment: 'cash',
-    status: 'processing',
-    shipping: 'Novi Sad, Serbia',
-    products: [
-      { id: 'p4', name: 'Samsung Galaxy S23 Screen Protector', quantity: 1, price: 1499 },
-      { id: 'p5', name: 'Bluetooth Earbuds', quantity: 1, price: 4999 },
-    ]
-  },
-  {
-    id: 'ORD-28739',
-    customer: 'Stefan Nikolić',
-    date: '05.04.2025',
-    items: 1,
-    total: 5670,
-    payment: 'card',
-    status: 'pending',
-    shipping: 'Niš, Serbia',
-    products: [
-      { id: 'p6', name: 'Xiaomi Redmi Note 12 Case + Screen Protector', quantity: 1, price: 2499 },
-    ]
-  },
-  {
-    id: 'ORD-28738',
-    customer: 'Jelena Đorđević',
-    date: '04.04.2025',
-    items: 4,
-    total: 13290,
-    payment: 'card',
-    status: 'completed',
-    shipping: 'Kragujevac, Serbia',
-    products: [
-      { id: 'p7', name: 'iPhone 14 Pro Case - Black', quantity: 1, price: 2499 },
-      { id: 'p8', name: 'iPhone 14 Pro Screen Protector', quantity: 1, price: 1499 },
-      { id: 'p9', name: 'USB-C Fast Charger 65W', quantity: 1, price: 3499 },
-      { id: 'p10', name: 'Wireless Charger', quantity: 1, price: 2999 },
-    ]
-  },
-  {
-    id: 'ORD-28737',
-    customer: 'Milan Todorović',
-    date: '04.04.2025',
-    items: 2,
-    total: 7890,
-    payment: 'cash',
-    status: 'processing',
-    shipping: 'Subotica, Serbia',
-    products: [
-      { id: 'p11', name: 'Samsung Galaxy S23 Case', quantity: 1, price: 1899 },
-      { id: 'p12', name: 'Bluetooth Earbuds', quantity: 1, price: 4999 },
-    ]
-  },
-  {
-    id: 'ORD-28736',
-    customer: 'Ivana Milić',
-    date: '03.04.2025',
-    items: 1,
-    total: 4999,
-    payment: 'card',
-    status: 'cancelled',
-    shipping: 'Belgrade, Serbia',
-    products: [
-      { id: 'p13', name: 'Bluetooth Earbuds', quantity: 1, price: 4999 },
-    ]
-  },
-];
+import { useToast } from '@/hooks/use-toast';
+import { OrderService, Order } from '@/services/OrderService';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 const Orders: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [selectedStatus, setSelectedStatus] = useState('all');
-  
-  // Filter orders based on search term and status
-  const filteredOrders = mockOrders.filter(order => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch orders
+  const { data: orders = [], isLoading } = useQuery({
+    queryKey: ['orders', selectedStatus],
+    queryFn: () => 
+      selectedStatus === 'all' 
+        ? OrderService.getOrders()
+        : OrderService.getOrdersByStatus(selectedStatus as Order['status'])
+  });
+
+  // Filter orders based on search term
+  const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.customer.toLowerCase().includes(searchTerm.toLowerCase());
+      order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      order.customerEmail.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = 
-      selectedStatus === 'all' || 
-      order.status === selectedStatus;
-    
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
-  
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Additional search logic would be implemented here in a real app
+
+  // Update order status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Order['status'] }) => 
+      OrderService.updateOrderStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast({
+        title: "Order status updated",
+        description: "The order status has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating order",
+        description: "There was a problem updating the order status.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Update payment status mutation
+  const updatePaymentStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: Order['paymentStatus'] }) => 
+      OrderService.updatePaymentStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['orders'] });
+      toast({
+        title: "Payment status updated",
+        description: "The payment status has been successfully updated.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error updating payment",
+        description: "There was a problem updating the payment status.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleStatusUpdate = (id: string, status: Order['status']) => {
+    updateStatusMutation.mutate({ id, status });
   };
-  
+
+  const handlePaymentStatusUpdate = (id: string, status: Order['paymentStatus']) => {
+    updatePaymentStatusMutation.mutate({ id, status });
+  };
+
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
       case 'completed':
@@ -164,13 +126,17 @@ const Orders: React.FC = () => {
       case 'processing':
         return 'secondary';
       case 'pending':
-        return 'outline'; // Changed from 'warning' to 'outline'
+        return 'outline';
       case 'cancelled':
         return 'destructive';
       default:
         return 'outline';
     }
   };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center p-8">Loading orders...</div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -193,7 +159,7 @@ const Orders: React.FC = () => {
         <CardContent className="p-0">
           <div className="p-4 border-b">
             <div className="flex flex-col sm:flex-row gap-4">
-              <form onSubmit={handleSearch} className="flex-1">
+              <form onSubmit={(e) => e.preventDefault()} className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
@@ -226,7 +192,6 @@ const Orders: React.FC = () => {
             </div>
           </div>
           
-          {/* Orders table */}
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
@@ -246,34 +211,34 @@ const Orders: React.FC = () => {
                 {filteredOrders.map((order) => (
                   <TableRow key={order.id} className="group">
                     <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell>{order.customer}</TableCell>
-                    <TableCell>{order.date}</TableCell>
+                    <TableCell>{order.customerName}</TableCell>
+                    <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell>
                       <HoverCard>
                         <HoverCardTrigger className="underline text-primary cursor-pointer">
-                          {order.items} items
+                          {order.items.length} items
                         </HoverCardTrigger>
                         <HoverCardContent className="w-80">
                           <div className="space-y-2">
                             <h4 className="font-semibold mb-2">Order Items</h4>
-                            {order.products.map((product) => (
-                              <div key={product.id} className="grid grid-cols-8 text-sm gap-2">
-                                <div className="col-span-5 truncate">{product.name}</div>
-                                <div className="col-span-1 text-right">{product.quantity}x</div>
-                                <div className="col-span-2 text-right">{product.price.toLocaleString()} RSD</div>
+                            {order.items.map((item, index) => (
+                              <div key={index} className="grid grid-cols-8 text-sm gap-2">
+                                <div className="col-span-5 truncate">{item.title}</div>
+                                <div className="col-span-1 text-right">{item.quantity}x</div>
+                                <div className="col-span-2 text-right">{item.price.toLocaleString()} RSD</div>
                               </div>
                             ))}
                             <div className="border-t pt-2 mt-2 font-medium text-right">
-                              Total: {order.total.toLocaleString()} RSD
+                              Total: {order.totalAmount.toLocaleString()} RSD
                             </div>
                           </div>
                         </HoverCardContent>
                       </HoverCard>
                     </TableCell>
-                    <TableCell className="text-right">{order.total.toLocaleString()} RSD</TableCell>
+                    <TableCell className="text-right">{order.totalAmount.toLocaleString()} RSD</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="capitalize">
-                        {order.payment}
+                        {order.paymentMethod}
                       </Badge>
                     </TableCell>
                     <TableCell>
@@ -298,11 +263,20 @@ const Orders: React.FC = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
-                            <DropdownMenuItem>Update Status</DropdownMenuItem>
-                            <DropdownMenuItem>Send Email</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'processing')}>
+                              Mark as Processing
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'completed')}>
+                              Mark as Completed
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePaymentStatusUpdate(order.id, 'paid')}>
+                              Mark as Paid
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            <DropdownMenuItem 
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleStatusUpdate(order.id, 'cancelled')}
+                            >
                               Cancel Order
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -315,7 +289,6 @@ const Orders: React.FC = () => {
             </Table>
           </div>
           
-          {/* Pagination */}
           <div className="p-4 border-t">
             <Pagination>
               <PaginationContent>
