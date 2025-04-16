@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   Calendar, 
@@ -53,7 +52,6 @@ const Orders: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch orders
   const { data: orders = [], isLoading } = useQuery({
     queryKey: ['orders', selectedStatus],
     queryFn: () => 
@@ -62,7 +60,6 @@ const Orders: React.FC = () => {
         : OrderService.getOrdersByStatus(selectedStatus as Order['status'])
   });
 
-  // Filter orders based on search term
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,7 +69,6 @@ const Orders: React.FC = () => {
     return matchesSearch;
   });
 
-  // Update order status mutation
   const updateStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Order['status'] }) => 
       OrderService.updateOrderStatus(id, status),
@@ -92,7 +88,6 @@ const Orders: React.FC = () => {
     }
   });
 
-  // Update payment status mutation
   const updatePaymentStatusMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: Order['paymentStatus'] }) => 
       OrderService.updatePaymentStatus(id, status),
@@ -120,7 +115,7 @@ const Orders: React.FC = () => {
     updatePaymentStatusMutation.mutate({ id, status });
   };
 
-  const getStatusBadgeVariant = (status: string) => {
+  const getStatusBadgeVariant = (status: Order['status']) => {
     switch (status) {
       case 'delivered':
         return 'default';
@@ -128,6 +123,8 @@ const Orders: React.FC = () => {
         return 'secondary';
       case 'pending':
         return 'outline';
+      case 'shipped':
+        return 'primary';
       case 'cancelled':
         return 'destructive';
       default:
@@ -186,6 +183,7 @@ const Orders: React.FC = () => {
                     <SelectItem value="delivered">Delivered</SelectItem>
                     <SelectItem value="processing">Processing</SelectItem>
                     <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="shipped">Shipped</SelectItem>
                     <SelectItem value="cancelled">Cancelled</SelectItem>
                   </SelectContent>
                 </Select>
@@ -264,8 +262,14 @@ const Orders: React.FC = () => {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'pending')}>
+                              Mark as Pending
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'processing')}>
                               Mark as Processing
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'shipped')}>
+                              Mark as Shipped
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleStatusUpdate(order.id, 'delivered')}>
                               Mark as Delivered
