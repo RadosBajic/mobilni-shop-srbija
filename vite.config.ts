@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -19,4 +20,8 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Explicitly tell Vite not to try processing certain Node.js modules
+  optimizeDeps: {
+    exclude: ['pg', 'pg-native', 'pg-pool']
+  }
 }));
