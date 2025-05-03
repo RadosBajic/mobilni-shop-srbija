@@ -1,9 +1,11 @@
+
 import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { setupDatabase } from '@/utils/setupDatabase';
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle, ShoppingCart, DollarSign, Users, Package, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
+import DashboardStats from '@/components/Admin/DashboardStats';
 import {
   ResponsiveContainer,
   LineChart,
@@ -15,23 +17,88 @@ import {
   Legend,
   PieChart,
   Pie,
-  Cell,
-  BarChart,
-  Bar
+  Cell
 } from 'recharts';
+import { api } from '@/lib/api';
 
 const Dashboard: React.FC = () => {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const [databaseReady, setDatabaseReady] = useState<boolean | null>(null);
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const checkDatabase = async () => {
       const isReady = await setupDatabase();
       setDatabaseReady(isReady);
+      
+      if (isReady) {
+        fetchDashboardData();
+      } else {
+        setLoading(false);
+      }
     };
     
     checkDatabase();
   }, []);
+  
+  const fetchDashboardData = async () => {
+    try {
+      // Fetch recent orders
+      const orders = await api.getOrders();
+      
+      // Format orders for display
+      const formattedOrders = orders.slice(0, 5).map((order: any) => ({
+        id: order.id.substring(0, 8),
+        customer: order.customer_name,
+        date: new Date(order.created_at).toLocaleDateString(language === 'sr' ? 'sr-RS' : 'en-US'),
+        amount: Number(order.total_amount).toLocaleString() + ' RSD',
+        status: mapOrderStatus(order.status)
+      }));
+      
+      setRecentOrders(formattedOrders);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const mapOrderStatus = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return language === 'sr' ? 'Završeno' : 'Completed';
+      case 'processing':
+        return language === 'sr' ? 'U obradi' : 'Processing';
+      case 'shipped':
+        return language === 'sr' ? 'Poslato' : 'Shipped';
+      case 'cancelled':
+        return language === 'sr' ? 'Otkazano' : 'Cancelled';
+      default:
+        return language === 'sr' ? 'Na čekanju' : 'Pending';
+    }
+  };
+  
+  // Sample data for charts (in a real app, this would come from API)
+  const salesData = [
+    { month: 'Nov', revenue: 154600 },
+    { month: 'Dec', revenue: 211400 },
+    { month: 'Jan', revenue: 178500 },
+    { month: 'Feb', revenue: 199300 },
+    { month: 'Mar', revenue: 235800 },
+    { month: 'Apr', revenue: 289500 },
+  ];
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF6347'];
+
+  const categoryData = [
+    { name: language === 'sr' ? 'Maske za telefone' : 'Phone Cases', value: 245 },
+    { name: language === 'sr' ? 'Zaštita ekrana' : 'Screen Protectors', value: 167 },
+    { name: language === 'sr' ? 'Punjači' : 'Chargers', value: 134 },
+    { name: language === 'sr' ? 'Kablovi' : 'Cables', value: 98 },
+    { name: language === 'sr' ? 'Slušalice' : 'Headphones', value: 76 },
+    { name: language === 'sr' ? 'Ostalo' : 'Other', value: 43 },
+  ];
   
   return (
     <div className="space-y-6">
@@ -67,44 +134,19 @@ const Dashboard: React.FC = () => {
         </Alert>
       )}
       
-      {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title="Orders"
-          value="156"
-          description="Total orders this month"
-          trend={{ value: '+12%', positive: true }}
-          icon={ShoppingCart}
-        />
-        <StatCard 
-          title="Revenue"
-          value="289,500 RSD"
-          description="Total revenue this month"
-          trend={{ value: '+23%', positive: true }}
-          icon={DollarSign}
-        />
-        <StatCard 
-          title="Customers"
-          value="2,345"
-          description="Active customers"
-          trend={{ value: '+8%', positive: true }}
-          icon={Users}
-        />
-        <StatCard 
-          title="Products"
-          value="586"
-          description="Total products"
-          trend={{ value: '-3%', positive: false }}
-          icon={Package}
-        />
-      </div>
+      {/* Real-time stats from database */}
+      {databaseReady === true && <DashboardStats />}
       
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="hover-lift transition-all">
           <CardHeader>
-            <CardTitle>Sales Overview</CardTitle>
-            <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+            <CardTitle>{language === 'sr' ? 'Pregled prodaje' : 'Sales Overview'}</CardTitle>
+            <CardDescription>
+              {language === 'sr' 
+                ? 'Mesečni prihodi za poslednjih 6 meseci' 
+                : 'Monthly revenue for the last 6 months'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -137,8 +179,12 @@ const Dashboard: React.FC = () => {
         
         <Card className="hover-lift transition-all">
           <CardHeader>
-            <CardTitle>Product Categories</CardTitle>
-            <CardDescription>Sales by product category</CardDescription>
+            <CardTitle>
+              {language === 'sr' ? 'Kategorije proizvoda' : 'Product Categories'}
+            </CardTitle>
+            <CardDescription>
+              {language === 'sr' ? 'Prodaje po kategoriji proizvoda' : 'Sales by product category'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -165,157 +211,79 @@ const Dashboard: React.FC = () => {
         </Card>
       </div>
       
-      <div className="grid grid-cols-1 gap-6">
-        <Card className="hover-lift transition-all">
-          <CardHeader>
-            <CardTitle>Top Selling Products</CardTitle>
-            <CardDescription>Best performers this month</CardDescription>
-          </CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={topProductsData}
-                layout="vertical"
-                margin={{
-                  top: 5,
-                  right: 30,
-                  left: 120,
-                  bottom: 5,
-                }}
-              >
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis type="number" />
-                <YAxis type="category" dataKey="name" />
-                <Tooltip formatter={(value) => `${value} units`} />
-                <Legend />
-                <Bar dataKey="units" fill="#82ca9d" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-      
       {/* Recent orders */}
       <Card className="hover-lift transition-all">
         <CardHeader>
-          <CardTitle>Recent Orders</CardTitle>
-          <CardDescription>Latest orders from customers</CardDescription>
+          <CardTitle>{language === 'sr' ? 'Nedavne porudžbine' : 'Recent Orders'}</CardTitle>
+          <CardDescription>
+            {language === 'sr' ? 'Najnovije porudžbine kupaca' : 'Latest orders from customers'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left py-3 px-4 font-medium">Order ID</th>
-                  <th className="text-left py-3 px-4 font-medium">Customer</th>
-                  <th className="text-left py-3 px-4 font-medium">Date</th>
-                  <th className="text-right py-3 px-4 font-medium">Amount</th>
-                  <th className="text-right py-3 px-4 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b hover:bg-muted/30 transition-colors">
-                    <td className="py-3 px-4">#{order.id}</td>
-                    <td className="py-3 px-4">{order.customer}</td>
-                    <td className="py-3 px-4">{order.date}</td>
-                    <td className="py-3 px-4 text-right">{order.amount} RSD</td>
-                    <td className="py-3 px-4 text-right">
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        order.status === 'Completed' ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
-                        order.status === 'Processing' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
-                        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}>
-                        {order.status}
-                      </span>
-                    </td>
-                  </tr>
+            {loading ? (
+              <div className="space-y-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-12 bg-muted rounded animate-pulse"></div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-3 px-4 font-medium">
+                      {language === 'sr' ? 'ID porudžbine' : 'Order ID'}
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium">
+                      {language === 'sr' ? 'Kupac' : 'Customer'}
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium">
+                      {language === 'sr' ? 'Datum' : 'Date'}
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium">
+                      {language === 'sr' ? 'Iznos' : 'Amount'}
+                    </th>
+                    <th className="text-right py-3 px-4 font-medium">
+                      {language === 'sr' ? 'Status' : 'Status'}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentOrders.length > 0 ? (
+                    recentOrders.map((order) => (
+                      <tr key={order.id} className="border-b hover:bg-muted/30 transition-colors">
+                        <td className="py-3 px-4">#{order.id}</td>
+                        <td className="py-3 px-4">{order.customer}</td>
+                        <td className="py-3 px-4">{order.date}</td>
+                        <td className="py-3 px-4 text-right">{order.amount}</td>
+                        <td className="py-3 px-4 text-right">
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                            order.status === 'Completed' || order.status === 'Završeno' 
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                            order.status === 'Processing' || order.status === 'U obradi' 
+                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                            'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                          }`}>
+                            {order.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                        {language === 'sr' ? 'Nema porudžbina za prikaz' : 'No orders to display'}
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         </CardContent>
       </Card>
     </div>
   );
 };
-
-// Stat card component
-interface StatCardProps {
-  title: string;
-  value: string;
-  description: string;
-  icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
-  trend?: {
-    value: string;
-    positive: boolean;
-  };
-}
-
-const StatCard: React.FC<StatCardProps> = ({ title, value, description, icon: Icon, trend }) => {
-  return (
-    <Card className="hover-lift transition-all">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="text-muted-foreground h-4 w-4" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
-        <div className="text-xs text-muted-foreground mt-1">{description}</div>
-        {trend && (
-          <div className={`flex items-center mt-2 text-xs ${
-            trend.positive ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-          }`}>
-            {trend.positive ? 
-              <ArrowUpRight className="mr-1 h-3.5 w-3.5" /> : 
-              <ArrowDownRight className="mr-1 h-3.5 w-3.5" />
-            }
-            {trend.value}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-};
-
-// Sample data for recent orders
-const recentOrders = [
-  { id: '28741', customer: 'Marko Petrović', date: '06.04.2025', amount: '12,890', status: 'Completed' },
-  { id: '28740', customer: 'Ana Jovanović', date: '05.04.2025', amount: '8,450', status: 'Processing' },
-  { id: '28739', customer: 'Stefan Nikolić', date: '05.04.2025', amount: '5,670', status: 'Pending' },
-  { id: '28738', customer: 'Jelena Đorđević', date: '04.04.2025', amount: '3,290', status: 'Completed' },
-  { id: '28737', customer: 'Milan Todorović', date: '04.04.2025', amount: '7,890', status: 'Processing' },
-];
-
-// Sample data for sales chart
-const salesData = [
-  { month: 'Nov', revenue: 154600 },
-  { month: 'Dec', revenue: 211400 },
-  { month: 'Jan', revenue: 178500 },
-  { month: 'Feb', revenue: 199300 },
-  { month: 'Mar', revenue: 235800 },
-  { month: 'Apr', revenue: 289500 },
-];
-
-// Sample data for categories pie chart
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#FF6347'];
-
-const categoryData = [
-  { name: 'Phone Cases', value: 245 },
-  { name: 'Screen Protectors', value: 167 },
-  { name: 'Chargers', value: 134 },
-  { name: 'Cables', value: 98 },
-  { name: 'Headphones', value: 76 },
-  { name: 'Other', value: 43 },
-];
-
-// Sample data for top products bar chart
-const topProductsData = [
-  { name: 'iPhone 14 Pro Case - Black', units: 67 },
-  { name: 'Samsung S23 Screen Protector', units: 54 },
-  { name: 'USB-C Fast Charger 65W', units: 42 },
-  { name: 'Bluetooth Earbuds', units: 38 },
-  { name: 'Lightning Cable - 2m', units: 31 },
-];
 
 export default Dashboard;

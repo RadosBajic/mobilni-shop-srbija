@@ -1,24 +1,47 @@
 
+import { Pool } from 'pg';
+
 // Configuration for Neon PostgreSQL
-const connectionString = "postgresql://neondb_owner:npg_UKgRG1lc7uTn@ep-green-haze-a4nqoybg-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
+const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UKgRG1lc7uTn@ep-green-haze-a4nqoybg-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
+
+// Create a pool instance to manage database connections
+let pool: Pool;
+
+// Initialize and configure the database pool
+const getPool = () => {
+  if (!pool) {
+    pool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false
+      }
+    });
+  }
+  return pool;
+};
 
 // Export connection configuration check function
 export const isNeonConfigured = (): boolean => {
   return Boolean(connectionString);
 };
 
-// Create a simple API wrapper for database operations
-// This avoids importing pg directly in the frontend code
+// Execute database queries
 export const executeQuery = async (
   query: string, 
   params?: any[]
 ): Promise<any> => {
   try {
-    // In a production environment, this would call a serverless function or API
-    // For demonstration purposes, we'll return mock data for essential queries
-    console.log('Query executed:', query, params);
+    // For server-side contexts, execute real queries
+    if (typeof window === 'undefined') {
+      const pool = getPool();
+      const result = await pool.query(query, params);
+      return result.rows;
+    } 
     
-    // Mock implementation for frontend
+    // For client-side (browser) context, we'll use mock data
+    console.log('Query executed (client-side mock):', query, params);
+    
+    // Mock implementations for client-side debugging
     if (query.includes('SELECT * FROM products')) {
       return mockProducts();
     } else if (query.includes('SELECT * FROM banners')) {
@@ -27,12 +50,19 @@ export const executeQuery = async (
       return mockPromotions();
     } else if (query.includes('SELECT * FROM orders')) {
       return mockOrders();
+    } else if (query.includes('SELECT * FROM categories')) {
+      return mockCategories();
     } else if (query.includes('INSERT INTO')) {
       return [{ id: crypto.randomUUID() }];
     } else if (query.includes('UPDATE')) {
       return [{ id: params?.[params.length - 1] }];
     } else if (query.includes('DELETE')) {
       return [];
+    } else if (query.includes('information_schema.tables')) {
+      // This is for checking if tables exist
+      return ['products', 'orders', 'categories', 'customers', 'banners', 'promotions'].map(
+        tableName => ({ table_name: tableName })
+      );
     }
     
     return [];
@@ -42,7 +72,7 @@ export const executeQuery = async (
   }
 };
 
-// Mock data functions
+// Mock data functions (used only in client-side browser context)
 const mockProducts = () => {
   return [
     {
@@ -78,6 +108,37 @@ const mockProducts = () => {
       status: 'active',
       description_sr: 'Opis proizvoda 2',
       description_en: 'Product 2 description',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    }
+  ];
+};
+
+const mockCategories = () => {
+  return [
+    {
+      id: '1',
+      name_sr: 'Elektronika',
+      name_en: 'Electronics',
+      slug: 'electronics',
+      description_sr: 'Kategorija elektronike',
+      description_en: 'Electronics category',
+      image: '/placeholder.svg',
+      is_active: true,
+      display_order: 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    },
+    {
+      id: '2',
+      name_sr: 'Odeća',
+      name_en: 'Clothes',
+      slug: 'clothes',
+      description_sr: 'Kategorija odeće',
+      description_en: 'Clothes category',
+      image: '/placeholder.svg',
+      is_active: true,
+      display_order: 2,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     }

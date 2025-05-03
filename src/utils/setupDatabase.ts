@@ -2,7 +2,7 @@
 import { executeQuery } from '@/lib/neon';
 
 export const setupDatabase = async (): Promise<boolean> => {
-  // Proveriti da li postoje potrebne tabele
+  // Check if the required tables exist
   try {
     const requiredTables = ['products', 'orders', 'categories', 'customers', 'banners', 'promotions'];
     
@@ -15,23 +15,23 @@ export const setupDatabase = async (): Promise<boolean> => {
     
     const tables = await executeQuery(query, requiredTables);
     
-    // Dobijamo listu postojećih tabela
+    // Get the list of existing tables
     const existingTables = tables.map((t: any) => t.table_name);
     
-    // Proverimo da li je potrebno kreirati bilo koju tabelu
+    // Check if any tables are missing
     const missingTables = requiredTables.filter(
       table => !existingTables.includes(table)
     );
     
     if (missingTables.length === 0) {
-      console.log('Sve potrebne tabele postoje');
+      console.log('All required tables exist');
       return true;
     }
     
-    console.log('Nedostajuće tabele:', missingTables);
+    console.log('Missing tables:', missingTables);
     return false;
   } catch (error) {
-    console.error('Greška prilikom provere tabela:', error);
+    console.error('Error checking tables:', error);
     return false;
   }
 };
