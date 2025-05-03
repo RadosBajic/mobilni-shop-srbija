@@ -1,9 +1,9 @@
 
-import { supabase } from '@/lib/supabase';
+import { executeQuery } from '@/lib/neon';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from './ProductService';
 
-// Define Supabase table types
+// Definicija tipova za bazu
 export type SupabaseProduct = {
   id: string;
   title_sr: string;
@@ -23,7 +23,7 @@ export type SupabaseProduct = {
   updated_at: string;
 };
 
-// Convert Supabase product to frontend Product format
+// Konvertovanje proizvoda iz baze u frontend format
 const mapToProduct = (product: SupabaseProduct): Product => ({
   id: product.id,
   title: {
@@ -38,7 +38,7 @@ const mapToProduct = (product: SupabaseProduct): Product => ({
   isOnSale: product.is_on_sale,
 });
 
-// Convert Supabase product to AdminProduct format
+// Konvertovanje proizvoda iz baze u AdminProduct format
 const mapToAdminProduct = (product: SupabaseProduct): AdminProduct => ({
   ...mapToProduct(product),
   sku: product.sku,
@@ -46,10 +46,10 @@ const mapToAdminProduct = (product: SupabaseProduct): AdminProduct => ({
   status: product.status,
   descriptionSr: product.description_sr || '',
   descriptionEn: product.description_en || '',
-  description: '', // Will be updated based on language
+  description: '', // Biće ažurirano na osnovu jezika
 });
 
-// Convert ProductFormData to Supabase format
+// Konvertovanje ProductFormData u format za bazu
 const mapToSupabaseProduct = (formData: any): Omit<SupabaseProduct, 'created_at' | 'updated_at'> => ({
   id: formData.id || crypto.randomUUID(),
   title_sr: formData.nameSr,
@@ -67,7 +67,7 @@ const mapToSupabaseProduct = (formData: any): Omit<SupabaseProduct, 'created_at'
   description_en: formData.descriptionEn || null,
 });
 
-// Supabase Product Service
+// Neon Product Service
 export const SupabaseProductService = {
   getProducts: async (
     category?: string, 
@@ -76,35 +76,35 @@ export const SupabaseProductService = {
     isNew?: boolean
   ): Promise<Product[]> => {
     try {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'active');
+      let query = 'SELECT * FROM products WHERE status = $1';
+      const params: any[] = ['active'];
+      let paramIndex = 2;
       
       if (category) {
-        query = query.eq('category', category);
+        query += ` AND category = $${paramIndex}`;
+        params.push(category);
+        paramIndex++;
       }
       
       if (isOnSale !== undefined) {
-        query = query.eq('is_on_sale', isOnSale);
+        query += ` AND is_on_sale = $${paramIndex}`;
+        params.push(isOnSale);
+        paramIndex++;
       }
       
       if (isNew !== undefined) {
-        query = query.eq('is_new', isNew);
+        query += ` AND is_new = $${paramIndex}`;
+        params.push(isNew);
+        paramIndex++;
       }
       
       if (limit) {
-        query = query.limit(limit);
+        query += ` LIMIT $${paramIndex}`;
+        params.push(limit);
       }
       
-      const { data, error } = await query;
-      
-      if (error) {
-        console.error('Error fetching products:', error);
-        throw error;
-      }
-      
-      return (data as SupabaseProduct[]).map(mapToProduct);
+      const data = await executeQuery(query, params);
+      return data.map(mapToProduct);
     } catch (error) {
       console.error('Error in getProducts:', error);
       throw error;
@@ -113,19 +113,14 @@ export const SupabaseProductService = {
   
   getFeaturedProducts: async (limit = 4): Promise<Product[]> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'active')
-        .or('is_on_sale.eq.true,is_new.eq.true')
-        .limit(limit);
-      
-      if (error) {
-        console.error('Error fetching featured products:', error);
-        throw error;
-      }
-      
-      return (data as SupabaseProduct[]).map(mapToProduct);
+      const query = `
+        SELECT * FROM products 
+        WHERE status = $1 
+        AND (is_on_sale = true OR is_new = true) 
+        LIMIT $2
+      `;
+      const data = await executeQuery(query, ['active', limit]);
+      return data.map(mapToProduct);
     } catch (error) {
       console.error('Error in getFeaturedProducts:', error);
       throw error;
@@ -134,19 +129,13 @@ export const SupabaseProductService = {
   
   getNewArrivals: async (limit = 4): Promise<Product[]> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'active')
-        .eq('is_new', true)
-        .limit(limit);
-      
-      if (error) {
-        console.error('Error fetching new arrivals:', error);
-        throw error;
-      }
-      
-      return (data as SupabaseProduct[]).map(mapToProduct);
+      const query = `
+        SELECT * FROM products 
+        WHERE status = $1 AND is_new = true
+        LIMIT $2
+      `;
+      const data = await executeQuery(query, ['active', limit]);
+      return data.map(mapToProduct);
     } catch (error) {
       console.error('Error in getNewArrivals:', error);
       throw error;
@@ -155,22 +144,11 @@ export const SupabaseProductService = {
   
   getProductById: async (id: string): Promise<Product | null> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
+      const query = 'SELECT * FROM products WHERE id = $1';
+      const data = await executeQuery(query, [id]);
       
-      if (error) {
-        console.error('Error fetching product by ID:', error);
-        if (error.code === 'PGRST116') {
-          // "No rows returned" error - product not found
-          return null;
-        }
-        throw error;
-      }
-      
-      return mapToProduct(data as SupabaseProduct);
+      if (!data || data.length === 0) return null;
+      return mapToProduct(data[0]);
     } catch (error) {
       console.error('Error in getProductById:', error);
       throw error;
@@ -179,17 +157,14 @@ export const SupabaseProductService = {
   
   getProductsByIds: async (ids: string[]): Promise<Product[]> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .in('id', ids);
+      if (!ids.length) return [];
       
-      if (error) {
-        console.error('Error fetching products by IDs:', error);
-        throw error;
-      }
+      // Kreiramo dinamički IN upit sa parametrima
+      const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+      const query = `SELECT * FROM products WHERE id IN (${placeholders})`;
       
-      return (data as SupabaseProduct[]).map(mapToProduct);
+      const data = await executeQuery(query, ids);
+      return data.map(mapToProduct);
     } catch (error) {
       console.error('Error in getProductsByIds:', error);
       throw error;
@@ -198,50 +173,50 @@ export const SupabaseProductService = {
   
   getRelatedProducts: async (productId: string, limit = 4): Promise<Product[]> => {
     try {
-      // First, get the category of the current product
-      const { data: product, error: productError } = await supabase
-        .from('products')
-        .select('category')
-        .eq('id', productId)
-        .single();
+      // Prvo dobijamo kategoriju trenutnog proizvoda
+      const productQuery = 'SELECT category FROM products WHERE id = $1';
+      const productData = await executeQuery(productQuery, [productId]);
       
-      if (productError) {
-        console.error('Error fetching product category:', productError);
-        throw productError;
+      if (!productData || productData.length === 0) {
+        throw new Error('Product not found');
       }
       
-      // Then get related products in the same category
-      const { data: relatedProducts, error: relatedError } = await supabase
-        .from('products')
-        .select('*')
-        .eq('status', 'active')
-        .eq('category', product.category)
-        .neq('id', productId)
-        .limit(limit);
+      // Zatim dobijamo povezane proizvode iste kategorije
+      const relatedQuery = `
+        SELECT * FROM products 
+        WHERE status = $1 
+        AND category = $2 
+        AND id != $3 
+        LIMIT $4
+      `;
       
-      if (relatedError) {
-        console.error('Error fetching related products:', relatedError);
-        throw relatedError;
-      }
+      const relatedData = await executeQuery(relatedQuery, [
+        'active', 
+        productData[0].category, 
+        productId, 
+        limit
+      ]);
       
-      let related = (relatedProducts as SupabaseProduct[]).map(mapToProduct);
+      let related = relatedData.map(mapToProduct);
       
-      // If we don't have enough related products, add some others
+      // Ako nemamo dovoljno povezanih proizvoda, dodajemo neke druge
       if (related.length < limit) {
-        const { data: otherProducts, error: otherError } = await supabase
-          .from('products')
-          .select('*')
-          .eq('status', 'active')
-          .neq('category', product.category)
-          .neq('id', productId)
-          .limit(limit - related.length);
+        const otherQuery = `
+          SELECT * FROM products 
+          WHERE status = $1 
+          AND category != $2 
+          AND id != $3 
+          LIMIT $4
+        `;
         
-        if (otherError) {
-          console.error('Error fetching other products:', otherError);
-          throw otherError;
-        }
+        const otherData = await executeQuery(otherQuery, [
+          'active', 
+          productData[0].category, 
+          productId, 
+          limit - related.length
+        ]);
         
-        related = [...related, ...(otherProducts as SupabaseProduct[]).map(mapToProduct)];
+        related = [...related, ...otherData.map(mapToProduct)];
       }
       
       return related;
@@ -253,17 +228,9 @@ export const SupabaseProductService = {
   
   getAdminProducts: async (): Promise<AdminProduct[]> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
-      if (error) {
-        console.error('Error fetching admin products:', error);
-        throw error;
-      }
-      
-      return (data as SupabaseProduct[]).map(mapToAdminProduct);
+      const query = 'SELECT * FROM products ORDER BY created_at DESC';
+      const data = await executeQuery(query);
+      return data.map(mapToAdminProduct);
     } catch (error) {
       console.error('Error in getAdminProducts:', error);
       throw error;
@@ -272,20 +239,23 @@ export const SupabaseProductService = {
   
   createProduct: async (formData: any): Promise<AdminProduct> => {
     try {
-      const supabaseData = mapToSupabaseProduct(formData);
+      const product = mapToSupabaseProduct(formData);
       
-      const { data, error } = await supabase
-        .from('products')
-        .insert(supabaseData)
-        .select()
-        .single();
+      const columns = Object.keys(product).join(', ');
+      const placeholders = Object.keys(product)
+        .map((_, i) => `$${i + 1}`)
+        .join(', ');
       
-      if (error) {
-        console.error('Error creating product:', error);
-        throw error;
-      }
+      const query = `
+        INSERT INTO products (${columns}) 
+        VALUES (${placeholders})
+        RETURNING *
+      `;
       
-      return mapToAdminProduct(data as SupabaseProduct);
+      const values = Object.values(product);
+      const data = await executeQuery(query, values);
+      
+      return mapToAdminProduct(data[0]);
     } catch (error) {
       console.error('Error in createProduct:', error);
       throw error;
@@ -294,21 +264,27 @@ export const SupabaseProductService = {
   
   updateProduct: async (id: string, formData: any): Promise<AdminProduct> => {
     try {
-      const supabaseData = mapToSupabaseProduct({ ...formData, id });
+      const product = mapToSupabaseProduct({ ...formData, id });
       
-      const { data, error } = await supabase
-        .from('products')
-        .update(supabaseData)
-        .eq('id', id)
-        .select()
-        .single();
+      // Dinamički kreiramo update upit
+      const updateFields = Object.keys(product)
+        .filter(key => key !== 'id') // Ne ažuriramo ID
+        .map((key, i) => `${key} = $${i + 2}`)
+        .join(', ');
       
-      if (error) {
-        console.error('Error updating product:', error);
-        throw error;
-      }
+      const query = `
+        UPDATE products 
+        SET ${updateFields}
+        WHERE id = $1
+        RETURNING *
+      `;
       
-      return mapToAdminProduct(data as SupabaseProduct);
+      const values = [id, ...Object.values(product).filter((_, i) => 
+        Object.keys(product)[i] !== 'id'
+      )];
+      
+      const data = await executeQuery(query, values);
+      return mapToAdminProduct(data[0]);
     } catch (error) {
       console.error('Error in updateProduct:', error);
       throw error;
@@ -317,16 +293,8 @@ export const SupabaseProductService = {
   
   deleteProduct: async (id: string): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error deleting product:', error);
-        throw error;
-      }
-      
+      const query = 'DELETE FROM products WHERE id = $1';
+      await executeQuery(query, [id]);
       return true;
     } catch (error) {
       console.error('Error in deleteProduct:', error);
@@ -336,16 +304,12 @@ export const SupabaseProductService = {
   
   bulkDeleteProducts: async (ids: string[]): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .delete()
-        .in('id', ids);
+      if (!ids.length) return true;
       
-      if (error) {
-        console.error('Error bulk deleting products:', error);
-        throw error;
-      }
+      const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+      const query = `DELETE FROM products WHERE id IN (${placeholders})`;
       
+      await executeQuery(query, ids);
       return true;
     } catch (error) {
       console.error('Error in bulkDeleteProducts:', error);
@@ -355,18 +319,14 @@ export const SupabaseProductService = {
   
   getProductStatus: async (id: string): Promise<'active' | 'outOfStock' | 'draft'> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('status')
-        .eq('id', id)
-        .single();
+      const query = 'SELECT status FROM products WHERE id = $1';
+      const data = await executeQuery(query, [id]);
       
-      if (error) {
-        console.error('Error fetching product status:', error);
-        throw error;
+      if (!data || data.length === 0) {
+        throw new Error('Product not found');
       }
       
-      return data.status;
+      return data[0].status;
     } catch (error) {
       console.error('Error in getProductStatus:', error);
       throw error;
@@ -375,16 +335,8 @@ export const SupabaseProductService = {
   
   updateProductStatus: async (id: string, status: 'active' | 'outOfStock' | 'draft'): Promise<boolean> => {
     try {
-      const { error } = await supabase
-        .from('products')
-        .update({ status })
-        .eq('id', id);
-      
-      if (error) {
-        console.error('Error updating product status:', error);
-        throw error;
-      }
-      
+      const query = 'UPDATE products SET status = $1 WHERE id = $2';
+      await executeQuery(query, [status, id]);
       return true;
     } catch (error) {
       console.error('Error in updateProductStatus:', error);
@@ -394,15 +346,8 @@ export const SupabaseProductService = {
   
   exportProducts: async (): Promise<string> => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
-      
-      if (error) {
-        console.error('Error exporting products:', error);
-        throw error;
-      }
-      
+      const query = 'SELECT * FROM products';
+      const data = await executeQuery(query);
       return JSON.stringify(data, null, 2);
     } catch (error) {
       console.error('Error in exportProducts:', error);
@@ -418,28 +363,38 @@ export const SupabaseProductService = {
         throw new Error('Invalid import data format');
       }
       
-      // First, we'll delete all existing products
-      const { error: deleteError } = await supabase
-        .from('products')
-        .delete()
-        .neq('id', 'dummy_id_that_doesnt_exist'); // Delete all rows
-      
-      if (deleteError) {
-        console.error('Error deleting existing products:', deleteError);
-        throw deleteError;
+      // Brisanje svih postojećih proizvoda i dodavanje novih
+      // Koristićemo transakciju za ovo
+      const client = await pool.connect();
+      try {
+        await client.query('BEGIN');
+        
+        // Brisanje postojećih proizvoda
+        await client.query('DELETE FROM products');
+        
+        // Dodavanje novih proizvoda
+        for (const product of products) {
+          const columns = Object.keys(product).join(', ');
+          const placeholders = Object.keys(product)
+            .map((_, i) => `$${i + 1}`)
+            .join(', ');
+          
+          const insertQuery = `
+            INSERT INTO products (${columns}) 
+            VALUES (${placeholders})
+          `;
+          
+          await client.query(insertQuery, Object.values(product));
+        }
+        
+        await client.query('COMMIT');
+        return true;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
       }
-      
-      // Then, insert all imported products
-      const { error: insertError } = await supabase
-        .from('products')
-        .insert(products);
-      
-      if (insertError) {
-        console.error('Error importing products:', insertError);
-        throw insertError;
-      }
-      
-      return true;
     } catch (error) {
       console.error('Error in importProducts:', error);
       throw error;

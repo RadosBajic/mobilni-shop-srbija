@@ -1,16 +1,31 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { pool } from '@/lib/neon';
 
 export const SupabaseStatus: React.FC = () => {
   const { language } = useLanguage();
-  const isConfigured = isSupabaseConfigured();
+  const [isConfigured, setIsConfigured] = useState<boolean>(true);
+  
+  useEffect(() => {
+    async function checkConnection() {
+      try {
+        const client = await pool.connect();
+        client.release();
+        setIsConfigured(true);
+      } catch (error) {
+        console.error('Database connection error:', error);
+        setIsConfigured(false);
+      }
+    }
+    
+    checkConnection();
+  }, []);
   
   if (isConfigured) {
-    return null; // Don't show anything if configured properly
+    return null; // Ne prikazujemo ništa ako je konfiguracija ispravna
   }
   
   return (
@@ -21,8 +36,8 @@ export const SupabaseStatus: React.FC = () => {
       </AlertTitle>
       <AlertDescription>
         {language === 'sr' 
-          ? 'Supabase veza nije ispravno konfigurisana. Proverite podešavanja.'
-          : 'Supabase connection is not properly configured. Please check your settings.'}
+          ? 'Veza sa bazom podataka nije ispravno konfigurisana. Proverite podešavanja.'
+          : 'Database connection is not properly configured. Please check your settings.'}
       </AlertDescription>
     </Alert>
   );
