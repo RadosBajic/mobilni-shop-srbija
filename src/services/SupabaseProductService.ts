@@ -1,5 +1,4 @@
-
-import { executeQuery } from '@/lib/neon';
+import { executeQuery, pool } from '@/lib/neon';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from './ProductService';
 

@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +9,7 @@ import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
-import { isSupabaseConfigured } from "@/lib/supabase";
+import { isNeonConfigured } from "@/lib/neon";
 import { AdminAuthService } from "@/services/AdminAuthService";
 
 // Public pages
@@ -84,19 +83,19 @@ const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => {
-  const [isSupabaseReady, setIsSupabaseReady] = useState<boolean>(false);
+  const [isDatabaseReady, setIsDatabaseReady] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkSupabase = () => {
-      const configured = isSupabaseConfigured();
-      setIsSupabaseReady(configured);
+    const checkDatabase = () => {
+      const configured = isNeonConfigured();
+      setIsDatabaseReady(configured);
       
       if (!configured) {
-        console.error("Supabase is not properly configured. Check your environment variables.");
+        console.error("Database is not properly configured. Check your connection string.");
       }
     };
     
-    checkSupabase();
+    checkDatabase();
   }, []);
 
   return (

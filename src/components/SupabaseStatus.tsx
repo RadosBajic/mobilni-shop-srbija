@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { pool } from '@/lib/neon';
+import { isNeonConfigured } from '@/lib/neon';
 
 export const SupabaseStatus: React.FC = () => {
   const { language } = useLanguage();
@@ -12,11 +12,10 @@ export const SupabaseStatus: React.FC = () => {
   useEffect(() => {
     async function checkConnection() {
       try {
-        const client = await pool.connect();
-        client.release();
-        setIsConfigured(true);
+        const configStatus = isNeonConfigured();
+        setIsConfigured(configStatus);
       } catch (error) {
-        console.error('Database connection error:', error);
+        console.error('Database configuration error:', error);
         setIsConfigured(false);
       }
     }
