@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define translation keys
@@ -377,10 +378,7 @@ const translations: Translations = {
     sr: 'Sastavi',
     en: 'Compose',
   },
-};
-
-// Additional translations for order management
-const additionalTranslations: Partial<Translations> = {
+  // Additional translations for order management
   cashOnDelivery: {
     sr: 'Plaćanje pouzećem',
     en: 'Cash on delivery',
@@ -494,12 +492,6 @@ type LanguageContextType = {
   translations: Translations;
 };
 
-// Merge existing translations with additional ones
-const mergedTranslations: Translations = {
-  ...translations,
-  ...additionalTranslations as Translations,
-};
-
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -514,11 +506,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Translate function
   const t = (key: TranslationKey): string => {
-    if (!mergedTranslations[key]) {
+    if (!translations[key]) {
       console.warn(`Translation key "${key}" not found`);
       return key;
     }
-    return mergedTranslations[key][language as 'sr' | 'en'] || key;
+    return translations[key][language as 'sr' | 'en'] || key;
   };
 
   // Update language and save to localStorage
@@ -535,7 +527,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, translations: mergedTranslations }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translations }}>
       {children}
     </LanguageContext.Provider>
   );
