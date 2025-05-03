@@ -5,7 +5,7 @@ import MainLayout from '@/components/Layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useCart } from '@/contexts/CartContext';
-import { ArrowLeft, CreditCard } from 'lucide-react';
+import { ArrowLeft, CreditCard, Truck } from 'lucide-react';
 import { 
   Form,
   FormControl,
@@ -21,9 +21,10 @@ import { useForm } from 'react-hook-form';
 import { createNotification } from '@/services/NotificationService';
 import { Captcha } from '@/components/ui/captcha';
 import { ScrollToTop } from '@/components/ui/scroll-to-top';
+import { OrderService, CreateOrderData } from '@/services/OrderService';
 
 const Checkout: React.FC = () => {
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const { totalItems, totalPrice, items, clearCart } = useCart();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isCaptchaVerified, setIsCaptchaVerified] = useState(false);
@@ -103,6 +104,18 @@ const Checkout: React.FC = () => {
       sr: 'Vaša porudžbina je uspešno primljena. Uskoro ćete dobiti email sa potvrdom.',
       en: 'Your order has been successfully placed. You will receive a confirmation email shortly.',
     },
+    paymentMethod: {
+      sr: 'Način plaćanja',
+      en: 'Payment method',
+    },
+    cashOnDelivery: {
+      sr: 'Plaćanje pouzećem',
+      en: 'Cash on delivery',
+    },
+    cashOnDeliveryInfo: {
+      sr: 'Platite kuriru prilikom preuzimanja pošiljke',
+      en: 'Pay the courier when you receive your package',
+    },
   };
 
   const form = useForm({
@@ -119,8 +132,8 @@ const Checkout: React.FC = () => {
   const handleSubmit = async (data: any) => {
     if (totalItems === 0) {
       toast({
-        title: "Cart is empty",
-        description: "Add items to your cart before placing an order",
+        title: language === 'sr' ? "Korpa je prazna" : "Cart is empty",
+        description: language === 'sr' ? "Dodajte artikle u korpu pre naručivanja" : "Add items to your cart before placing an order",
         variant: "destructive",
       });
       return;
@@ -136,15 +149,41 @@ const Checkout: React.FC = () => {
 
     setIsProcessing(true);
 
-    // Simulate order processing
-    setTimeout(async () => {
-      // In a real app, we would send this to a backend
-      const orderId = `ORD-${Math.floor(Math.random() * 10000)}`;
+    try {
+      // Create order data
+      const orderData: CreateOrderData = {
+        customerId: null,
+        customerName: data.fullName,
+        customerEmail: data.email,
+        customerPhone: data.phone,
+        shippingAddress: {
+          street: data.address,
+          city: data.city,
+          postalCode: data.postalCode,
+          country: language === 'sr' ? 'Srbija' : 'Serbia',
+        },
+        items: items.map(item => ({
+          productId: item.id,
+          quantity: item.quantity,
+          price: item.price,
+          title: item.name,
+        })),
+        totalAmount: totalPrice,
+        status: 'pending',
+        paymentMethod: 'cash_on_delivery',
+        paymentStatus: 'pending',
+        notes: null,
+      };
+
+      // Save order to database
+      const createdOrder = await OrderService.createOrder(orderData);
       
       // Create an admin notification for the new order
       await createNotification(
-        'New Order Received', 
-        `Order #${orderId} has been placed for ${totalPrice} RSD`, 
+        language === 'sr' ? 'Nova porudžbina' : 'New Order Received', 
+        language === 'sr' 
+          ? `Porudžbina #${createdOrder.id.substring(0, 8)} je primljena u iznosu od ${totalPrice} RSD` 
+          : `Order #${createdOrder.id.substring(0, 8)} has been placed for ${totalPrice} RSD`, 
         'info',
         '/admin/orders'
       );
@@ -161,9 +200,16 @@ const Checkout: React.FC = () => {
       
       // Redirect to home page
       navigate('/');
-      
+    } catch (error) {
+      console.error('Error creating order:', error);
+      toast({
+        title: language === 'sr' ? "Greška" : "Error",
+        description: language === 'sr' ? "Došlo je do greške prilikom kreiranja porudžbine" : "There was an error placing your order",
+        variant: "destructive",
+      });
+    } finally {
       setIsProcessing(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -182,6 +228,7 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="fullName"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.fullName[language]}</FormLabel>
@@ -196,6 +243,7 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="email"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.email[language]}</FormLabel>
@@ -210,11 +258,12 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="phone"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.phone[language]}</FormLabel>
                           <FormControl>
-                            <Input placeholder="+1 234 567 890" {...field} />
+                            <Input placeholder="+381 64 123 4567" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -224,6 +273,7 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="address"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.address[language]}</FormLabel>
@@ -238,11 +288,12 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="city"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.city[language]}</FormLabel>
                           <FormControl>
-                            <Input placeholder="New York" {...field} />
+                            <Input placeholder="Belgrade" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -252,16 +303,30 @@ const Checkout: React.FC = () => {
                     <FormField
                       control={form.control}
                       name="postalCode"
+                      rules={{ required: true }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>{translations.postalCode[language]}</FormLabel>
                           <FormControl>
-                            <Input placeholder="10001" {...field} />
+                            <Input placeholder="11000" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <h2 className="text-xl font-semibold">{translations.paymentMethod[language]}</h2>
+                  <div className="bg-muted/50 p-4 rounded-lg border flex items-start gap-4">
+                    <div className="bg-primary/10 p-2 rounded-full mt-1">
+                      <Truck className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="font-medium">{translations.cashOnDelivery[language]}</h3>
+                      <p className="text-sm text-muted-foreground">{translations.cashOnDeliveryInfo[language]}</p>
+                    </div>
                   </div>
                 </div>
                 

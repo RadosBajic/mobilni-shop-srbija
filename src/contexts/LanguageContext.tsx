@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 // Define translation keys
@@ -52,7 +51,6 @@ type TranslationKey =
   | 'confirmDelete'
   | 'areYouSure'
   | 'thisCannotBeUndone'
-  // Additional keys for Footer
   | 'footerAbout'
   | 'quickLinks'
   | 'about'
@@ -64,29 +62,45 @@ type TranslationKey =
   | 'allRightsReserved'
   | 'privacyPolicy'
   | 'termsOfService'
-  // Additional keys for Header
   | 'viewAll'
-  // Additional keys for Search
   | 'noResults'
   | 'product'
   | 'category'
   | 'pages'
   | 'page'
-  // Additional keys for Admin
-  | 'compose';
+  | 'compose'
+  | 'cashOnDelivery'
+  | 'cashOnDeliveryInfo'
+  | 'orderSuccess'
+  | 'orderSuccessMessage'
+  | 'orderDetails'
+  | 'customerInfo'
+  | 'orderId'
+  | 'orderDate'
+  | 'orderStatus'
+  | 'orderAmount'
+  | 'orderItems'
+  | 'shipping'
+  | 'name'
+  | 'price'
+  | 'status'
+  | 'actions'
+  | 'edit'
+  | 'delete'
+  | 'save'
+  | 'personalInfo'
+  | 'address'
+  | 'city'
+  | 'postalCode'
+  | 'country'
+  | 'phone'
+  | 'fullName';
 
 type Translations = {
   [key in TranslationKey]: {
     sr: string;
     en: string;
   };
-};
-
-type LanguageContextType = {
-  language: string;
-  setLanguage: (lang: string) => void;
-  t: (key: TranslationKey) => string;
-  translations: Translations;
 };
 
 // Define translations
@@ -365,6 +379,127 @@ const translations: Translations = {
   },
 };
 
+// Additional translations for order management
+const additionalTranslations: Partial<Translations> = {
+  cashOnDelivery: {
+    sr: 'Plaćanje pouzećem',
+    en: 'Cash on delivery',
+  },
+  cashOnDeliveryInfo: {
+    sr: 'Platite kuriru prilikom preuzimanja pošiljke',
+    en: 'Pay the courier when you receive your package',
+  },
+  orderSuccess: {
+    sr: 'Porudžbina uspešna',
+    en: 'Order Successful',
+  },
+  orderSuccessMessage: {
+    sr: 'Vaša porudžbina je uspešno primljena. Uskoro ćete dobiti email sa potvrdom.',
+    en: 'Your order has been successfully placed. You will receive a confirmation email shortly.',
+  },
+  orderDetails: {
+    sr: 'Detalji porudžbine',
+    en: 'Order Details',
+  },
+  customerInfo: {
+    sr: 'Podaci o kupcu',
+    en: 'Customer Information',
+  },
+  orderId: {
+    sr: 'Broj porudžbine',
+    en: 'Order ID',
+  },
+  orderDate: {
+    sr: 'Datum porudžbine',
+    en: 'Order Date',
+  },
+  orderStatus: {
+    sr: 'Status porudžbine',
+    en: 'Order Status',
+  },
+  orderAmount: {
+    sr: 'Iznos porudžbine',
+    en: 'Order Amount',
+  },
+  orderItems: {
+    sr: 'Stavke porudžbine',
+    en: 'Order Items',
+  },
+  shipping: {
+    sr: 'Dostava',
+    en: 'Shipping',
+  },
+  name: {
+    sr: 'Ime',
+    en: 'Name',
+  },
+  price: {
+    sr: 'Cena',
+    en: 'Price',
+  },
+  status: {
+    sr: 'Status',
+    en: 'Status',
+  },
+  actions: {
+    sr: 'Akcije',
+    en: 'Actions',
+  },
+  edit: {
+    sr: 'Izmeni',
+    en: 'Edit',
+  },
+  delete: {
+    sr: 'Obriši',
+    en: 'Delete',
+  },
+  save: {
+    sr: 'Sačuvaj',
+    en: 'Save',
+  },
+  personalInfo: {
+    sr: 'Lični podaci',
+    en: 'Personal Information',
+  },
+  address: {
+    sr: 'Adresa',
+    en: 'Address',
+  },
+  city: {
+    sr: 'Grad',
+    en: 'City',
+  },
+  postalCode: {
+    sr: 'Poštanski broj',
+    en: 'Postal code',
+  },
+  country: {
+    sr: 'Država',
+    en: 'Country',
+  },
+  phone: {
+    sr: 'Telefon',
+    en: 'Phone',
+  },
+  fullName: {
+    sr: 'Ime i prezime',
+    en: 'Full name',
+  },
+};
+
+type LanguageContextType = {
+  language: string;
+  setLanguage: (lang: string) => void;
+  t: (key: TranslationKey) => string;
+  translations: Translations;
+};
+
+// Merge existing translations with additional ones
+const mergedTranslations: Translations = {
+  ...translations,
+  ...additionalTranslations as Translations,
+};
+
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -379,11 +514,11 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Translate function
   const t = (key: TranslationKey): string => {
-    if (!translations[key]) {
+    if (!mergedTranslations[key]) {
       console.warn(`Translation key "${key}" not found`);
       return key;
     }
-    return translations[key][language as 'sr' | 'en'] || key;
+    return mergedTranslations[key][language as 'sr' | 'en'] || key;
   };
 
   // Update language and save to localStorage
@@ -400,7 +535,7 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
   }, [language]);
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, translations }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, translations: mergedTranslations }}>
       {children}
     </LanguageContext.Provider>
   );

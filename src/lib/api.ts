@@ -43,10 +43,47 @@ export const api = {
 
   // Orders
   createOrder: async (orderData: any) => {
-    // In real implementation, this would insert into the orders table
-    // For now, we'll use the mock implementation in executeQuery
-    const query = 'INSERT INTO orders (data) VALUES ($1) RETURNING *';
-    return executeQuery(query, [orderData]);
+    const query = `
+      INSERT INTO orders (
+        customer_id, customer_name, customer_email, customer_phone, 
+        shipping_address, items, total_amount, status, 
+        payment_method, payment_status, notes
+      ) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
+      RETURNING *
+    `;
+    
+    const params = [
+      orderData.customerId,
+      orderData.customerName,
+      orderData.customerEmail,
+      orderData.customerPhone,
+      orderData.shippingAddress,
+      orderData.items,
+      orderData.totalAmount,
+      orderData.status,
+      orderData.paymentMethod,
+      orderData.paymentStatus,
+      orderData.notes
+    ];
+    
+    return executeQuery(query, params);
+  },
+
+  getOrderById: async (id: string) => {
+    const query = 'SELECT * FROM orders WHERE id = $1';
+    const result = await executeQuery(query, [id]);
+    return result.length > 0 ? result[0] : null;
+  },
+
+  getOrders: async () => {
+    const query = 'SELECT * FROM orders ORDER BY created_at DESC';
+    return executeQuery(query);
+  },
+
+  updateOrderStatus: async (id: string, status: string) => {
+    const query = 'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2';
+    return executeQuery(query, [status, id]);
   },
 
   // Banners
@@ -77,5 +114,26 @@ export const api = {
     query += ' ORDER BY "order" ASC';
     
     return executeQuery(query, params);
+  },
+
+  // Categories
+  getCategories: async (isActive?: boolean) => {
+    let query = 'SELECT * FROM categories';
+    const params: any[] = [];
+    
+    if (isActive !== undefined) {
+      query += ' WHERE is_active = $1';
+      params.push(isActive);
+    }
+    
+    query += ' ORDER BY display_order ASC';
+    
+    return executeQuery(query, params);
+  },
+
+  getCategoryBySlug: async (slug: string) => {
+    const query = 'SELECT * FROM categories WHERE slug = $1';
+    const result = await executeQuery(query, [slug]);
+    return result.length > 0 ? result[0] : null;
   }
 };
