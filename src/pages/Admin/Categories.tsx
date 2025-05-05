@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -208,6 +207,7 @@ const Categories: React.FC = () => {
     });
   };
 
+  // Fix for the error - Handle cases where display_order might be undefined
   const handleEditCategoryChange = (field: string, value: string | boolean | number) => {
     if (!editingCategory) return;
     
@@ -313,6 +313,7 @@ const Categories: React.FC = () => {
     }
   };
 
+  // Fix for the error - Handle cases where display_order might be undefined
   const handleUpdateCategory = async () => {
     if (!editingCategory) return;
     
@@ -351,7 +352,7 @@ const Categories: React.FC = () => {
         descriptionEn: editingCategory.description_en || '',
         image: editingCategory.image || '',
         isActive: editingCategory.is_active,
-        displayOrder: editingCategory.display_order
+        displayOrder: editingCategory.display_order || 0
       };
       
       await api.updateCategory(editingCategory.id, categoryData);
@@ -752,7 +753,7 @@ const Categories: React.FC = () => {
                       <Input
                         id="edit_display_order"
                         type="number"
-                        value={editingCategory.display_order.toString()}
+                        value={(editingCategory.display_order || 0).toString()}
                         onChange={(e) => handleEditCategoryChange('display_order', parseInt(e.target.value) || 0)}
                       />
                     </div>
@@ -869,115 +870,3 @@ const Categories: React.FC = () => {
                         </TableHead>
                         <TableHead>
                           {language === 'sr' ? 'Status' : 'Status'}
-                        </TableHead>
-                        <TableHead className="w-28">
-                          {language === 'sr' ? 'Akcije' : 'Actions'}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    
-                    <TableBody>
-                      {filteredCategories.map((category) => (
-                        <TableRow key={category.id}>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7"
-                                onClick={() => handleOrderChange(category.id, 'up')}
-                              >
-                                <MoveUp className="h-4 w-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7"
-                                onClick={() => handleOrderChange(category.id, 'down')}
-                              >
-                                <MoveDown className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="h-10 w-10 rounded-md bg-secondary overflow-hidden">
-                              {category.image ? (
-                                <img 
-                                  src={category.image} 
-                                  alt={category.name_sr} 
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <div className="h-full w-full flex items-center justify-center bg-secondary text-muted-foreground">
-                                  <ImagePlus className="h-5 w-5" />
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {language === 'sr' ? category.name_sr : category.name_en}
-                            <div className="text-xs text-muted-foreground">
-                              {language === 'sr' ? category.description_sr : category.description_en}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {category.slug}
-                          </TableCell>
-                          <TableCell>
-                            {category.productCount || 0}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={category.is_active ? 'default' : 'secondary'}>
-                              {category.is_active 
-                                ? (language === 'sr' ? 'Aktivna' : 'Active')
-                                : (language === 'sr' ? 'Skrivena' : 'Hidden')
-                              }
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8"
-                                onClick={() => {
-                                  setEditingCategory(category);
-                                  setIsEditCategoryOpen(true);
-                                }}
-                              >
-                                <Edit className="h-4 w-4" />
-                                <span className="sr-only">
-                                  {language === 'sr' ? 'Izmeni' : 'Edit'}
-                                </span>
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-destructive"
-                                onClick={() => {
-                                  setDeletingCategoryId(category.id);
-                                  setIsDeleteConfirmOpen(true);
-                                }}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="sr-only">
-                                  {language === 'sr' ? 'Obriši' : 'Delete'}
-                                </span>
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
-    </div>
-  );
-};
-
-export default Categories;
