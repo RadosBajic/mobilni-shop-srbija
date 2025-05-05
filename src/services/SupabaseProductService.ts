@@ -1,3 +1,4 @@
+
 import { executeQuery } from '@/lib/neon';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from './ProductService';
@@ -239,6 +240,7 @@ export const SupabaseProductService = {
   createProduct: async (formData: any): Promise<AdminProduct> => {
     try {
       const product = mapToSupabaseProduct(formData);
+      console.log('Creating product:', product);
       
       const columns = Object.keys(product).join(', ');
       const placeholders = Object.keys(product)
@@ -254,6 +256,11 @@ export const SupabaseProductService = {
       const values = Object.values(product);
       const data = await executeQuery(query, values);
       
+      if (!data || data.length === 0) {
+        throw new Error('Failed to create product: No data returned');
+      }
+      
+      console.log('Product created successfully:', data[0]);
       return mapToAdminProduct(data[0]);
     } catch (error) {
       console.error('Error in createProduct:', error);
@@ -264,6 +271,7 @@ export const SupabaseProductService = {
   updateProduct: async (id: string, formData: any): Promise<AdminProduct> => {
     try {
       const product = mapToSupabaseProduct({ ...formData, id });
+      console.log('Updating product:', product);
       
       // Dinamički kreiramo update upit
       const updateFields = Object.keys(product)
@@ -283,6 +291,12 @@ export const SupabaseProductService = {
       )];
       
       const data = await executeQuery(query, values);
+      
+      if (!data || data.length === 0) {
+        throw new Error('Failed to update product: No data returned');
+      }
+      
+      console.log('Product updated successfully:', data[0]);
       return mapToAdminProduct(data[0]);
     } catch (error) {
       console.error('Error in updateProduct:', error);
@@ -292,8 +306,10 @@ export const SupabaseProductService = {
   
   deleteProduct: async (id: string): Promise<boolean> => {
     try {
+      console.log('Deleting product:', id);
       const query = 'DELETE FROM products WHERE id = $1';
       await executeQuery(query, [id]);
+      console.log('Product deleted successfully');
       return true;
     } catch (error) {
       console.error('Error in deleteProduct:', error);
@@ -305,10 +321,12 @@ export const SupabaseProductService = {
     try {
       if (!ids.length) return true;
       
+      console.log('Bulk deleting products:', ids);
       const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
       const query = `DELETE FROM products WHERE id IN (${placeholders})`;
       
       await executeQuery(query, ids);
+      console.log('Products deleted successfully');
       return true;
     } catch (error) {
       console.error('Error in bulkDeleteProducts:', error);
@@ -334,8 +352,10 @@ export const SupabaseProductService = {
   
   updateProductStatus: async (id: string, status: 'active' | 'outOfStock' | 'draft'): Promise<boolean> => {
     try {
+      console.log('Updating product status:', id, status);
       const query = 'UPDATE products SET status = $1 WHERE id = $2';
       await executeQuery(query, [status, id]);
+      console.log('Product status updated successfully');
       return true;
     } catch (error) {
       console.error('Error in updateProductStatus:', error);
@@ -362,11 +382,40 @@ export const SupabaseProductService = {
         throw new Error('Invalid import data format');
       }
       
-      // Since we don't have a real pool connection in the frontend mock,
-      // we'll just simulate the import success
       console.log('Importing products:', products.length);
       
-      // In a real implementation, we would use a transaction here
+      // U stvarnom sistemu, ovde bismo koristili transakciju
+      // Za našu demonstraciju, iteriraćemo kroz proizvode i ubaciti ih jedan po jedan
+      for (const product of products) {
+        const columns = Object.keys(product).join(', ');
+        const placeholders = Object.keys(product)
+          .map((_, i) => `$${i + 1}`)
+          .join(', ');
+        
+        const query = `
+          INSERT INTO products (${columns}) 
+          VALUES (${placeholders})
+          ON CONFLICT (id) DO UPDATE SET 
+            title_sr = EXCLUDED.title_sr,
+            title_en = EXCLUDED.title_en,
+            price = EXCLUDED.price,
+            old_price = EXCLUDED.old_price,
+            image = EXCLUDED.image,
+            category = EXCLUDED.category,
+            is_new = EXCLUDED.is_new,
+            is_on_sale = EXCLUDED.is_on_sale,
+            sku = EXCLUDED.sku,
+            stock = EXCLUDED.stock,
+            status = EXCLUDED.status,
+            description_sr = EXCLUDED.description_sr,
+            description_en = EXCLUDED.description_en,
+            updated_at = NOW()
+        `;
+        
+        await executeQuery(query, Object.values(product));
+      }
+      
+      console.log('Products imported successfully');
       return true;
     } catch (error) {
       console.error('Error in importProducts:', error);
