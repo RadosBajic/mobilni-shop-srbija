@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -10,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 
 interface PromotionsGridProps {
-  position?: 'home' | 'category'; // Update to only accept these literals
+  position?: 'home' | 'category';
   limit?: number;
   className?: string;
 }

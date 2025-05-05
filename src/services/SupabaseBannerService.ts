@@ -1,10 +1,9 @@
-
 import { BannerType, PromotionType } from '@/types/banners';
 import { executeQuery } from '@/lib/neon';
 
 export const SupabaseBannerService = {
-  // Banner metode
-  getBanners: async (position?: 'hero' | 'promo'): Promise<BannerType[]> => {
+  // Banner methods
+  getBanners: async (position?: 'home' | 'category' | 'hero' | 'promo'): Promise<BannerType[]> => {
     try {
       let query = 'SELECT * FROM banners';
       const params: any[] = [];
@@ -31,7 +30,7 @@ export const SupabaseBannerService = {
         image: banner.image || '',
         targetUrl: banner.target_url || '',
         isActive: banner.is_active || false,
-        position: banner.position as 'hero' | 'promo',
+        position: banner.position as 'home' | 'category' | 'hero' | 'promo',
         order: banner.order,
         startDate: banner.start_date || undefined,
         endDate: banner.end_date || undefined
@@ -63,7 +62,7 @@ export const SupabaseBannerService = {
         image: banner.image || '',
         targetUrl: banner.target_url || '',
         isActive: banner.is_active || false,
-        position: banner.position as 'hero' | 'promo',
+        position: banner.position as 'home' | 'category' | 'hero' | 'promo',
         order: banner.order,
         startDate: banner.start_date || undefined,
         endDate: banner.end_date || undefined
@@ -116,7 +115,7 @@ export const SupabaseBannerService = {
         image: newBanner.image || '',
         targetUrl: newBanner.target_url || '',
         isActive: newBanner.is_active || false,
-        position: newBanner.position as 'hero' | 'promo',
+        position: newBanner.position as 'home' | 'category' | 'hero' | 'promo',
         order: newBanner.order,
         startDate: newBanner.start_date || undefined,
         endDate: newBanner.end_date || undefined
@@ -222,7 +221,7 @@ export const SupabaseBannerService = {
         image: updatedBanner.image || '',
         targetUrl: updatedBanner.target_url || '',
         isActive: updatedBanner.is_active || false,
-        position: updatedBanner.position as 'hero' | 'promo',
+        position: updatedBanner.position as 'home' | 'category' | 'hero' | 'promo',
         order: updatedBanner.order,
         startDate: updatedBanner.start_date || undefined,
         endDate: updatedBanner.end_date || undefined
@@ -244,7 +243,7 @@ export const SupabaseBannerService = {
     }
   },
 
-  // Promotion metode
+  // Promotion methods
   getPromotions: async (position?: 'home' | 'category'): Promise<PromotionType[]> => {
     try {
       let query = 'SELECT * FROM promotions';

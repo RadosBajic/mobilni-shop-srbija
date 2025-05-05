@@ -42,7 +42,7 @@ const mapToPromotion = (promo: any): PromotionType => ({
 });
 
 export const BannerService = {
-  getBanners: async (position?: 'home' | 'category'): Promise<BannerType[]> => {
+  getBanners: async (position?: 'home' | 'category' | 'hero' | 'promo'): Promise<BannerType[]> => {
     try {
       const banners = await api.getBanners(position);
       return banners.map(mapToBanner);
