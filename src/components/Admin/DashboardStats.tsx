@@ -3,7 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Card, CardContent } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ShoppingCart, DollarSign, Users, Package } from 'lucide-react';
+import { ShoppingCart, DollarSign, Users, Package, Database } from 'lucide-react';
+import { setupDatabase, initializeDatabase } from '@/utils/setupDatabase';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
 
 interface StatCardProps {
   title: string;
@@ -37,6 +40,7 @@ interface DashboardStatsProps {
 
 const DashboardStats: React.FC<DashboardStatsProps> = ({ refreshTrigger = 0 }) => {
   const { language } = useLanguage();
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     orders: 0,
     revenue: 0,
@@ -44,22 +48,81 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ refreshTrigger = 0 }) =
     products: 0
   });
   const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState<'checking' | 'ready' | 'not-ready'>('checking');
+  const [initializing, setInitializing] = useState(false);
+
+  // Provera stanja baze podataka
+  useEffect(() => {
+    const checkDatabase = async () => {
+      try {
+        const isReady = await setupDatabase();
+        setDbStatus(isReady ? 'ready' : 'not-ready');
+      } catch (error) {
+        console.error('Error checking database:', error);
+        setDbStatus('not-ready');
+      }
+    };
+    
+    checkDatabase();
+  }, [refreshTrigger]);
+
+  // Inicijalizacija baze podataka
+  const handleInitializeDb = async () => {
+    try {
+      setInitializing(true);
+      
+      const result = await initializeDatabase();
+      
+      if (result) {
+        setDbStatus('ready');
+        toast({
+          title: language === 'sr' ? 'Uspeh' : 'Success',
+          description: language === 'sr' 
+            ? 'Baza podataka je uspešno inicijalizovana'
+            : 'Database has been successfully initialized',
+        });
+      } else {
+        toast({
+          title: language === 'sr' ? 'Greška' : 'Error',
+          description: language === 'sr' 
+            ? 'Inicijalizacija baze podataka nije uspela'
+            : 'Database initialization failed',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error initializing database:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: String(error),
+        variant: 'destructive',
+      });
+    } finally {
+      setInitializing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchStats = async () => {
+      // Samo pokušavamo da dohvatimo statistiku ako je baza spremna
+      if (dbStatus !== 'ready') {
+        setLoading(false);
+        return;
+      }
+      
       try {
         setLoading(true);
         
-        // Get orders
+        // Dobijamo porudžbine
         const orders = await api.getOrders();
         
-        // Get customers
+        // Dobijamo kupce
         const customers = await api.getCustomers();
         
-        // Get products
+        // Dobijamo proizvode
         const products = await api.getProducts();
         
-        // Calculate total revenue from orders
+        // Izračunavamo ukupan prihod od porudžbina
         const revenue = orders.reduce((sum: number, order: any) => sum + Number(order.total_amount), 0);
         
         setStats({
@@ -76,7 +139,7 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ refreshTrigger = 0 }) =
     };
     
     fetchStats();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, dbStatus]);
   
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat(language === 'sr' ? 'sr-RS' : 'en-US', { 
@@ -85,6 +148,44 @@ const DashboardStats: React.FC<DashboardStatsProps> = ({ refreshTrigger = 0 }) =
       maximumFractionDigits: 0
     }).format(value);
   };
+
+  // UI za stanje baze podataka
+  if (dbStatus !== 'ready') {
+    return (
+      <div className="space-y-6">
+        <Card className="bg-amber-50 border-amber-200">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="p-2 bg-amber-100 text-amber-700 rounded-full">
+                <Database className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-amber-800">
+                  {language === 'sr' ? 'Baza podataka nije spremna' : 'Database is not ready'}
+                </h2>
+                <p className="text-sm text-amber-700 mt-1">
+                  {language === 'sr' 
+                    ? 'Potrebne tabele nisu pronađene u bazi podataka. Pokrenite inicijalizaciju baze.'
+                    : 'Required tables were not found in the database. Initialize the database.'}
+                </p>
+              </div>
+            </div>
+            <div className="mt-4">
+              <Button 
+                onClick={handleInitializeDb} 
+                disabled={initializing}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {initializing
+                  ? (language === 'sr' ? 'Inicijalizacija...' : 'Initializing...')
+                  : (language === 'sr' ? 'Inicijalizuj bazu podataka' : 'Initialize database')}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
   
   if (loading) {
     return (

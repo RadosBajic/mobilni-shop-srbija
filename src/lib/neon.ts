@@ -1,15 +1,27 @@
 
-import { Pool } from 'pg';
+// Ne importujemo Pool direktno, nego samo ako smo na serveru
+let Pool: any;
 
-// Configuration for Neon PostgreSQL
+// Omogući učitavanje Pool modula samo na serveru
+if (typeof window === 'undefined') {
+  // Dynamic import za serversko okruženje
+  try {
+    const pg = require('pg');
+    Pool = pg.Pool;
+  } catch (error) {
+    console.error('Failed to load pg module:', error);
+  }
+}
+
+// Konfiguracija za Neon PostgreSQL
 const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UKgRG1lc7uTn@ep-green-haze-a4nqoybg-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
 
-// Create a pool instance to manage database connections
-let pool: Pool;
+// Instanca pool-a za upravljanje konekcijama
+let pool: any;
 
-// Initialize and configure the database pool
+// Inicijalizacija i konfiguracija pool-a
 const getPool = () => {
-  if (!pool) {
+  if (!pool && Pool) {
     pool = new Pool({
       connectionString,
       ssl: {
@@ -20,28 +32,31 @@ const getPool = () => {
   return pool;
 };
 
-// Export connection configuration check function
+// Provera konfiguracije funkcija
 export const isNeonConfigured = (): boolean => {
   return Boolean(connectionString);
 };
 
-// Execute database queries
+// Izvršavanje upita
 export const executeQuery = async (
   query: string, 
   params?: any[]
 ): Promise<any> => {
   try {
-    // For server-side contexts, execute real queries
+    // Za serverski kontekst, izvršavaj prave upite
     if (typeof window === 'undefined') {
       const pool = getPool();
+      if (!pool) {
+        throw new Error('Database pool not initialized');
+      }
       const result = await pool.query(query, params);
       return result.rows;
     } 
     
-    // For client-side (browser) context, we'll use mock data
+    // Za klijentski (browser) kontekst, koristimo lažne podatke
     console.log('Query executed (client-side mock):', query, params);
     
-    // Mock implementations for client-side debugging
+    // Mock implementacije za klijentsko debagovanje
     if (query.includes('SELECT * FROM products')) {
       return mockProducts();
     } else if (query.includes('SELECT * FROM banners')) {
@@ -59,7 +74,7 @@ export const executeQuery = async (
     } else if (query.includes('DELETE')) {
       return [];
     } else if (query.includes('information_schema.tables')) {
-      // This is for checking if tables exist
+      // Ovo je za proveru da li tabele postoje
       return ['products', 'orders', 'categories', 'customers', 'banners', 'promotions'].map(
         tableName => ({ table_name: tableName })
       );
@@ -72,7 +87,7 @@ export const executeQuery = async (
   }
 };
 
-// Mock data functions (used only in client-side browser context)
+// Funkcije za lažne podatke (korišćene samo u klijentskom browser kontekstu)
 const mockProducts = () => {
   return [
     {

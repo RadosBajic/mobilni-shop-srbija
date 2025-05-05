@@ -20,8 +20,28 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Explicitly tell Vite not to try processing certain Node.js modules
+  // Eksplicitno navodimo Node.js module koje treba isključiti
   optimizeDeps: {
     exclude: ['pg', 'pg-native', 'pg-pool']
+  },
+  // Eksplicitno definišemo eksterne module za Rollup
+  build: {
+    rollupOptions: {
+      external: [
+        'pg', 
+        'pg-native', 
+        'pg-pool', 
+        'cloudflare:sockets',
+        'net',
+        'tls',
+        'fs',
+        'crypto',
+        'stream',
+        'events',
+        'util',
+        'path',
+        'dns'
+      ]
+    }
   }
 }));
