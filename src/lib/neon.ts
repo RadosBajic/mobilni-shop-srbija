@@ -13,8 +13,16 @@ if (typeof window === 'undefined') {
   }
 }
 
-// Konfiguracija za Neon PostgreSQL
-const connectionString = process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UKgRG1lc7uTn@ep-green-haze-a4nqoybg-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
+// Konfiguracija za Neon PostgreSQL - bezbedan pristup za process.env
+const getConnectionString = () => {
+  // Na serverskoj strani, možemo koristiti process.env
+  if (typeof window === 'undefined' && typeof process !== 'undefined' && process.env) {
+    return process.env.DATABASE_URL || "postgresql://neondb_owner:npg_UKgRG1lc7uTn@ep-green-haze-a4nqoybg-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require";
+  }
+  
+  // Na klijentskoj strani, vraćamo default string, ali nećemo ga stvarno koristiti
+  return "mock_connection_string_for_client";
+};
 
 // Instanca pool-a za upravljanje konekcijama
 let pool: any;
@@ -23,7 +31,7 @@ let pool: any;
 const getPool = () => {
   if (!pool && Pool) {
     pool = new Pool({
-      connectionString,
+      connectionString: getConnectionString(),
       ssl: {
         rejectUnauthorized: false
       }
@@ -34,7 +42,13 @@ const getPool = () => {
 
 // Provera konfiguracije funkcija
 export const isNeonConfigured = (): boolean => {
-  return Boolean(connectionString);
+  // Ako smo na klijentu, samo vrati true jer ćemo koristiti mock podatke
+  if (typeof window !== 'undefined') {
+    return true;
+  }
+  
+  // Na serveru, proveravamo stvarnu konfiguraciju
+  return Boolean(getConnectionString());
 };
 
 // Izvršavanje upita

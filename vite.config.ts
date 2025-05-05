@@ -20,6 +20,11 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // Eksplicitno definišemo globalne objekte za specifične platforme
+  define: {
+    // Samo ako je potrebno za klijentski JavaScript kod
+    'process.env': {}, // Prazan objekat umesto process.env za klijent
+  },
   // Eksplicitno navodimo Node.js module koje treba isključiti
   optimizeDeps: {
     exclude: ['pg', 'pg-native', 'pg-pool']
@@ -40,7 +45,8 @@ export default defineConfig(({ mode }) => ({
         'events',
         'util',
         'path',
-        'dns'
+        'dns',
+        'process'
       ]
     }
   }
