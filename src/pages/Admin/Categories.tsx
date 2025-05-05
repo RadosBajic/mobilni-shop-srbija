@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -870,3 +871,95 @@ const Categories: React.FC = () => {
                         </TableHead>
                         <TableHead>
                           {language === 'sr' ? 'Status' : 'Status'}
+                        </TableHead>
+                        <TableHead className="text-right">
+                          {language === 'sr' ? 'Akcije' : 'Actions'}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredCategories.map((category) => (
+                        <TableRow key={category.id}>
+                          <TableCell className="font-medium">
+                            {category.display_order}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOrderChange(category.id, 'up')}
+                                disabled={categories.indexOf(category) === 0}
+                                className="h-7 w-7"
+                              >
+                                <MoveUp className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleOrderChange(category.id, 'down')}
+                                disabled={categories.indexOf(category) === categories.length - 1}
+                                className="h-7 w-7"
+                              >
+                                <MoveDown className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="font-medium">{language === 'sr' ? category.name_sr : category.name_en}</div>
+                            <div className="text-xs text-muted-foreground">{language === 'sr' ? category.name_en : category.name_sr}</div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {category.slug}
+                          </TableCell>
+                          <TableCell>
+                            {category.productCount !== undefined ? category.productCount : '-'}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={category.is_active ? "default" : "outline"}>
+                              {category.is_active 
+                                ? (language === 'sr' ? 'Aktivna' : 'Active') 
+                                : (language === 'sr' ? 'Neaktivna' : 'Inactive')}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditingCategory(category);
+                                  setIsEditCategoryOpen(true);
+                                }}
+                                className="h-7 w-7"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setDeletingCategoryId(category.id);
+                                  setIsDeleteConfirmOpen(true);
+                                }}
+                                className="h-7 w-7 text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
+    </div>
+  );
+};
+
+export default Categories;
