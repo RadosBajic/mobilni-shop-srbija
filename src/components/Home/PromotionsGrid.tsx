@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
@@ -6,12 +5,12 @@ import { Button } from '@/components/ui/button';
 import { PromotionType } from '@/types/banners';
 import { BannerService } from '@/services/BannerService';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { ShoppingCart, Sparkles, Clock, ExternalLink } from 'lucide-react';
+import { ShoppingCart, Sparkles, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
 
 interface PromotionsGridProps {
-  position?: string;
+  position?: 'home' | 'category'; // Update to only accept these literals
   limit?: number;
   className?: string;
 }

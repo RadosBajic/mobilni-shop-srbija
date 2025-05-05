@@ -2,7 +2,7 @@
 import { api } from '@/lib/api';
 import { BannerType, PromotionType } from '@/types/banners';
 
-const mapToBannerType = (banner: any): BannerType => ({
+const mapToBanner = (banner: any): BannerType => ({
   id: banner.id,
   title: {
     sr: banner.title_sr,
@@ -21,7 +21,7 @@ const mapToBannerType = (banner: any): BannerType => ({
   endDate: banner.end_date
 });
 
-const mapToPromotionType = (promo: any): PromotionType => ({
+const mapToPromotion = (promo: any): PromotionType => ({
   id: promo.id,
   title: {
     sr: promo.title_sr,
@@ -42,81 +42,70 @@ const mapToPromotionType = (promo: any): PromotionType => ({
 });
 
 export const BannerService = {
-  getBanners: async (position?: 'hero' | 'promo'): Promise<BannerType[]> => {
+  getBanners: async (position?: 'home' | 'category'): Promise<BannerType[]> => {
     try {
       const banners = await api.getBanners(position);
-      return banners.map(mapToBannerType);
+      return banners.map(mapToBanner);
     } catch (error) {
       console.error('Error fetching banners:', error);
       return [];
     }
   },
-
+  
   getPromotions: async (position?: 'home' | 'category'): Promise<PromotionType[]> => {
     try {
       const promotions = await api.getPromotions(position);
-      return promotions.map(mapToPromotionType);
+      return promotions.map(mapToPromotion);
     } catch (error) {
       console.error('Error fetching promotions:', error);
       return [];
     }
   },
-
-  // Admin methods
-  createBanner: async (bannerData: Omit<BannerType, 'id'>): Promise<BannerType> => {
+  
+  createBanner: async (bannerData: {
+    titleSr: string;
+    titleEn: string;
+    descriptionSr?: string;
+    descriptionEn?: string;
+    image: string;
+    targetUrl: string;
+    isActive?: boolean;
+    position: 'home' | 'category';
+    order: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<BannerType> => {
     try {
-      const data = {
-        titleSr: bannerData.title.sr,
-        titleEn: bannerData.title.en,
-        descriptionSr: bannerData.description.sr,
-        descriptionEn: bannerData.description.en,
-        image: bannerData.image,
-        targetUrl: bannerData.targetUrl,
-        isActive: bannerData.isActive,
-        position: bannerData.position,
-        order: bannerData.order,
-        startDate: bannerData.startDate,
-        endDate: bannerData.endDate
-      };
-
-      const banner = await api.createBanner(data);
-      return mapToBannerType(banner);
+      const banner = await api.createBanner(bannerData);
+      return mapToBanner(banner);
     } catch (error) {
       console.error('Error creating banner:', error);
       throw error;
     }
   },
-
-  updateBanner: async (id: string, bannerData: Partial<BannerType>): Promise<BannerType> => {
+  
+  updateBanner: async (id: string, bannerData: Partial<{
+    titleSr: string;
+    titleEn: string;
+    descriptionSr?: string;
+    descriptionEn?: string;
+    image: string;
+    targetUrl: string;
+    isActive?: boolean;
+    position: 'home' | 'category';
+    order: number;
+    startDate?: string;
+    endDate?: string;
+  }>): Promise<BannerType> => {
     try {
-      const data: any = {};
-
-      if (bannerData.title) {
-        data.titleSr = bannerData.title.sr;
-        data.titleEn = bannerData.title.en;
-      }
-
-      if (bannerData.description) {
-        data.descriptionSr = bannerData.description.sr;
-        data.descriptionEn = bannerData.description.en;
-      }
-
-      if ('image' in bannerData) data.image = bannerData.image;
-      if ('targetUrl' in bannerData) data.targetUrl = bannerData.targetUrl;
-      if ('isActive' in bannerData) data.isActive = bannerData.isActive;
-      if ('position' in bannerData) data.position = bannerData.position;
-      if ('order' in bannerData) data.order = bannerData.order;
-      if ('startDate' in bannerData) data.startDate = bannerData.startDate;
-      if ('endDate' in bannerData) data.endDate = bannerData.endDate;
-
-      const banner = await api.updateBanner(id, data);
-      return mapToBannerType(banner);
+      const banner = await api.updateBanner(id, bannerData);
+      return mapToBanner(banner);
     } catch (error) {
       console.error('Error updating banner:', error);
       throw error;
     }
   },
-
+  
   deleteBanner: async (id: string): Promise<boolean> => {
     try {
       return await api.deleteBanner(id);
@@ -125,63 +114,53 @@ export const BannerService = {
       throw error;
     }
   },
-
-  createPromotion: async (promotionData: Omit<PromotionType, 'id'>): Promise<PromotionType> => {
+  
+  createPromotion: async (promoData: {
+    titleSr: string;
+    titleEn: string;
+    descriptionSr?: string;
+    descriptionEn?: string;
+    image: string;
+    targetUrl: string;
+    isActive?: boolean;
+    position: 'home' | 'category';
+    order: number;
+    discount?: number;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<PromotionType> => {
     try {
-      const data = {
-        titleSr: promotionData.title.sr,
-        titleEn: promotionData.title.en,
-        descriptionSr: promotionData.description.sr,
-        descriptionEn: promotionData.description.en,
-        image: promotionData.image,
-        targetUrl: promotionData.targetUrl,
-        isActive: promotionData.isActive,
-        position: promotionData.position,
-        order: promotionData.order,
-        discount: promotionData.discount,
-        startDate: promotionData.startDate,
-        endDate: promotionData.endDate
-      };
-
-      const promotion = await api.createPromotion(data);
-      return mapToPromotionType(promotion);
+      const promo = await api.createPromotion(promoData);
+      return mapToPromotion(promo);
     } catch (error) {
       console.error('Error creating promotion:', error);
       throw error;
     }
   },
-
-  updatePromotion: async (id: string, promotionData: Partial<PromotionType>): Promise<PromotionType> => {
+  
+  updatePromotion: async (id: string, promoData: Partial<{
+    titleSr: string;
+    titleEn: string;
+    descriptionSr?: string;
+    descriptionEn?: string;
+    image: string;
+    targetUrl: string;
+    isActive?: boolean;
+    position: 'home' | 'category';
+    order: number;
+    discount?: number;
+    startDate?: string;
+    endDate?: string;
+  }>): Promise<PromotionType> => {
     try {
-      const data: any = {};
-
-      if (promotionData.title) {
-        data.titleSr = promotionData.title.sr;
-        data.titleEn = promotionData.title.en;
-      }
-
-      if (promotionData.description) {
-        data.descriptionSr = promotionData.description.sr;
-        data.descriptionEn = promotionData.description.en;
-      }
-
-      if ('image' in promotionData) data.image = promotionData.image;
-      if ('targetUrl' in promotionData) data.targetUrl = promotionData.targetUrl;
-      if ('isActive' in promotionData) data.isActive = promotionData.isActive;
-      if ('position' in promotionData) data.position = promotionData.position;
-      if ('order' in promotionData) data.order = promotionData.order;
-      if ('discount' in promotionData) data.discount = promotionData.discount;
-      if ('startDate' in promotionData) data.startDate = promotionData.startDate;
-      if ('endDate' in promotionData) data.endDate = promotionData.endDate;
-
-      const promotion = await api.updatePromotion(id, data);
-      return mapToPromotionType(promotion);
+      const promo = await api.updatePromotion(id, promoData);
+      return mapToPromotion(promo);
     } catch (error) {
       console.error('Error updating promotion:', error);
       throw error;
     }
   },
-
+  
   deletePromotion: async (id: string): Promise<boolean> => {
     try {
       return await api.deletePromotion(id);

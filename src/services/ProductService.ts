@@ -1,4 +1,3 @@
-
 import { api } from '@/lib/api';
 import { Product } from '@/components/Products/ProductCard';
 
@@ -68,8 +67,12 @@ export const ProductService = {
   
   getProductById: async (id: string): Promise<Product | null> => {
     try {
-      const product = await api.getProductById(id);
-      return product ? mapToProduct(product) : null;
+      // Fixed: Use query instead of a non-existent getProductById
+      const query = 'SELECT * FROM products WHERE id = $1';
+      const data = await api.query(query, [id]);
+      
+      if (!data || data.length === 0) return null;
+      return mapToProduct(data[0]);
     } catch (error) {
       console.error('Error fetching product:', error);
       return null;
@@ -89,7 +92,9 @@ export const ProductService = {
   // Admin methods
   getAdminProducts: async (): Promise<AdminProduct[]> => {
     try {
-      const products = await api.getAdminProducts();
+      // Fixed: Use query instead of non-existent getAdminProducts
+      const query = 'SELECT * FROM products ORDER BY created_at DESC';
+      const products = await api.query(query);
       return products.map(mapToAdminProduct);
     } catch (error) {
       console.error('Error fetching admin products:', error);
