@@ -71,7 +71,9 @@ const Products: React.FC = () => {
   const loadProducts = async () => {
     setLoading(true);
     try {
+      console.log('Loading products...');
       const allProducts = await SupabaseProductService.getAdminProducts();
+      console.log('Products loaded:', allProducts.length);
       setProducts(allProducts);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -200,8 +202,12 @@ const Products: React.FC = () => {
   };
   
   const handleSaveProduct = async (productData: ProductFormData) => {
+    setLoading(true);
     try {
+      console.log('Saving product:', productData);
+      
       if (productData.id) {
+        // Update existing product
         await SupabaseProductService.updateProduct(productData.id, productData);
         toast({
           title: language === 'sr' ? 'Proizvod ažuriran' : 'Product Updated',
@@ -210,7 +216,11 @@ const Products: React.FC = () => {
             : `Product "${productData.name}" has been successfully updated.`,
         });
       } else {
-        await SupabaseProductService.createProduct(productData);
+        // Create new product
+        console.log('Creating new product with data:', productData);
+        const newProduct = await SupabaseProductService.createProduct(productData);
+        console.log('New product created:', newProduct);
+        
         toast({
           title: language === 'sr' ? 'Proizvod dodat' : 'Product Added',
           description: language === 'sr' 
@@ -219,16 +229,23 @@ const Products: React.FC = () => {
         });
       }
       
-      loadProducts();
+      // Reload products to reflect changes
+      await loadProducts();
+      
+      // Close any open modals
+      setIsAddProductModalOpen(false);
+      setIsEditProductModalOpen(false);
     } catch (error) {
       console.error('Error saving product:', error);
       toast({
         title: language === 'sr' ? 'Greška' : 'Error',
         description: language === 'sr' 
-          ? `Greška pri čuvanju proizvoda "${productData.name}".` 
-          : `Error saving product "${productData.name}".`,
+          ? `Greška pri čuvanju proizvoda "${productData.name}". ${(error as Error).message}` 
+          : `Error saving product "${productData.name}". ${(error as Error).message}`,
         variant: 'destructive'
       });
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -648,7 +665,7 @@ const Products: React.FC = () => {
           <div className="space-y-4 py-4">
             <Textarea
               className="min-h-[200px] font-mono text-sm"
-              placeholder={language === 'sr' ? 'Zalepite JSON podatke ovde...' : 'Paste JSON data here...'}
+              placeholder={language === 'sr' ? 'Zalemite JSON podatke ovde...' : 'Paste JSON data here...'}
               value={importData}
               onChange={(e) => setImportData(e.target.value)}
             />

@@ -242,6 +242,7 @@ export const SupabaseProductService = {
       const product = mapToSupabaseProduct(formData);
       console.log('Creating product:', product);
       
+      // Kreiranje upita sa navedenim kolonama i vrednostima
       const columns = Object.keys(product).join(', ');
       const placeholders = Object.keys(product)
         .map((_, i) => `$${i + 1}`)
@@ -254,6 +255,11 @@ export const SupabaseProductService = {
       `;
       
       const values = Object.values(product);
+      
+      // Pokušaj da izvršimo upit direktno na serveru ako je moguće
+      console.log('Executing query:', query);
+      console.log('With values:', values);
+      
       const data = await executeQuery(query, values);
       
       if (!data || data.length === 0) {
