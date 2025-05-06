@@ -48,6 +48,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminProduct } from '@/services/ProductService';
 import { SupabaseProductService } from '@/services/SupabaseProductService';
+import { SupabaseCategoryService } from '@/services/SupabaseCategoryService';
 
 const Products: React.FC = () => {
   const { toast } = useToast();
@@ -56,6 +57,7 @@ const Products: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedProducts, setSelectedProducts] = useState<string[]>([]);
   const [products, setProducts] = useState<AdminProduct[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAddProductModalOpen, setIsAddProductModalOpen] = useState(false);
   const [isEditProductModalOpen, setIsEditProductModalOpen] = useState(false);
@@ -66,6 +68,7 @@ const Products: React.FC = () => {
   
   useEffect(() => {
     loadProducts();
+    loadCategories();
   }, []);
   
   const loadProducts = async () => {
@@ -84,6 +87,20 @@ const Products: React.FC = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const loadCategories = async () => {
+    try {
+      const allCategories = await SupabaseCategoryService.getCategories();
+      setCategories(allCategories);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+      toast({
+        title: language === 'sr' ? 'Greška' : 'Error',
+        description: language === 'sr' ? 'Greška pri učitavanju kategorija' : 'Error loading categories',
+        variant: 'destructive'
+      });
     }
   };
   
@@ -357,6 +374,14 @@ const Products: React.FC = () => {
     }
   };
 
+  const getCategoryLabel = (categorySlug: string) => {
+    const category = categories.find(cat => cat.slug === categorySlug);
+    if (category) {
+      return language === 'sr' ? category.name.sr : category.name.en;
+    }
+    return categorySlug;
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -511,15 +536,18 @@ const Products: React.FC = () => {
                       <TableCell>
                         <div className="h-10 w-10 rounded-md bg-secondary overflow-hidden">
                           <img 
-                            src={product.image} 
+                            src={product.image || '/placeholder.svg'} 
                             alt={product.title[language]} 
                             className="h-full w-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = '/placeholder.svg';
+                            }}
                           />
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{product.title[language]}</TableCell>
                       <TableCell>{product.sku}</TableCell>
-                      <TableCell>{product.category}</TableCell>
+                      <TableCell>{getCategoryLabel(product.category)}</TableCell>
                       <TableCell className="text-right">{product.price.toLocaleString()} RSD</TableCell>
                       <TableCell className="text-right">{product.stock}</TableCell>
                       <TableCell className="text-right">
@@ -609,6 +637,7 @@ const Products: React.FC = () => {
         onOpenChange={setIsAddProductModalOpen}
         onSave={handleSaveProduct}
         isEditing={false}
+        categories={categories}
       />
       
       <ProductFormModal
@@ -617,6 +646,7 @@ const Products: React.FC = () => {
         onSave={handleSaveProduct}
         product={currentProduct || undefined}
         isEditing={true}
+        categories={categories}
       />
       
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

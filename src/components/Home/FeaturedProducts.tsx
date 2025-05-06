@@ -15,6 +15,7 @@ interface FeaturedProductsProps {
   viewAllLink?: string;
   premiumCards?: boolean;
   newArrivals?: boolean;
+  category?: string;
   limit?: number;
   className?: string;
 }
@@ -24,6 +25,7 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
   viewAllLink = '/proizvodi',
   premiumCards = false,
   newArrivals = false,
+  category,
   limit = 4,
   className = ''
 }) => {
@@ -36,11 +38,18 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
       setLoading(true);
       try {
         let data: Product[];
-        if (newArrivals) {
+        
+        if (category) {
+          // Fetch products by category
+          data = await ProductService.getProducts(category, limit);
+        } else if (newArrivals) {
+          // Fetch new arrivals
           data = await ProductService.getNewArrivals(limit);
         } else {
+          // Fetch featured products
           data = await ProductService.getFeaturedProducts(limit);
         }
+        
         setProducts(data);
       } catch (error) {
         console.error('Error fetching products:', error);
@@ -50,11 +59,17 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
     };
 
     fetchProducts();
-  }, [newArrivals, limit]);
+  }, [category, newArrivals, limit]);
 
-  const defaultTitle = newArrivals 
-    ? (language === 'sr' ? 'Nove Ponude' : 'New Arrivals')
-    : (language === 'sr' ? 'Izdvojeni Proizvodi' : 'Featured Products');
+  // Determine title based on props
+  let defaultTitle;
+  if (category) {
+    defaultTitle = language === 'sr' ? 'Proizvodi iz kategorije' : 'Products from category';
+  } else if (newArrivals) {
+    defaultTitle = language === 'sr' ? 'Nove Ponude' : 'New Arrivals';
+  } else {
+    defaultTitle = language === 'sr' ? 'Izdvojeni Proizvodi' : 'Featured Products';
+  }
 
   const container = {
     hidden: { opacity: 0 },

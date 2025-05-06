@@ -146,6 +146,9 @@ const App = () => {
                       <Route path="settings" element={<Settings />} />
                     </Route>
                     
+                    {/* Category products */}
+                    <Route path="/category/:slug" element={<CategoryProducts />} />
+                    
                     {/* 404 catch-all */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

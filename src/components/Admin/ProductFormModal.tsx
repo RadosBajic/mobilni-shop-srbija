@@ -61,19 +61,14 @@ interface ProductFormModalProps {
   onSave: (data: ProductFormData) => void;
   product?: Partial<ProductFormData>;
   isEditing?: boolean;
+  categories?: any[];
 }
 
-// Categories for the select dropdown
-const CATEGORIES = [
+// Fallback categories for when API call fails
+const DEFAULT_CATEGORIES = [
   { value: 'phone-cases', labelEn: 'Phone Cases', labelSr: 'Maske za telefone' },
   { value: 'screen-protectors', labelEn: 'Screen Protectors', labelSr: 'Zaštita ekrana' },
   { value: 'chargers', labelEn: 'Chargers', labelSr: 'Punjači' },
-  { value: 'cables', labelEn: 'Cables', labelSr: 'Kablovi' },
-  { value: 'headphones', labelEn: 'Headphones', labelSr: 'Slušalice' },
-  { value: 'adapters', labelEn: 'Adapters', labelSr: 'Adapteri' },
-  { value: 'power-banks', labelEn: 'Power Banks', labelSr: 'Eksterna baterija' },
-  { value: 'speakers', labelEn: 'Speakers', labelSr: 'Zvučnici' },
-  { value: 'accessories', labelEn: 'Accessories', labelSr: 'Dodatna oprema' },
 ];
 
 const STATUS_OPTIONS = [
@@ -114,10 +109,16 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
   onSave,
   product = {},
   isEditing = false,
+  categories = [],
 }) => {
   const { toast } = useToast();
   const { language, t } = useLanguage();
   const [imagePreview, setImagePreview] = useState<string | null>(product.image || null);
+
+  // Use provided categories or fallback to defaults
+  const categoryOptions = categories.length > 0 
+    ? categories 
+    : DEFAULT_CATEGORIES;
 
   // Initialize the form with default values or existing product data
   const form = useForm<z.infer<typeof productFormSchema>>({
@@ -263,9 +264,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CATEGORIES.map(category => (
-                          <SelectItem key={category.value} value={category.value}>
-                            {language === 'sr' ? category.labelSr : category.labelEn}
+                        {categoryOptions.map(category => (
+                          <SelectItem key={category.slug || category.value} value={category.slug || category.value}>
+                            {language === 'sr' ? category.name?.sr || category.labelSr : category.name?.en || category.labelEn}
                           </SelectItem>
                         ))}
                       </SelectContent>
