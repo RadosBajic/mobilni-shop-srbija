@@ -23,6 +23,7 @@ import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import About from "./pages/About";
 import CategoryProducts from "./pages/CategoryProducts";
+import SearchPage from "./pages/SearchPage";
 
 // Admin pages
 import AdminLogin from "./pages/Admin/AdminLogin";
@@ -119,6 +120,7 @@ const App = () => {
                     <Route path="/about" element={<About />} />
                     <Route path="/cart" element={<Cart />} />
                     <Route path="/checkout" element={<Checkout />} />
+                    <Route path="/search" element={<SearchPage />} />
                     
                     {/* Auth routes */}
                     <Route path="/auth/login" element={<Login />} />
@@ -148,8 +150,8 @@ const App = () => {
                       <Route path="settings" element={<Settings />} />
                     </Route>
                     
-                    {/* Category products */}
-                    <Route path="/category/:slug" element={<CategoryProducts />} />
+                    {/* Category products - fixed route path */}
+                    <Route path="/kategorija/:slug" element={<CategoryProducts />} />
                     
                     {/* 404 catch-all */}
                     <Route path="*" element={<NotFound />} />

@@ -125,18 +125,18 @@ const CategoryProducts = () => {
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
         <BreadcrumbItem>
-          <BreadcrumbLink href="/">
-            {language === 'sr' ? 'Početna' : 'Home'}
+          <BreadcrumbLink asChild>
+            <Link to="/">{language === 'sr' ? 'Početna' : 'Home'}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <BreadcrumbLink href="/proizvodi">
-            {language === 'sr' ? 'Proizvodi' : 'Products'}
+          <BreadcrumbLink asChild>
+            <Link to="/proizvodi">{language === 'sr' ? 'Proizvodi' : 'Products'}</Link>
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <BreadcrumbLink>
-            {category ? (language === 'sr' ? category.name.sr : category.name.en) : ''}
+          <BreadcrumbLink asChild>
+            <span>{category ? (language === 'sr' ? category.name.sr : category.name.en) : ''}</span>
           </BreadcrumbLink>
         </BreadcrumbItem>
       </Breadcrumb>
@@ -197,7 +197,7 @@ const CategoryProducts = () => {
               ? 'Proizvodi iz ove kategorije će uskoro biti dostupni' 
               : 'Products for this category will be available soon'}
           </p>
-          <Button>
+          <Button asChild>
             <Link to="/proizvodi">
               {language === 'sr' ? 'Pogledajte sve proizvode' : 'Browse all products'}
             </Link>

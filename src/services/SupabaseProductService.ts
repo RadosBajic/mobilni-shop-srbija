@@ -1,4 +1,3 @@
-
 import { executeQuery } from '@/lib/neon';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from './ProductService';
@@ -222,6 +221,32 @@ export const SupabaseProductService = {
       return related;
     } catch (error) {
       console.error('Error in getRelatedProducts:', error);
+      throw error;
+    }
+  },
+  
+  searchProducts: async (query: string): Promise<Product[]> => {
+    try {
+      const searchQuery = `%${query.toLowerCase()}%`;
+      
+      const sqlQuery = `
+        SELECT * FROM products 
+        WHERE status = $1 
+        AND (
+          LOWER(title_sr) LIKE $2 OR 
+          LOWER(title_en) LIKE $2 OR 
+          LOWER(description_sr) LIKE $2 OR 
+          LOWER(description_en) LIKE $2 OR
+          sku LIKE $2
+        )
+        ORDER BY title_sr ASC
+        LIMIT 100
+      `;
+      
+      const data = await executeQuery(sqlQuery, ['active', searchQuery]);
+      return data.map(mapToProduct);
+    } catch (error) {
+      console.error('Error in searchProducts:', error);
       throw error;
     }
   },

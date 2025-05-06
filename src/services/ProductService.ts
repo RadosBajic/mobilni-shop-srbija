@@ -1,5 +1,14 @@
-import { api } from '@/lib/api';
+
+import { SupabaseProductService } from '@/services/SupabaseProductService';
 import { Product } from '@/components/Products/ProductCard';
+
+// Define the params interface for getProducts
+interface GetProductsParams {
+  category?: string;
+  limit?: number;
+  isOnSale?: boolean;
+  isNew?: boolean;
+}
 
 export interface AdminProduct extends Product {
   sku: string;
@@ -7,186 +16,120 @@ export interface AdminProduct extends Product {
   status: 'active' | 'outOfStock' | 'draft';
   descriptionSr: string;
   descriptionEn: string;
-  description: string; // Localized description based on current language
+  description: string;
 }
 
-const mapToProduct = (product: any): Product => ({
-  id: product.id,
-  title: {
-    sr: product.title_sr,
-    en: product.title_en
-  },
-  price: parseFloat(product.price),
-  oldPrice: product.old_price ? parseFloat(product.old_price) : null,
-  image: product.image || '',
-  category: product.category,
-  isNew: product.is_new,
-  isOnSale: product.is_on_sale,
-});
-
-const mapToAdminProduct = (product: any): AdminProduct => ({
-  ...mapToProduct(product),
-  sku: product.sku,
-  stock: product.stock,
-  status: product.status,
-  descriptionSr: product.description_sr || '',
-  descriptionEn: product.description_en || '',
-  description: '', // Will be set based on language
-});
-
 export const ProductService = {
-  getProducts: async (options: { category?: string, limit?: number, isOnSale?: boolean, isNew?: boolean } = {}): Promise<Product[]> => {
+  getProducts: async (params: GetProductsParams): Promise<Product[]> => {
     try {
-      const products = await api.getProducts(options);
-      return products.map(mapToProduct);
+      return await SupabaseProductService.getProducts(
+        params.category,
+        params.limit,
+        params.isOnSale,
+        params.isNew
+      );
     } catch (error) {
-      console.error('Error fetching products:', error);
+      console.error('ProductService getProducts error:', error);
       return [];
     }
   },
-  
-  getFeaturedProducts: async (limit = 4): Promise<Product[]> => {
+
+  getFeaturedProducts: async (limit: number = 4): Promise<Product[]> => {
     try {
-      const products = await api.getProducts({ isOnSale: true, limit });
-      return products.map(mapToProduct);
+      return await SupabaseProductService.getFeaturedProducts(limit);
     } catch (error) {
-      console.error('Error fetching featured products:', error);
+      console.error('ProductService getFeaturedProducts error:', error);
       return [];
     }
   },
-  
-  getNewArrivals: async (limit = 4): Promise<Product[]> => {
+
+  getNewArrivals: async (limit: number = 4): Promise<Product[]> => {
     try {
-      const products = await api.getProducts({ isNew: true, limit });
-      return products.map(mapToProduct);
+      return await SupabaseProductService.getNewArrivals(limit);
     } catch (error) {
-      console.error('Error fetching new arrivals:', error);
+      console.error('ProductService getNewArrivals error:', error);
       return [];
     }
   },
-  
+
   getProductById: async (id: string): Promise<Product | null> => {
     try {
-      // Fixed: Use query instead of a non-existent getProductById
-      const query = 'SELECT * FROM products WHERE id = $1';
-      const data = await api.query(query, [id]);
-      
-      if (!data || data.length === 0) return null;
-      return mapToProduct(data[0]);
+      return await SupabaseProductService.getProductById(id);
     } catch (error) {
-      console.error('Error fetching product:', error);
+      console.error('ProductService getProductById error:', error);
       return null;
     }
   },
-  
-  getProductsByCategory: async (categorySlug: string, limit?: number): Promise<Product[]> => {
+
+  getProductsByIds: async (ids: string[]): Promise<Product[]> => {
     try {
-      const products = await api.getProducts({ category: categorySlug, limit });
-      return products.map(mapToProduct);
+      return await SupabaseProductService.getProductsByIds(ids);
     } catch (error) {
-      console.error('Error fetching products by category:', error);
+      console.error('ProductService getProductsByIds error:', error);
       return [];
     }
   },
-  
-  // Admin methods
+
+  getRelatedProducts: async (productId: string, limit: number = 4): Promise<Product[]> => {
+    try {
+      return await SupabaseProductService.getRelatedProducts(productId, limit);
+    } catch (error) {
+      console.error('ProductService getRelatedProducts error:', error);
+      return [];
+    }
+  },
+
+  searchProducts: async (query: string): Promise<Product[]> => {
+    try {
+      // New function in SupabaseProductService
+      return await SupabaseProductService.searchProducts(query);
+    } catch (error) {
+      console.error('ProductService searchProducts error:', error);
+      return [];
+    }
+  },
+
   getAdminProducts: async (): Promise<AdminProduct[]> => {
     try {
-      // Fixed: Use query instead of non-existent getAdminProducts
-      const query = 'SELECT * FROM products ORDER BY created_at DESC';
-      const products = await api.query(query);
-      return products.map(mapToAdminProduct);
+      return await SupabaseProductService.getAdminProducts();
     } catch (error) {
-      console.error('Error fetching admin products:', error);
+      console.error('ProductService getAdminProducts error:', error);
       return [];
     }
   },
-  
-  createProduct: async (formData: {
-    nameSr: string;
-    nameEn: string;
-    price: number;
-    oldPrice?: number;
-    image: string;
-    category: string;
-    isNew: boolean;
-    isOnSale: boolean;
-    sku: string;
-    stock: number;
-    status: 'active' | 'outOfStock' | 'draft';
-    descriptionSr: string;
-    descriptionEn: string;
-  }): Promise<AdminProduct> => {
+
+  createProduct: async (formData: any): Promise<AdminProduct> => {
     try {
-      const productData = {
-        titleSr: formData.nameSr,
-        titleEn: formData.nameEn,
-        price: formData.price,
-        oldPrice: formData.oldPrice,
-        image: formData.image,
-        category: formData.category,
-        isNew: formData.isNew,
-        isOnSale: formData.isOnSale,
-        sku: formData.sku,
-        stock: formData.stock,
-        status: formData.status,
-        descriptionSr: formData.descriptionSr,
-        descriptionEn: formData.descriptionEn
-      };
-      
-      const product = await api.createProduct(productData);
-      return mapToAdminProduct(product);
+      return await SupabaseProductService.createProduct(formData);
     } catch (error) {
-      console.error('Error creating product:', error);
+      console.error('ProductService createProduct error:', error);
       throw error;
     }
   },
-  
-  updateProduct: async (id: string, formData: Partial<{
-    nameSr: string;
-    nameEn: string;
-    price: number;
-    oldPrice?: number;
-    image: string;
-    category: string;
-    isNew: boolean;
-    isOnSale: boolean;
-    sku: string;
-    stock: number;
-    status: 'active' | 'outOfStock' | 'draft';
-    descriptionSr: string;
-    descriptionEn: string;
-  }>): Promise<AdminProduct> => {
+
+  updateProduct: async (id: string, formData: any): Promise<AdminProduct> => {
     try {
-      const productData: any = {};
-      
-      if ('nameSr' in formData) productData.titleSr = formData.nameSr;
-      if ('nameEn' in formData) productData.titleEn = formData.nameEn;
-      if ('price' in formData) productData.price = formData.price;
-      if ('oldPrice' in formData) productData.oldPrice = formData.oldPrice;
-      if ('image' in formData) productData.image = formData.image;
-      if ('category' in formData) productData.category = formData.category;
-      if ('isNew' in formData) productData.isNew = formData.isNew;
-      if ('isOnSale' in formData) productData.isOnSale = formData.isOnSale;
-      if ('sku' in formData) productData.sku = formData.sku;
-      if ('stock' in formData) productData.stock = formData.stock;
-      if ('status' in formData) productData.status = formData.status;
-      if ('descriptionSr' in formData) productData.descriptionSr = formData.descriptionSr;
-      if ('descriptionEn' in formData) productData.descriptionEn = formData.descriptionEn;
-      
-      const product = await api.updateProduct(id, productData);
-      return mapToAdminProduct(product);
+      return await SupabaseProductService.updateProduct(id, formData);
     } catch (error) {
-      console.error('Error updating product:', error);
+      console.error('ProductService updateProduct error:', error);
       throw error;
     }
   },
-  
+
   deleteProduct: async (id: string): Promise<boolean> => {
     try {
-      return await api.deleteProduct(id);
+      return await SupabaseProductService.deleteProduct(id);
     } catch (error) {
-      console.error('Error deleting product:', error);
+      console.error('ProductService deleteProduct error:', error);
+      throw error;
+    }
+  },
+
+  bulkDeleteProducts: async (ids: string[]): Promise<boolean> => {
+    try {
+      return await SupabaseProductService.bulkDeleteProducts(ids);
+    } catch (error) {
+      console.error('ProductService bulkDeleteProducts error:', error);
       throw error;
     }
   }

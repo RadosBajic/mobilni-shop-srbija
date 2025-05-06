@@ -1,3 +1,4 @@
+
 import React from 'react';
 import MainLayout from '@/components/Layout/MainLayout';
 import HeroSlider from '@/components/Home/HeroSlider';
@@ -6,6 +7,8 @@ import FeaturedProducts from '@/components/Home/FeaturedProducts';
 import PromoBanner from '@/components/Home/PromoBanner';
 import PromotionsGrid from '@/components/Home/PromotionsGrid';
 import SaleBanner from '@/components/Home/SaleBanner';
+import WhatsNew from '@/components/Home/WhatsNew';
+import FeatureBox, { Feature } from '@/components/Home/FeatureBox';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Cpu, ShieldCheck, TruckIcon, Headphones, ArrowRight, Heart } from 'lucide-react';
@@ -15,7 +18,7 @@ import { Link } from 'react-router-dom';
 const Index: React.FC = () => {
   const { t, language } = useLanguage();
 
-  const features = [
+  const features: Feature[] = [
     {
       icon: TruckIcon,
       title: {
@@ -75,21 +78,7 @@ const Index: React.FC = () => {
         
         {/* Features section */}
         <div className="container relative z-10 -mt-16">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {features.map((feature, index) => (
-              <Card key={index} className="bg-card/80 backdrop-blur-sm border-primary/10 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1">
-                <CardContent className="p-6 flex items-start">
-                  <div className="rounded-full bg-primary/10 p-3 mr-4">
-                    <feature.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-1">{feature.title[language]}</h3>
-                    <p className="text-sm text-muted-foreground">{feature.description[language]}</p>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <FeatureBox features={features} />
         </div>
         
         {/* Category banners */}
@@ -99,6 +88,9 @@ const Index: React.FC = () => {
           </h2>
           <CategoryBanner />
         </div>
+        
+        {/* What's New section */}
+        <WhatsNew />
         
         {/* Promotions grid */}
         <div className="container">
@@ -122,6 +114,15 @@ const Index: React.FC = () => {
             newArrivals={true}
             viewAllLink="/proizvodi?new=true" 
             title={language === 'sr' ? 'Novi Proizvodi' : 'New Arrivals'}
+          />
+        </div>
+        
+        {/* Category-specific products - Added phone cases */}
+        <div className="container">
+          <FeaturedProducts 
+            category="phone-cases"
+            viewAllLink="/kategorija/phone-cases"
+            title={language === 'sr' ? 'Maske za telefone' : 'Phone Cases'}
           />
         </div>
         
