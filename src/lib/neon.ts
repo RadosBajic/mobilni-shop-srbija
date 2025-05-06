@@ -1,3 +1,4 @@
+
 // Ne importujemo Pool direktno, nego samo ako smo na serveru
 let Pool: any;
 
@@ -387,6 +388,20 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
     const product = mockProducts.find(p => p.id === params?.[0]);
     return product ? [{ category: product.category }] : [];
   }
+
+  // SELECTS za kategorije
+  else if (query.includes('SELECT * FROM categories WHERE slug = $1')) {
+    return mockCategories.filter(c => c.slug === params?.[0]);
+  }
+  else if (query.includes('SELECT * FROM categories WHERE id = $1')) {
+    return mockCategories.filter(c => c.id === params?.[0]);
+  }
+  else if (query.includes('SELECT * FROM categories WHERE is_active =')) {
+    return mockCategories.filter(c => c.is_active === params?.[0]);
+  }
+  else if (query.includes('SELECT * FROM categories ORDER BY display_order')) {
+    return [...mockCategories].sort((a, b) => a.display_order - b.display_order);
+  }
   else if (query.includes('SELECT * FROM categories')) {
     return mockCategories;
   }
@@ -420,6 +435,35 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
     }
     
     return [newProduct];
+  }
+  else if (query.includes('INSERT INTO categories')) {
+    const newCategory: any = { id: crypto.randomUUID() };
+    
+    // Parse columns and values from query
+    if (params) {
+      const columnsMatch = query.match(/INSERT INTO categories \(([^)]+)\)/);
+      const columns = columnsMatch ? columnsMatch[1].split(', ') : [];
+      
+      columns.forEach((col, index) => {
+        newCategory[col] = params[index];
+      });
+      
+      if (!newCategory.created_at) {
+        newCategory.created_at = new Date().toISOString();
+      }
+      if (!newCategory.updated_at) {
+        newCategory.updated_at = new Date().toISOString();
+      }
+      
+      mockCategories.push(newCategory);
+      setLocalStorage('mockCategories', mockCategories);
+      
+      // Log the change in a clear way
+      console.log('LOKALNO: Dodata nova kategorija:', newCategory);
+      console.log('LOKALNO: Ukupno kategorija:', mockCategories.length);
+    }
+    
+    return [newCategory];
   }
   
   // UPDATES
@@ -457,51 +501,6 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
     
     return [];
   }
-  
-  // DELETES
-  else if (query.includes('DELETE FROM products WHERE id = $1')) {
-    const idToDelete = params?.[0];
-    const deletedProduct = mockProducts.find(p => p.id === idToDelete);
-    mockProducts = mockProducts.filter(p => p.id !== idToDelete);
-    setLocalStorage('mockProducts', mockProducts);
-    
-    // Log the change
-    console.log('LOKALNO: Obrisan proizvod sa ID:', idToDelete);
-    return deletedProduct ? [deletedProduct] : [];
-  }
-  
-  // Kategorije i ostali entiteti
-  else if (query.includes('INSERT INTO categories')) {
-    const newCategory: any = { id: crypto.randomUUID() };
-    
-    // Parse columns and values from query
-    if (params) {
-      const columnsMatch = query.match(/INSERT INTO categories \(([^)]+)\)/);
-      const columns = columnsMatch ? columnsMatch[1].split(', ') : [];
-      
-      columns.forEach((col, index) => {
-        newCategory[col] = params[index];
-      });
-      
-      if (!newCategory.created_at) {
-        newCategory.created_at = new Date().toISOString();
-      }
-      if (!newCategory.updated_at) {
-        newCategory.updated_at = new Date().toISOString();
-      }
-      
-      mockCategories.push(newCategory);
-      setLocalStorage('mockCategories', mockCategories);
-      
-      // Log the change in a clear way
-      console.log('LOKALNO: Dodata nova kategorija:', newCategory);
-      console.log('LOKALNO: Ukupno kategorija:', mockCategories.length);
-    }
-    
-    return [newCategory];
-  }
-  
-  // UPDATES
   else if (query.includes('UPDATE categories SET')) {
     const idIndex = params ? params.findIndex((_, i) => query.includes(`id = $${i + 1}`)) : -1;
     const idParam = idIndex !== -1 ? params?.[idIndex] : params?.[params?.length - 1];
@@ -538,6 +537,16 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
   }
   
   // DELETES
+  else if (query.includes('DELETE FROM products WHERE id = $1')) {
+    const idToDelete = params?.[0];
+    const deletedProduct = mockProducts.find(p => p.id === idToDelete);
+    mockProducts = mockProducts.filter(p => p.id !== idToDelete);
+    setLocalStorage('mockProducts', mockProducts);
+    
+    // Log the change
+    console.log('LOKALNO: Obrisan proizvod sa ID:', idToDelete);
+    return deletedProduct ? [deletedProduct] : [];
+  }
   else if (query.includes('DELETE FROM categories WHERE id = $1')) {
     const idToDelete = params?.[0];
     const deletedCategory = mockCategories.find(c => c.id === idToDelete);
@@ -545,7 +554,7 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
     setLocalStorage('mockCategories', mockCategories);
     
     // Log the change
-    console.log('LOKALNO: Obrisan kategorija sa ID:', idToDelete);
+    console.log('LOKALNO: Obrisana kategorija sa ID:', idToDelete);
     return deletedCategory ? [deletedCategory] : [];
   }
   
@@ -560,4 +569,165 @@ export const resetMockDatabase = () => {
   localStorage.removeItem('mockProducts');
   localStorage.removeItem('mockCategories');
   window.location.reload();
+};
+
+// Novi API za kategorije koji će biti korišćen u komponenti
+export const categoryApi = {
+  getCategories: async (isActive?: boolean) => {
+    return executeQuery(
+      isActive !== undefined 
+        ? 'SELECT * FROM categories WHERE is_active = $1 ORDER BY display_order ASC' 
+        : 'SELECT * FROM categories ORDER BY display_order ASC',
+      isActive !== undefined ? [isActive] : undefined
+    );
+  },
+  
+  getCategoryBySlug: async (slug: string) => {
+    const result = await executeQuery(
+      'SELECT * FROM categories WHERE slug = $1', 
+      [slug]
+    );
+    return result.length ? result[0] : null;
+  },
+  
+  createCategory: async (data: any) => {
+    const { nameSr, nameEn, slug, descriptionSr, descriptionEn, image, isActive, displayOrder } = data;
+    
+    const generatedSlug = slug || nameSr.toLowerCase().replace(/[^\w\s]/gi, '').replace(/\s+/g, '-');
+    
+    return executeQuery(
+      `INSERT INTO categories (name_sr, name_en, slug, description_sr, description_en, image, is_active, display_order)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *`,
+      [nameSr, nameEn, generatedSlug, descriptionSr || null, descriptionEn || null, image || null, isActive, displayOrder || 0]
+    );
+  },
+  
+  updateCategory: async (id: string, data: any) => {
+    const { nameSr, nameEn, slug, descriptionSr, descriptionEn, image, isActive, displayOrder } = data;
+    
+    return executeQuery(
+      `UPDATE categories 
+      SET name_sr = $1, name_en = $2, slug = $3, description_sr = $4, description_en = $5, 
+          image = $6, is_active = $7, display_order = $8, updated_at = NOW()
+      WHERE id = $9
+      RETURNING *`,
+      [nameSr, nameEn, slug, descriptionSr || null, descriptionEn || null, image || null, isActive, displayOrder, id]
+    );
+  },
+  
+  deleteCategory: async (id: string) => {
+    return executeQuery('DELETE FROM categories WHERE id = $1', [id]);
+  }
+};
+
+// Novi API za proizvode koji će biti korišćen u komponenti
+export const productApi = {
+  getProducts: async (options: { category?: string, status?: string, isOnSale?: boolean, isNew?: boolean, limit?: number }) => {
+    let query = 'SELECT * FROM products WHERE 1=1';
+    const params: any[] = [];
+    let paramIndex = 1;
+    
+    if (options.status) {
+      query += ` AND status = $${paramIndex}`;
+      params.push(options.status);
+      paramIndex++;
+    }
+    
+    if (options.category) {
+      query += ` AND category = $${paramIndex}`;
+      params.push(options.category);
+      paramIndex++;
+    }
+    
+    if (options.isOnSale !== undefined) {
+      query += ` AND is_on_sale = $${paramIndex}`;
+      params.push(options.isOnSale);
+      paramIndex++;
+    }
+    
+    if (options.isNew !== undefined) {
+      query += ` AND is_new = $${paramIndex}`;
+      params.push(options.isNew);
+      paramIndex++;
+    }
+    
+    if (options.limit) {
+      query += ` LIMIT $${paramIndex}`;
+      params.push(options.limit);
+    }
+    
+    return executeQuery(query, params);
+  },
+  
+  getProductById: async (id: string) => {
+    const result = await executeQuery(
+      'SELECT * FROM products WHERE id = $1', 
+      [id]
+    );
+    return result.length ? result[0] : null;
+  },
+  
+  createProduct: async (data: any) => {
+    const columns = [
+      'title_sr', 'title_en', 'price', 'old_price', 'image', 'category',
+      'is_new', 'is_on_sale', 'sku', 'stock', 'status', 'description_sr', 'description_en'
+    ];
+    
+    const values = [
+      data.nameSr, 
+      data.nameEn, 
+      data.price, 
+      data.oldPrice || null, 
+      data.image || '', 
+      data.category,
+      data.isNew || false, 
+      data.isOnSale || false, 
+      data.sku, 
+      data.stock || 0, 
+      data.status || 'active',
+      data.descriptionSr || null, 
+      data.descriptionEn || null
+    ];
+    
+    const placeholders = columns.map((_, i) => `$${i + 1}`).join(', ');
+    
+    return executeQuery(
+      `INSERT INTO products (${columns.join(', ')})
+      VALUES (${placeholders})
+      RETURNING *`,
+      values
+    );
+  },
+  
+  updateProduct: async (id: string, data: any) => {
+    return executeQuery(
+      `UPDATE products 
+      SET title_sr = $1, title_en = $2, price = $3, old_price = $4, image = $5, category = $6, 
+          is_new = $7, is_on_sale = $8, sku = $9, stock = $10, status = $11, 
+          description_sr = $12, description_en = $13, updated_at = NOW()
+      WHERE id = $14
+      RETURNING *`,
+      [
+        data.nameSr, 
+        data.nameEn, 
+        data.price, 
+        data.oldPrice || null, 
+        data.image || '', 
+        data.category,
+        data.isNew || false, 
+        data.isOnSale || false, 
+        data.sku, 
+        data.stock || 0, 
+        data.status || 'active',
+        data.descriptionSr || null, 
+        data.descriptionEn || null,
+        id
+      ]
+    );
+  },
+  
+  deleteProduct: async (id: string) => {
+    return executeQuery('DELETE FROM products WHERE id = $1', [id]);
+  }
 };
