@@ -1,5 +1,4 @@
 
-import { NextApiRequest, NextApiResponse } from 'next';
 import { Pool } from 'pg';
 
 // Definišemo tipove za naš API response
@@ -17,45 +16,68 @@ const pool = new Pool({
   }
 });
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ApiResponse>
-) {
-  // Dozvoljavamo samo POST zahteve
+// Express-style handler function that works with both Express and standard fetch API
+export async function handleDbRequest(req: Request): Promise<ApiResponse> {
+  // Only allow POST requests
   if (req.method !== 'POST') {
-    return res.status(405).json({ success: false, error: 'Method not allowed' });
+    return { 
+      success: false, 
+      error: 'Method not allowed'
+    };
   }
 
   try {
-    // Izvlačimo query i params iz body-ja
-    const { query, params } = req.body;
+    // Extract query and params from request body
+    const body = await req.json();
+    const { query, params } = body;
     
-    // Osnovna validacija
+    // Basic validation
     if (!query || typeof query !== 'string') {
-      return res.status(400).json({ success: false, error: 'Invalid query' });
+      return { 
+        success: false, 
+        error: 'Invalid query' 
+      };
     }
     
-    // Provera bezbednosti - blokiramo određene tipove upita
+    // Security check - block certain types of queries
     const upperQuery = query.toUpperCase();
     const forbiddenKeywords = ['DROP', 'TRUNCATE', 'ALTER', 'GRANT', 'REVOKE'];
     if (forbiddenKeywords.some(keyword => upperQuery.includes(keyword))) {
-      return res.status(403).json({ success: false, error: 'Forbidden operation' });
+      return { 
+        success: false, 
+        error: 'Forbidden operation'
+      };
     }
     
-    // Izvršavanje upita
+    // Execute query
     const result = await pool.query(query, params);
     
-    // Vraćamo rezultat
-    return res.status(200).json({
+    // Return success response
+    return {
       success: true,
       data: result.rows
-    });
+    };
   } catch (error: any) {
     console.error('Database query error:', error);
     
-    return res.status(500).json({
+    return {
       success: false,
       error: error.message || 'Internal server error'
-    });
+    };
   }
+}
+
+// This function can be used directly in API routes
+export default async function handler(req: Request): Promise<Response> {
+  const result = await handleDbRequest(req);
+  
+  return new Response(
+    JSON.stringify(result),
+    { 
+      status: result.success ? 200 : result.error === 'Method not allowed' ? 405 : 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }
+  );
 }

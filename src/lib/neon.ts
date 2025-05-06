@@ -173,6 +173,13 @@ let mockCategories = getLocalStorage('mockCategories', [
   }
 ]);
 
+// Funkcija za kreiranje serverske API putanje
+const createServerEndpoint = (endpoint: string) => {
+  // Base URL za API zahteve - updated to use the new endpoint
+  const apiBase = '/api';
+  return `${apiBase}/${endpoint}`;
+};
+
 // Izvršavanje upita - poboljšana verzija
 export const executeQuery = async (
   query: string, 
@@ -201,7 +208,7 @@ export const executeQuery = async (
     // Za upite koji menjaju podatke, koristimo POST
     if (isModifyingQuery) {
       try {
-        // Slanje POST zahteva na server endpoint
+        // Slanje POST zahteva na server endpoint - using the updated endpoint
         const response = await fetch(createServerEndpoint('db'), {
           method: 'POST',
           headers: {
@@ -263,13 +270,6 @@ export const executeQuery = async (
     console.error('Database query error:', error);
     throw error;
   }
-};
-
-// Funkcija za kreiranje serverske API putanje
-const createServerEndpoint = (endpoint: string) => {
-  // Base URL za API zahteve
-  const apiBase = '/api';
-  return `${apiBase}/${endpoint}`;
 };
 
 // Funkcija za ažuriranje lokalnih podataka nakon server operacija
@@ -369,7 +369,6 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
     
     return filtered;
   }
-  // ... keep existing code (other query handlers)
   else if (query.includes('SELECT * FROM products WHERE id = $1')) {
     return mockProducts.filter(p => p.id === params?.[0]);
   }
@@ -472,7 +471,83 @@ const handleQueryLocally = (query: string, params?: any[]): any[] => {
   }
   
   // Kategorije i ostali entiteti
-  // ... keep existing code (other query handlers for categories and other entities)
+  else if (query.includes('INSERT INTO categories')) {
+    const newCategory: any = { id: crypto.randomUUID() };
+    
+    // Parse columns and values from query
+    if (params) {
+      const columnsMatch = query.match(/INSERT INTO categories \(([^)]+)\)/);
+      const columns = columnsMatch ? columnsMatch[1].split(', ') : [];
+      
+      columns.forEach((col, index) => {
+        newCategory[col] = params[index];
+      });
+      
+      if (!newCategory.created_at) {
+        newCategory.created_at = new Date().toISOString();
+      }
+      if (!newCategory.updated_at) {
+        newCategory.updated_at = new Date().toISOString();
+      }
+      
+      mockCategories.push(newCategory);
+      setLocalStorage('mockCategories', mockCategories);
+      
+      // Log the change in a clear way
+      console.log('LOKALNO: Dodata nova kategorija:', newCategory);
+      console.log('LOKALNO: Ukupno kategorija:', mockCategories.length);
+    }
+    
+    return [newCategory];
+  }
+  
+  // UPDATES
+  else if (query.includes('UPDATE categories SET')) {
+    const idIndex = params ? params.findIndex((_, i) => query.includes(`id = $${i + 1}`)) : -1;
+    const idParam = idIndex !== -1 ? params?.[idIndex] : params?.[params?.length - 1];
+    const categoryIndex = mockCategories.findIndex(c => c.id === idParam);
+    
+    if (categoryIndex !== -1) {
+      const updateFields = query.match(/SET ([^W]+)/)?.[1].split(', ');
+      
+      if (updateFields && params) {
+        const updatedCategory = { ...mockCategories[categoryIndex] };
+        
+        updateFields.forEach(field => {
+          const [column, paramPlaceholder] = field.split(' = ');
+          if (paramPlaceholder.startsWith('$')) {
+            const paramIndex = parseInt(paramPlaceholder.substring(1)) - 1;
+            if (paramIndex >= 0 && paramIndex < params.length) {
+              updatedCategory[column] = params[paramIndex];
+            }
+          }
+        });
+        
+        updatedCategory.updated_at = new Date().toISOString();
+        mockCategories[categoryIndex] = updatedCategory;
+        setLocalStorage('mockCategories', mockCategories);
+        
+        // Log the change
+        console.log('LOKALNO: Ažurirana kategorija:', updatedCategory);
+      }
+      
+      return [mockCategories[categoryIndex]];
+    }
+    
+    return [];
+  }
+  
+  // DELETES
+  else if (query.includes('DELETE FROM categories WHERE id = $1')) {
+    const idToDelete = params?.[0];
+    const deletedCategory = mockCategories.find(c => c.id === idToDelete);
+    mockCategories = mockCategories.filter(c => c.id !== idToDelete);
+    setLocalStorage('mockCategories', mockCategories);
+    
+    // Log the change
+    console.log('LOKALNO: Obrisan kategorija sa ID:', idToDelete);
+    return deletedCategory ? [deletedCategory] : [];
+  }
   
   // Default empty response
   return [];
