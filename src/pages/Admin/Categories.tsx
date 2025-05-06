@@ -167,7 +167,7 @@ const Categories = () => {
                   <TableCell>{category.name.en}</TableCell>
                   <TableCell>{category.slug}</TableCell>
                   <TableCell>
-                    <Badge variant={category.isActive ? "success" : "secondary"}>
+                    <Badge variant={category.isActive ? "primary" : "secondary"}>
                       {category.isActive ? "Aktivna" : "Neaktivna"}
                     </Badge>
                   </TableCell>
