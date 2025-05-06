@@ -37,8 +37,11 @@ const CategoryProducts = () => {
           const categoryData = await SupabaseCategoryService.getCategoryBySlug(slug);
           setCategory(categoryData);
 
-          // Load products for this category
-          const productsData = await ProductService.getProducts(slug);
+          // Load products for this category - passing as an object
+          const productsData = await ProductService.getProducts({
+            category: slug,
+            limit: 100
+          });
           
           // Apply sorting
           const sortedProducts = sortProducts(productsData, sortOption);
@@ -122,16 +125,16 @@ const CategoryProducts = () => {
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
         <BreadcrumbItem>
-          <BreadcrumbLink as={Link} to="/">
+          <BreadcrumbLink href="/">
             {language === 'sr' ? 'Početna' : 'Home'}
           </BreadcrumbLink>
         </BreadcrumbItem>
         <BreadcrumbItem>
-          <BreadcrumbLink as={Link} to="/proizvodi">
+          <BreadcrumbLink href="/proizvodi">
             {language === 'sr' ? 'Proizvodi' : 'Products'}
           </BreadcrumbLink>
         </BreadcrumbItem>
-        <BreadcrumbItem isCurrentPage>
+        <BreadcrumbItem>
           <BreadcrumbLink>
             {category ? (language === 'sr' ? category.name.sr : category.name.en) : ''}
           </BreadcrumbLink>
@@ -194,7 +197,7 @@ const CategoryProducts = () => {
               ? 'Proizvodi iz ove kategorije će uskoro biti dostupni' 
               : 'Products for this category will be available soon'}
           </p>
-          <Button asChild>
+          <Button>
             <Link to="/proizvodi">
               {language === 'sr' ? 'Pogledajte sve proizvode' : 'Browse all products'}
             </Link>

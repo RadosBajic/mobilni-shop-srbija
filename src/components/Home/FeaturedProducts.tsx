@@ -40,8 +40,11 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({
         let data: Product[];
         
         if (category) {
-          // Fetch products by category
-          data = await ProductService.getProducts(category, limit);
+          // Fetch products by category - pass category and limit as an object
+          data = await ProductService.getProducts({ 
+            category, 
+            limit 
+          });
         } else if (newArrivals) {
           // Fetch new arrivals
           data = await ProductService.getNewArrivals(limit);
