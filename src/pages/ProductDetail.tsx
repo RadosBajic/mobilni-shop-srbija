@@ -1,14 +1,26 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
-import { useCart } from '@/contexts/CartContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useCart } from '@/contexts/CartContext';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ShoppingCart, Heart, Share2, Star, ChevronRight, Minus, Plus, Loader2, AlertTriangle } from 'lucide-react';
+import { 
+  MinusIcon, 
+  PlusIcon, 
+  ShoppingCart, 
+  ArrowLeft, 
+  Heart,
+  Share,
+  Truck, 
+  ShieldCheck,
+  CreditCard
+} from 'lucide-react';
+import { ProductService } from '@/services/ProductService';
+import { Product } from '@/components/Products/ProductCard';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -16,39 +28,37 @@ import {
   BreadcrumbList,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { ProductService } from '@/services/ProductService';
-import { Product } from '@/components/Products/ProductCard';
-import FeaturedProducts from '@/components/Home/FeaturedProducts';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import Rating from '@/components/Reviews/Rating';
+import ProductReviews from '@/components/Reviews/ProductReviews';
+import RelatedProducts from '@/components/Products/RelatedProducts';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const [quantity, setQuantity] = useState(1);
-  const [selectedImage, setSelectedImage] = useState(0);
   const { language } = useLanguage();
   const { addToCart } = useCart();
   const { toast } = useToast();
   
   const [product, setProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [quantity, setQuantity] = useState<number>(1);
+  const [selectedTab, setSelectedTab] = useState<string>("description");
   
-  // Fetch product data
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
-      setError(null);
       try {
-        if (!id) {
-          throw new Error('Product ID is missing');
+        if (id) {
+          const productData = await ProductService.getProductById(id);
+          setProduct(productData);
         }
-        const productData = await ProductService.getProductById(id);
-        if (!productData) {
-          throw new Error('Product not found');
-        }
-        setProduct(productData);
-      } catch (err) {
-        console.error('Error fetching product:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load product');
+      } catch (error) {
+        console.error('Error fetching product:', error);
       } finally {
         setLoading(false);
       }
@@ -57,16 +67,6 @@ const ProductDetail: React.FC = () => {
     fetchProduct();
   }, [id]);
   
-  const incrementQuantity = () => {
-    setQuantity(prev => prev + 1);
-  };
-  
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(prev => prev - 1);
-    }
-  };
-  
   const handleAddToCart = () => {
     if (!product) return;
     
@@ -74,24 +74,48 @@ const ProductDetail: React.FC = () => {
       id: product.id,
       name: product.title[language],
       price: product.price,
-      image: product.image
+      image: product.image,
+      quantity
     });
     
     toast({
       title: language === 'sr' ? 'Proizvod dodat u korpu' : 'Product added to cart',
-      description: product.title[language],
+      description: `${quantity}x ${product.title[language]}`,
     });
   };
   
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat(language === 'sr' ? 'sr-RS' : 'en-US', {
-      style: 'currency',
-      currency: 'RSD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  const incrementQuantity = () => setQuantity(prev => prev + 1);
+  const decrementQuantity = () => setQuantity(prev => (prev > 1 ? prev - 1 : 1));
   
   const translations = {
+    loading: {
+      sr: 'Učitavanje proizvoda...',
+      en: 'Loading product...',
+    },
+    notFound: {
+      sr: 'Proizvod nije pronađen',
+      en: 'Product not found',
+    },
+    backToProducts: {
+      sr: 'Nazad na proizvode',
+      en: 'Back to products',
+    },
+    products: {
+      sr: 'Proizvodi',
+      en: 'Products',
+    },
+    inStock: {
+      sr: 'Na stanju',
+      en: 'In Stock',
+    },
+    outOfStock: {
+      sr: 'Nema na stanju',
+      en: 'Out of Stock',
+    },
+    quantity: {
+      sr: 'Količina',
+      en: 'Quantity',
+    },
     addToCart: {
       sr: 'Dodaj u korpu',
       en: 'Add to Cart',
@@ -100,170 +124,110 @@ const ProductDetail: React.FC = () => {
       sr: 'Opis',
       en: 'Description',
     },
-    features: {
-      sr: 'Karakteristike',
-      en: 'Features',
+    specifications: {
+      sr: 'Specifikacije',
+      en: 'Specifications',
     },
     reviews: {
       sr: 'Recenzije',
       en: 'Reviews',
     },
-    inStock: {
-      sr: 'Na stanju',
-      en: 'In Stock',
-    },
-    outOfStock: {
-      sr: 'Nije na stanju',
-      en: 'Out of Stock',
-    },
-    sku: {
-      sr: 'Šifra proizvoda',
-      en: 'SKU',
-    },
-    brand: {
-      sr: 'Brend',
-      en: 'Brand',
-    },
-    compatibility: {
-      sr: 'Kompatibilnost',
-      en: 'Compatibility',
-    },
-    material: {
-      sr: 'Materijal',
-      en: 'Material',
-    },
-    quantity: {
-      sr: 'Količina',
-      en: 'Quantity',
-    },
     shipping: {
       sr: 'Dostava',
       en: 'Shipping',
+    },
+    shippingInfo: {
+      sr: 'Besplatna dostava za sve porudžbine iznad 3000 RSD.',
+      en: 'Free shipping for all orders above 3000 RSD.',
     },
     warranty: {
       sr: 'Garancija',
       en: 'Warranty',
     },
-    wishlist: {
-      sr: 'Dodaj u listu želja',
-      en: 'Add to Wishlist',
+    warrantyInfo: {
+      sr: 'Garancija proizvođača 24 meseca.',
+      en: 'Manufacturer warranty 24 months.',
     },
-    share: {
-      sr: 'Podeli',
-      en: 'Share',
+    payment: {
+      sr: 'Plaćanje',
+      en: 'Payment',
     },
-    relatedProducts: {
-      sr: 'Slični proizvodi',
-      en: 'Related Products',
+    paymentInfo: {
+      sr: 'Plaćanje pouzećem, karticom ili preko računa.',
+      en: 'Cash on delivery, credit card or bank transfer.',
     },
-    loading: {
-      sr: 'Učitavanje...',
-      en: 'Loading...',
+    price: {
+      sr: 'Cena',
+      en: 'Price',
     },
-    errorLoading: {
-      sr: 'Greška pri učitavanju proizvoda',
-      en: 'Error loading product',
+    noDescription: {
+      sr: 'Nema opisa za ovaj proizvod.',
+      en: 'No description available for this product.',
     },
-    tryAgain: {
-      sr: 'Pokušajte ponovo',
-      en: 'Try again',
+    noSpecifications: {
+      sr: 'Nema tehničkih specifikacija za ovaj proizvod.',
+      en: 'No technical specifications available for this product.',
     },
-    productNotFound: {
-      sr: 'Proizvod nije pronađen',
-      en: 'Product not found',
+    new: {
+      sr: 'Novo',
+      en: 'New',
+    },
+    sale: {
+      sr: 'Akcija',
+      en: 'Sale',
     },
   };
-
+  
   if (loading) {
     return (
       <MainLayout>
-        <div className="container py-8 flex flex-col items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-12 w-12 animate-spin text-primary mb-4" />
-          <div className="text-xl font-medium">{translations.loading[language]}</div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  if (error || !product) {
-    return (
-      <MainLayout>
-        <div className="container py-8">
-          <Alert variant="destructive" className="mb-4">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            <AlertDescription>
-              {error || translations.productNotFound[language]}
-            </AlertDescription>
-          </Alert>
-          <Button asChild>
-            <a href="/proizvodi">{language === 'sr' ? 'Pogledaj sve proizvode' : 'Browse all products'}</a>
-          </Button>
+        <div className="container py-12 flex justify-center">
+          <div className="animate-pulse space-y-8 w-full max-w-4xl">
+            <div className="h-6 bg-muted rounded w-1/3"></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="aspect-square bg-muted rounded"></div>
+              <div className="space-y-4">
+                <div className="h-8 bg-muted rounded w-2/3"></div>
+                <div className="h-6 bg-muted rounded w-1/2"></div>
+                <div className="h-20 bg-muted rounded"></div>
+                <div className="h-12 bg-muted rounded w-1/3"></div>
+                <div className="h-12 bg-muted rounded"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </MainLayout>
     );
   }
   
-  // Mock data for additional details
-  const mockProductDetails = {
-    rating: 4.5,
-    reviewCount: 28,
-    images: [product.image],
-    category: {
-      sr: product.category === 'phone-cases' ? 'Maske za telefone' :
-          product.category === 'screen-protectors' ? 'Zaštita ekrana' :
-          product.category === 'headphones' ? 'Slušalice' :
-          product.category === 'chargers' ? 'Punjači' :
-          product.category === 'cables' ? 'Kablovi' : 'Ostalo',
-      en: product.category === 'phone-cases' ? 'Phone Cases' :
-          product.category === 'screen-protectors' ? 'Screen Protectors' :
-          product.category === 'headphones' ? 'Headphones' :
-          product.category === 'chargers' ? 'Chargers' :
-          product.category === 'cables' ? 'Cables' : 'Other'
-    },
-    brand: 'MobShop',
-    compatibility: product.category === 'phone-cases' ? ['iPhone 14 Pro', 'iPhone 14 Pro Max'] :
-                  product.category === 'screen-protectors' ? ['Samsung Galaxy S23 Ultra'] : [],
-    material: {
-      sr: product.category === 'phone-cases' ? 'Silikon' : 'Plastika',
-      en: product.category === 'phone-cases' ? 'Silicone' : 'Plastic'
-    },
-    description: {
-      sr: `Ovo je ${product.title.sr.toLowerCase()}. Visok kvalitet izrade i materijala garantuje dugotrajnu upotrebu i zaštitu vašeg uređaja.`,
-      en: `This is a ${product.title.en.toLowerCase()}. High quality materials and craftsmanship ensure long-lasting use and protection for your device.`
-    },
-    features: {
-      sr: [
-        'Precizno isečeni otvori za sve portove i kameru',
-        '100% kompatibilnost sa bežičnim punjenjem',
-        'Povišene ivice za zaštitu ekrana i kamere',
-        'Prvoklasni materijali koji ne klize',
-        'Tanka i lagana konstrukcija'
-      ],
-      en: [
-        'Precisely cut openings for all ports and the camera',
-        '100% compatibility with wireless charging',
-        'Raised edges to protect the screen and camera',
-        'Premium non-slip materials',
-        'Thin and lightweight construction'
-      ]
-    },
-    inStock: true,
-    sku: `MS-${product.id.toUpperCase()}`,
-    shippingInfo: {
-      sr: 'Besplatna dostava za porudžbine preko 3000 RSD',
-      en: 'Free shipping for orders over 3000 RSD'
-    },
-    warranty: {
-      sr: '12 meseci garancije',
-      en: '12 months warranty'
-    }
-  };
+  if (!product) {
+    return (
+      <MainLayout>
+        <div className="container py-12 text-center">
+          <h1 className="text-2xl font-bold mb-4">{translations.notFound[language]}</h1>
+          <Button asChild>
+            <Link to="/proizvodi">
+              {translations.backToProducts[language]}
+            </Link>
+          </Button>
+        </div>
+      </MainLayout>
+    );
+  }
 
-  // If we only have one image, duplicate it
-  const productImages = mockProductDetails.images.length === 1 
-    ? [mockProductDetails.images[0], mockProductDetails.images[0], mockProductDetails.images[0], mockProductDetails.images[0]]
-    : mockProductDetails.images;
-    
+  // Sample description - in real app this would come from the product data
+  const productDescription = language === 'sr' 
+    ? 'Ovo je detaljan opis proizvoda na srpskom jeziku. Ovde bi trebalo da stoji sve o karakteristikama, prednostima i načinu korišćenja proizvoda.'
+    : 'This is a detailed product description in English. Here should be all information about features, benefits and usage of the product.';
+
+  // Sample specifications - in real app these would come from the product data  
+  const specifications = [
+    { name: { sr: 'Dimenzije', en: 'Dimensions' }, value: '10 x 5 x 2 cm' },
+    { name: { sr: 'Težina', en: 'Weight' }, value: '150g' },
+    { name: { sr: 'Materijal', en: 'Material' }, value: { sr: 'Plastika', en: 'Plastic' } },
+    { name: { sr: 'Boja', en: 'Color' }, value: { sr: 'Crna', en: 'Black' } },
+  ];
+  
   return (
     <MainLayout>
       <div className="container py-8">
@@ -275,164 +239,110 @@ const ProductDetail: React.FC = () => {
                 {language === 'sr' ? 'Početna' : 'Home'}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-4 w-4" />
-            </BreadcrumbSeparator>
+            <BreadcrumbSeparator />
             <BreadcrumbItem>
               <BreadcrumbLink href="/proizvodi">
-                {language === 'sr' ? 'Proizvodi' : 'Products'}
+                {translations.products[language]}
               </BreadcrumbLink>
             </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-4 w-4" />
-            </BreadcrumbSeparator>
+            <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href={`/category/${product.category}`}>
-                {mockProductDetails.category[language]}
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-4 w-4" />
-            </BreadcrumbSeparator>
-            <BreadcrumbItem>
-              <BreadcrumbLink className="text-muted-foreground">
+              <BreadcrumbLink>
                 {product.title[language]}
               </BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-          {/* Product images */}
-          <div className="space-y-4">
-            <div className="border rounded-lg overflow-hidden bg-white aspect-square">
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          {/* Product Image */}
+          <div className="bg-card rounded-lg border overflow-hidden">
+            <div className="aspect-square relative">
               <img 
-                src={productImages[selectedImage]} 
+                src={product.image || '/placeholder.svg'} 
                 alt={product.title[language]} 
                 className="w-full h-full object-contain p-4"
               />
-            </div>
-            
-            <div className="grid grid-cols-4 gap-2">
-              {productImages.map((image, index) => (
-                <button 
-                  key={index} 
-                  className={`border rounded-md overflow-hidden ${index === selectedImage ? 'ring-2 ring-primary' : ''}`}
-                  onClick={() => setSelectedImage(index)}
-                >
-                  <img 
-                    src={image} 
-                    alt={`${product.title[language]} - thumbnail ${index + 1}`} 
-                    className="w-full h-24 object-cover"
-                  />
-                </button>
-              ))}
+              
+              {product.isNew && (
+                <Badge className="absolute top-4 left-4 bg-green-500 hover:bg-green-600">
+                  {translations.new[language]}
+                </Badge>
+              )}
+              
+              {product.isOnSale && product.oldPrice && (
+                <Badge variant="destructive" className="absolute top-4 right-4">
+                  -{Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)}%
+                </Badge>
+              )}
             </div>
           </div>
           
-          {/* Product info */}
+          {/* Product Details */}
           <div>
-            <h1 className="text-3xl font-bold mb-2">{product.title[language]}</h1>
+            <h1 className="text-3xl font-bold">{product.title[language]}</h1>
             
-            {/* Ratings */}
-            <div className="flex items-center mb-4">
-              <div className="flex text-amber-500">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    fill={i < Math.floor(mockProductDetails.rating) ? "currentColor" : "none"} 
-                    className="h-5 w-5"
-                  />
-                ))}
-              </div>
-              <span className="ml-2 text-sm text-muted-foreground">
-                ({mockProductDetails.reviewCount} {language === 'sr' ? 'recenzija' : 'reviews'})
+            <div className="flex items-center gap-2 mt-2">
+              <Rating value={4.5} />
+              <span className="text-sm text-muted-foreground">(24)</span>
+            </div>
+            
+            <div className="mt-4 flex items-end gap-2">
+              <span className="text-3xl font-bold">
+                {product.price.toLocaleString()} RSD
               </span>
-            </div>
-            
-            {/* Price */}
-            <div className="mb-6">
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
-                {product.oldPrice && (
-                  <span className="text-xl text-muted-foreground line-through">
-                    {formatPrice(product.oldPrice)}
-                  </span>
-                )}
-              </div>
               
-              <div className="text-sm text-muted-foreground mt-1">
-                {translations.shipping[language]}: {mockProductDetails.shippingInfo[language]}
-              </div>
-            </div>
-            
-            {/* Quick details */}
-            <div className="grid grid-cols-2 gap-y-2 mb-6">
-              <div className="text-sm text-muted-foreground">{translations.sku[language]}:</div>
-              <div className="text-sm">{mockProductDetails.sku}</div>
-              
-              <div className="text-sm text-muted-foreground">{translations.brand[language]}:</div>
-              <div className="text-sm">{mockProductDetails.brand}</div>
-              
-              {mockProductDetails.material && (
-                <>
-                  <div className="text-sm text-muted-foreground">{translations.material[language]}:</div>
-                  <div className="text-sm">{mockProductDetails.material[language]}</div>
-                </>
-              )}
-              
-              {mockProductDetails.compatibility && mockProductDetails.compatibility.length > 0 && (
-                <>
-                  <div className="text-sm text-muted-foreground">{translations.compatibility[language]}:</div>
-                  <div className="text-sm">{mockProductDetails.compatibility.join(', ')}</div>
-                </>
+              {product.oldPrice && (
+                <span className="text-lg text-muted-foreground line-through mb-1">
+                  {product.oldPrice.toLocaleString()} RSD
+                </span>
               )}
             </div>
             
-            {/* Add to cart */}
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <div className="text-sm font-medium mr-4">{translations.quantity[language]}:</div>
-                <div className="flex border rounded-md">
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-9 w-9 rounded-r-none"
+            <div className="mt-6 space-y-6">
+              {/* Product Status */}
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-2 w-2 rounded-full bg-green-500"></span>
+                <span className="text-sm">
+                  {translations.inStock[language]}
+                </span>
+              </div>
+              
+              {/* Quantity Selector */}
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  {translations.quantity[language]}
+                </label>
+                <div className="flex items-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={decrementQuantity}
+                    disabled={quantity <= 1}
                   >
-                    <Minus className="h-4 w-4" />
+                    <MinusIcon className="h-4 w-4" />
                   </Button>
-                  <div className="flex items-center justify-center w-12 border-x">
-                    {quantity}
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="h-9 w-9 rounded-l-none"
+                  <span className="w-12 text-center">{quantity}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
                     onClick={incrementQuantity}
                   >
-                    <Plus className="h-4 w-4" />
+                    <PlusIcon className="h-4 w-4" />
                   </Button>
-                </div>
-                
-                <div className="ml-auto flex items-center">
-                  {mockProductDetails.inStock ? (
-                    <span className="text-green-600 flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-green-600 mr-1.5"></div>
-                      {translations.inStock[language]}
-                    </span>
-                  ) : (
-                    <span className="text-red-500 flex items-center">
-                      <div className="w-2 h-2 rounded-full bg-red-500 mr-1.5"></div>
-                      {translations.outOfStock[language]}
-                    </span>
-                  )}
                 </div>
               </div>
               
-              <div className="flex gap-3">
-                <Button className="flex-1" onClick={handleAddToCart} disabled={!mockProductDetails.inStock}>
-                  <ShoppingCart className="mr-2 h-4 w-4" />
+              {/* Add to Cart */}
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button 
+                  size="lg" 
+                  className="flex-1 gap-2" 
+                  onClick={handleAddToCart}
+                >
+                  <ShoppingCart className="h-5 w-5" />
                   {translations.addToCart[language]}
                 </Button>
                 
@@ -441,66 +351,82 @@ const ProductDetail: React.FC = () => {
                 </Button>
                 
                 <Button variant="outline" size="icon">
-                  <Share2 className="h-5 w-5" />
+                  <Share className="h-5 w-5" />
                 </Button>
+              </div>
+              
+              {/* Product Info Boxes */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+                <div className="bg-muted/50 p-4 rounded-lg flex items-center gap-4">
+                  <Truck className="h-5 w-5 text-primary" />
+                  <div>
+                    <div className="font-medium text-sm">{translations.shipping[language]}</div>
+                    <div className="text-xs text-muted-foreground">{translations.shippingInfo[language]}</div>
+                  </div>
+                </div>
+                
+                <div className="bg-muted/50 p-4 rounded-lg flex items-center gap-4">
+                  <ShieldCheck className="h-5 w-5 text-primary" />
+                  <div>
+                    <div className="font-medium text-sm">{translations.warranty[language]}</div>
+                    <div className="text-xs text-muted-foreground">{translations.warrantyInfo[language]}</div>
+                  </div>
+                </div>
+                
+                <div className="bg-muted/50 p-4 rounded-lg flex items-center gap-4">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <div>
+                    <div className="font-medium text-sm">{translations.payment[language]}</div>
+                    <div className="text-xs text-muted-foreground">{translations.paymentInfo[language]}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
         
-        {/* Product details tabs */}
-        <Tabs defaultValue="description" className="w-full">
-          <TabsList className="w-full border-b rounded-none justify-start">
+        {/* Product Details Tabs */}
+        <Tabs defaultValue="description" value={selectedTab} onValueChange={setSelectedTab} className="mb-10">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-3 lg:w-[400px]">
             <TabsTrigger value="description">{translations.description[language]}</TabsTrigger>
-            <TabsTrigger value="features">{translations.features[language]}</TabsTrigger>
+            <TabsTrigger value="specifications">{translations.specifications[language]}</TabsTrigger>
             <TabsTrigger value="reviews">{translations.reviews[language]}</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="description" className="py-6">
-            <div className="prose max-w-none">
-              <p>{mockProductDetails.description[language]}</p>
+          <TabsContent value="description" className="pt-6">
+            <div className="prose prose-sm max-w-none">
+              {productDescription || translations.noDescription[language]}
             </div>
           </TabsContent>
           
-          <TabsContent value="features" className="py-6">
-            <div className="prose max-w-none">
-              <ul className="space-y-2">
-                {mockProductDetails.features[language].map((feature, index) => (
-                  <li key={index} className="flex items-start">
-                    <div className="bg-primary/10 text-primary rounded-full w-6 h-6 flex items-center justify-center mr-3 mt-0.5 flex-shrink-0">
-                      ✓
+          <TabsContent value="specifications" className="pt-6">
+            {specifications.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {specifications.map((spec, index) => (
+                  <div key={index} className="flex items-start py-2 border-b">
+                    <div className="w-1/2 font-medium">
+                      {typeof spec.name === 'object' ? spec.name[language] : spec.name}:
                     </div>
-                    {feature}
-                  </li>
+                    <div className="w-1/2">
+                      {typeof spec.value === 'object' ? spec.value[language] : spec.value}
+                    </div>
+                  </div>
                 ))}
-              </ul>
-            </div>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">
+                {translations.noSpecifications[language]}
+              </div>
+            )}
           </TabsContent>
           
-          <TabsContent value="reviews" className="py-6">
-            <div className="text-center py-8">
-              <div className="text-6xl font-bold text-primary mb-2">{mockProductDetails.rating.toFixed(1)}</div>
-              <div className="flex justify-center text-amber-500 mb-2">
-                {[...Array(5)].map((_, i) => (
-                  <Star 
-                    key={i} 
-                    fill={i < Math.floor(mockProductDetails.rating) ? "currentColor" : "none"} 
-                    className="h-5 w-5"
-                  />
-                ))}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {mockProductDetails.reviewCount} {language === 'sr' ? 'recenzija' : 'reviews'}
-              </div>
-            </div>
+          <TabsContent value="reviews" className="pt-6">
+            <ProductReviews productId={product.id} />
           </TabsContent>
         </Tabs>
         
-        {/* Related products */}
-        <div className="mt-10">
-          <h2 className="text-2xl font-bold mb-6">{translations.relatedProducts[language]}</h2>
-          <FeaturedProducts limit={4} />
-        </div>
+        {/* Related Products */}
+        <RelatedProducts productId={product.id} />
       </div>
     </MainLayout>
   );

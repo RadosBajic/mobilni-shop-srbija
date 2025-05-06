@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -25,6 +26,17 @@ import { ShoppingCart, Search, SlidersHorizontal, FilterX, Check } from 'lucide-
 import { ProductService } from '@/services/ProductService';
 import { Product } from '@/components/Products/ProductCard';
 import ProductCard from '@/components/Products/ProductCard';
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useMediaQuery } from '@/hooks/use-mobile';
 
 const categories = [
   { id: 'phone-cases', nameSr: 'Maske za telefone', nameEn: 'Phone Cases' },
@@ -41,6 +53,7 @@ const Products: React.FC = () => {
   const { language } = useLanguage();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const isMobile = useMediaQuery("(max-width: 768px)");
   
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +65,8 @@ const Products: React.FC = () => {
   
   // Filter visibility on mobile
   const [filtersVisible, setFiltersVisible] = useState(false);
+  // Drawer state for mobile filters
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   
   // Fetch products
   useEffect(() => {
@@ -214,7 +229,124 @@ const Products: React.FC = () => {
       sr: 'Sakrij filtere',
       en: 'Hide Filters',
     },
+    addToCart: {
+      sr: 'Dodaj u korpu',
+      en: 'Add to Cart',
+    },
+    mobileFilters: {
+      sr: 'Filteri',
+      en: 'Filters',
+    },
+    mobileFiltersDesc: {
+      sr: 'Izaberite opcije za filtriranje proizvoda',
+      en: 'Select options to filter products',
+    },
+    apply: {
+      sr: 'Primeni',
+      en: 'Apply',
+    },
   };
+  
+  // Render the filter sidebar for mobile using Drawer
+  const renderMobileFilters = () => (
+    <Drawer open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+      <DrawerTrigger asChild>
+        <Button 
+          variant="outline" 
+          className="sm:hidden flex gap-2 items-center" 
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          {translations.mobileFilters[language]}
+        </Button>
+      </DrawerTrigger>
+      <DrawerContent>
+        <DrawerHeader>
+          <DrawerTitle>{translations.filters[language]}</DrawerTitle>
+          <DrawerDescription>{translations.mobileFiltersDesc[language]}</DrawerDescription>
+        </DrawerHeader>
+        <div className="px-4 py-2">
+          <div className="space-y-4">
+            <h3 className="font-medium">{translations.categories[language]}</h3>
+            <div className="space-y-2">
+              {categories.map((category) => (
+                <div key={category.id} className="flex items-center space-x-2">
+                  <Checkbox 
+                    id={`mobile-category-${category.id}`} 
+                    checked={selectedCategories.includes(category.id)}
+                    onCheckedChange={() => handleCategoryToggle(category.id)}
+                  />
+                  <label 
+                    htmlFor={`mobile-category-${category.id}`}
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                  >
+                    {language === 'sr' ? category.nameSr : category.nameEn}
+                  </label>
+                </div>
+              ))}
+            </div>
+            
+            <Separator className="my-4" />
+            
+            <h3 className="font-medium">{translations.productStatus[language]}</h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="mobile-new-products" 
+                  checked={showNewOnly}
+                  onCheckedChange={(checked) => setShowNewOnly(!!checked)}
+                />
+                <label 
+                  htmlFor="mobile-new-products"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {translations.newProducts[language]}
+                </label>
+              </div>
+              
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                  id="mobile-on-sale" 
+                  checked={showSaleOnly}
+                  onCheckedChange={(checked) => setShowSaleOnly(!!checked)}
+                />
+                <label 
+                  htmlFor="mobile-on-sale"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                >
+                  {translations.onSale[language]}
+                </label>
+              </div>
+            </div>
+            
+            <Separator className="my-4" />
+            
+            <h3 className="font-medium">{translations.sortBy[language]}</h3>
+            <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+              <SelectTrigger>
+                <SelectValue placeholder={translations.sortBy[language]} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{translations.newest[language]}</SelectItem>
+                <SelectItem value="price-asc">{translations.priceAsc[language]}</SelectItem>
+                <SelectItem value="price-desc">{translations.priceDesc[language]}</SelectItem>
+                <SelectItem value="alphabetical">{translations.alphabetical[language]}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DrawerFooter>
+          <Button onClick={() => {setIsDrawerOpen(false);}}>
+            {translations.apply[language]}
+          </Button>
+          <DrawerClose asChild>
+            <Button variant="outline" onClick={resetFilters}>
+              {translations.resetFilters[language]}
+            </Button>
+          </DrawerClose>
+        </DrawerFooter>
+      </DrawerContent>
+    </Drawer>
+  );
   
   return (
     <MainLayout>
@@ -234,23 +366,27 @@ const Products: React.FC = () => {
             />
           </div>
           
-          <Button 
-            variant="outline" 
-            className="sm:hidden flex gap-2 items-center" 
-            onClick={() => setFiltersVisible(!filtersVisible)}
-          >
-            {filtersVisible ? (
-              <>
-                <FilterX className="h-4 w-4" />
-                {translations.hideFilters[language]}
-              </>
-            ) : (
-              <>
-                <SlidersHorizontal className="h-4 w-4" />
-                {translations.showFilters[language]}
-              </>
-            )}
-          </Button>
+          {isMobile ? (
+            renderMobileFilters()
+          ) : (
+            <Button 
+              variant="outline" 
+              className="sm:hidden flex gap-2 items-center" 
+              onClick={() => setFiltersVisible(!filtersVisible)}
+            >
+              {filtersVisible ? (
+                <>
+                  <FilterX className="h-4 w-4" />
+                  {translations.hideFilters[language]}
+                </>
+              ) : (
+                <>
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {translations.showFilters[language]}
+                </>
+              )}
+            </Button>
+          )}
           
           <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
             <SelectTrigger className="w-full sm:w-[240px]">
@@ -368,10 +504,18 @@ const Products: React.FC = () => {
             ) : filteredProducts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <ProductCard 
-                    key={product.id} 
-                    product={product} 
-                  />
+                  <div key={product.id} className="relative group">
+                    <ProductCard product={product} />
+                    <div className="absolute bottom-4 left-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button 
+                        className="w-full gap-2" 
+                        onClick={() => handleQuickAddToCart(product)}
+                      >
+                        <ShoppingCart className="h-4 w-4" />
+                        {translations.addToCart[language]}
+                      </Button>
+                    </div>
+                  </div>
                 ))}
               </div>
             ) : (
