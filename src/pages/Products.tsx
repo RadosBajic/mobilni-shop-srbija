@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -59,7 +58,8 @@ const Products: React.FC = () => {
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const allProducts = await ProductService.getProducts();
+        // Fix: Pass an empty object as parameter to getProducts
+        const allProducts = await ProductService.getProducts({});
         setProducts(allProducts);
       } catch (error) {
         console.error('Error fetching products:', error);
