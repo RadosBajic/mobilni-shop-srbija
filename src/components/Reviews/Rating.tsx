@@ -1,6 +1,7 @@
 
 import React from 'react';
 import { cn } from '@/lib/utils';
+import { Star } from 'lucide-react';
 
 interface RatingProps {
   value: number;
@@ -9,6 +10,7 @@ interface RatingProps {
   className?: string;
   readOnly?: boolean;
   onChange?: (value: number) => void;
+  showValue?: boolean;
 }
 
 const Rating: React.FC<RatingProps> = ({
@@ -18,6 +20,7 @@ const Rating: React.FC<RatingProps> = ({
   className,
   readOnly = true,
   onChange,
+  showValue = false,
 }) => {
   // Define star sizes based on size prop
   const sizeClasses = {
@@ -34,46 +37,50 @@ const Rating: React.FC<RatingProps> = ({
 
   return (
     <div className={cn('flex items-center', className)}>
-      {Array.from({ length: max }).map((_, index) => (
-        <Star 
-          key={index}
-          filled={index < value}
-          className={cn(
-            sizeClasses[size], 
-            !readOnly && 'cursor-pointer hover:scale-110 transition-transform',
-          )}
-          onClick={() => handleClick(index)}
-        />
-      ))}
-    </div>
-  );
-};
-
-interface StarProps {
-  filled: boolean;
-  className?: string;
-  onClick?: () => void;
-}
-
-const Star: React.FC<StarProps> = ({ filled, className, onClick }) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={cn(
-        'text-yellow-400',
-        filled ? 'fill-yellow-400' : 'fill-transparent',
-        className
+      <div className="flex">
+        {Array.from({ length: max }).map((_, index) => (
+          <div
+            key={index}
+            className={cn(
+              'text-yellow-400 relative',
+              !readOnly && 'cursor-pointer hover:scale-110 transition-transform',
+            )}
+            onClick={() => handleClick(index)}
+          >
+            {/* Background star (empty) */}
+            <Star
+              className={cn(
+                sizeClasses[size],
+                'stroke-yellow-400 text-muted fill-none'
+              )}
+            />
+            
+            {/* Foreground star (filled) */}
+            <div 
+              className="absolute top-0 left-0 overflow-hidden"
+              style={{ 
+                width: `${index < value 
+                  ? (index + 1 <= value ? 100 : (value - index) * 100) 
+                  : 0}%` 
+              }}
+            >
+              <Star
+                className={cn(
+                  sizeClasses[size],
+                  'stroke-yellow-400 text-yellow-400 fill-current'
+                )}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+      
+      {showValue && (
+        <span className="ml-2 text-sm font-medium">
+          {value.toFixed(1)}
+        </span>
       )}
-      onClick={onClick}
-    >
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    </svg>
+    </div>
   );
 };
 

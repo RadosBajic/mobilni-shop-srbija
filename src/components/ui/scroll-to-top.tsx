@@ -8,11 +8,19 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ScrollToTopProps {
   threshold?: number;
   className?: string;
+  position?: 'bottom-right' | 'bottom-left' | 'bottom-center';
+  offset?: number;
+  showLabel?: boolean;
+  label?: string;
 }
 
 export const ScrollToTop: React.FC<ScrollToTopProps> = ({ 
   threshold = 300,
-  className
+  className,
+  position = 'bottom-right',
+  offset = 6,
+  showLabel = false,
+  label = 'Back to top'
 }) => {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -36,6 +44,12 @@ export const ScrollToTop: React.FC<ScrollToTopProps> = ({
     });
   };
 
+  const positionClasses = {
+    'bottom-right': `right-${offset}`,
+    'bottom-left': `left-${offset}`,
+    'bottom-center': 'left-1/2 transform -translate-x-1/2',
+  };
+
   return (
     <AnimatePresence>
       {isVisible && (
@@ -43,20 +57,25 @@ export const ScrollToTop: React.FC<ScrollToTopProps> = ({
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.2 }}
-          className="fixed bottom-6 right-6 z-50"
+          transition={{ duration: 0.3 }}
+          className={cn(
+            "fixed bottom-6 z-50",
+            positionClasses[position]
+          )}
         >
           <Button
             onClick={scrollToTop}
             aria-label="Scroll to top"
             variant="default"
-            size="icon"
+            size={showLabel ? "default" : "icon"}
             className={cn(
-              'rounded-full shadow-lg bg-primary hover:bg-primary/90',
+              'rounded-full shadow-lg bg-primary/80 backdrop-blur-sm hover:bg-primary/90',
+              showLabel ? 'px-6' : '',
               className
             )}
           >
-            <ChevronUp size={20} />
+            <ChevronUp size={20} className={showLabel ? 'mr-2' : ''} />
+            {showLabel && <span>{label}</span>}
           </Button>
         </motion.div>
       )}
