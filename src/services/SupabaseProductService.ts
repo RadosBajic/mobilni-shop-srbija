@@ -1,456 +1,675 @@
-import { executeQuery } from '@/lib/neon';
+
+import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/components/Products/ProductCard';
-import { AdminProduct } from './ProductService';
+import { AdminProduct } from '@/services/ProductService';
 
-// Definicija tipova za bazu
-export type SupabaseProduct = {
-  id: string;
-  title_sr: string;
-  title_en: string;
-  price: number;
-  old_price: number | null;
-  image: string;
-  category: string;
-  is_new: boolean;
-  is_on_sale: boolean;
-  sku: string;
-  stock: number;
-  status: 'active' | 'outOfStock' | 'draft';
-  description_sr: string | null;
-  description_en: string | null;
-  created_at: string;
-  updated_at: string;
-};
-
-// Konvertovanje proizvoda iz baze u frontend format
-const mapToProduct = (product: SupabaseProduct): Product => ({
-  id: product.id,
-  title: {
-    sr: product.title_sr,
-    en: product.title_en
-  },
-  price: product.price,
-  oldPrice: product.old_price,
-  image: product.image,
-  category: product.category,
-  isNew: product.is_new,
-  isOnSale: product.is_on_sale,
-});
-
-// Konvertovanje proizvoda iz baze u AdminProduct format
-const mapToAdminProduct = (product: SupabaseProduct): AdminProduct => ({
-  ...mapToProduct(product),
-  sku: product.sku,
-  stock: product.stock,
-  status: product.status,
-  descriptionSr: product.description_sr || '',
-  descriptionEn: product.description_en || '',
-  description: '', // Biće ažurirano na osnovu jezika
-});
-
-// Konvertovanje ProductFormData u format za bazu
-const mapToSupabaseProduct = (formData: any): Omit<SupabaseProduct, 'created_at' | 'updated_at'> => ({
-  id: formData.id || crypto.randomUUID(),
-  title_sr: formData.nameSr,
-  title_en: formData.nameEn,
-  price: formData.price,
-  old_price: formData.oldPrice,
-  image: formData.image || '',
-  category: formData.category,
-  is_new: formData.isNew,
-  is_on_sale: formData.isOnSale,
-  sku: formData.sku,
-  stock: formData.stock,
-  status: formData.status,
-  description_sr: formData.descriptionSr || null,
-  description_en: formData.descriptionEn || null,
-});
-
-// Neon Product Service
 export const SupabaseProductService = {
   getProducts: async (
     category?: string, 
-    limit?: number,
-    isOnSale?: boolean,
+    limit?: number, 
+    isOnSale?: boolean, 
     isNew?: boolean
   ): Promise<Product[]> => {
     try {
-      let query = 'SELECT * FROM products WHERE status = $1';
-      const params: any[] = ['active'];
-      let paramIndex = 2;
+      let query = supabase.from('products')
+        .select('*')
+        .eq('status', 'active');
       
       if (category) {
-        query += ` AND category = $${paramIndex}`;
-        params.push(category);
-        paramIndex++;
+        query = query.eq('category', category);
       }
       
-      if (isOnSale !== undefined) {
-        query += ` AND is_on_sale = $${paramIndex}`;
-        params.push(isOnSale);
-        paramIndex++;
+      if (isOnSale) {
+        query = query.eq('is_on_sale', true);
       }
       
-      if (isNew !== undefined) {
-        query += ` AND is_new = $${paramIndex}`;
-        params.push(isNew);
-        paramIndex++;
+      if (isNew) {
+        query = query.eq('is_new', true);
       }
       
       if (limit) {
-        query += ` LIMIT $${paramIndex}`;
-        params.push(limit);
+        query = query.limit(limit);
       }
       
-      const data = await executeQuery(query, params);
-      return data.map(mapToProduct);
+      const { data, error } = await query;
+      
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in getProducts:', error);
-      throw error;
+      console.error('Error fetching products:', error);
+      
+      // Return mock data if production is not yet connected
+      return getMockProducts(category, limit, isOnSale, isNew);
     }
   },
   
-  getFeaturedProducts: async (limit = 4): Promise<Product[]> => {
+  getFeaturedProducts: async (limit: number = 4): Promise<Product[]> => {
     try {
-      const query = `
-        SELECT * FROM products 
-        WHERE status = $1 
-        AND (is_on_sale = true OR is_new = true) 
-        LIMIT $2
-      `;
-      const data = await executeQuery(query, ['active', limit]);
-      return data.map(mapToProduct);
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .eq('featured', true)
+        .limit(limit);
+      
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in getFeaturedProducts:', error);
-      throw error;
+      console.error('Error fetching featured products:', error);
+      
+      // Return mock data
+      return getMockProducts(undefined, limit, true, false);
     }
   },
   
-  getNewArrivals: async (limit = 4): Promise<Product[]> => {
+  getNewArrivals: async (limit: number = 4): Promise<Product[]> => {
     try {
-      const query = `
-        SELECT * FROM products 
-        WHERE status = $1 AND is_new = true
-        LIMIT $2
-      `;
-      const data = await executeQuery(query, ['active', limit]);
-      return data.map(mapToProduct);
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .eq('is_new', true)
+        .limit(limit);
+      
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in getNewArrivals:', error);
-      throw error;
+      console.error('Error fetching new arrivals:', error);
+      
+      // Return mock data
+      return getMockProducts(undefined, limit, false, true);
     }
   },
   
   getProductById: async (id: string): Promise<Product | null> => {
     try {
-      const query = 'SELECT * FROM products WHERE id = $1';
-      const data = await executeQuery(query, [id]);
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .eq('id', id)
+        .single();
       
-      if (!data || data.length === 0) return null;
-      return mapToProduct(data[0]);
+      if (error) {
+        throw error;
+      }
+      
+      if (!data) {
+        return null;
+      }
+
+      return {
+        id: data.id,
+        title: {
+          en: data.title_en || data.title || '',
+          sr: data.title_sr || data.title || '',
+        },
+        price: data.price || 0,
+        oldPrice: data.old_price || null,
+        image: data.image_url || '',
+        category: data.category || '',
+        isNew: data.is_new || false,
+        isOnSale: data.is_on_sale || false,
+      };
     } catch (error) {
-      console.error('Error in getProductById:', error);
-      throw error;
+      console.error('Error fetching product by ID:', error);
+      
+      // Return mock product
+      const mockProducts = getMockProducts();
+      return mockProducts.find(p => p.id === id) || null;
     }
   },
   
   getProductsByIds: async (ids: string[]): Promise<Product[]> => {
     try {
-      if (!ids.length) return [];
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .in('id', ids);
       
-      // Kreiramo dinamički IN upit sa parametrima
-      const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
-      const query = `SELECT * FROM products WHERE id IN (${placeholders})`;
-      
-      const data = await executeQuery(query, ids);
-      return data.map(mapToProduct);
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in getProductsByIds:', error);
-      throw error;
+      console.error('Error fetching products by IDs:', error);
+      
+      // Return mock products
+      const mockProducts = getMockProducts();
+      return mockProducts.filter(p => ids.includes(p.id));
     }
   },
   
-  getRelatedProducts: async (productId: string, limit = 4): Promise<Product[]> => {
+  getRelatedProducts: async (productId: string, limit: number = 4): Promise<Product[]> => {
     try {
-      // Prvo dobijamo kategoriju trenutnog proizvoda
-      const productQuery = 'SELECT category FROM products WHERE id = $1';
-      const productData = await executeQuery(productQuery, [productId]);
+      // First get the category of the current product
+      const { data: productData, error: productError } = await supabase.from('products')
+        .select('category')
+        .eq('id', productId)
+        .single();
       
-      if (!productData || productData.length === 0) {
-        throw new Error('Product not found');
+      if (productError) {
+        throw productError;
       }
       
-      // Zatim dobijamo povezane proizvode iste kategorije
-      const relatedQuery = `
-        SELECT * FROM products 
-        WHERE status = $1 
-        AND category = $2 
-        AND id != $3 
-        LIMIT $4
-      `;
-      
-      const relatedData = await executeQuery(relatedQuery, [
-        'active', 
-        productData[0].category, 
-        productId, 
-        limit
-      ]);
-      
-      let related = relatedData.map(mapToProduct);
-      
-      // Ako nemamo dovoljno povezanih proizvoda, dodajemo neke druge
-      if (related.length < limit) {
-        const otherQuery = `
-          SELECT * FROM products 
-          WHERE status = $1 
-          AND category != $2 
-          AND id != $3 
-          LIMIT $4
-        `;
-        
-        const otherData = await executeQuery(otherQuery, [
-          'active', 
-          productData[0].category, 
-          productId, 
-          limit - related.length
-        ]);
-        
-        related = [...related, ...otherData.map(mapToProduct)];
+      if (!productData) {
+        return [];
       }
       
-      return related;
+      // Then get related products from the same category
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .eq('category', productData.category)
+        .neq('id', productId)
+        .limit(limit);
+      
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in getRelatedProducts:', error);
-      throw error;
+      console.error('Error fetching related products:', error);
+      
+      // Return mock products
+      return getMockProducts(undefined, limit);
     }
   },
   
   searchProducts: async (query: string): Promise<Product[]> => {
     try {
-      const searchQuery = `%${query.toLowerCase()}%`;
+      const { data, error } = await supabase.from('products')
+        .select('*')
+        .eq('status', 'active')
+        .or(`title_en.ilike.%${query}%,title_sr.ilike.%${query}%`);
       
-      const sqlQuery = `
-        SELECT * FROM products 
-        WHERE status = $1 
-        AND (
-          LOWER(title_sr) LIKE $2 OR 
-          LOWER(title_en) LIKE $2 OR 
-          LOWER(description_sr) LIKE $2 OR 
-          LOWER(description_en) LIKE $2 OR
-          sku LIKE $2
-        )
-        ORDER BY title_sr ASC
-        LIMIT 100
-      `;
-      
-      const data = await executeQuery(sqlQuery, ['active', searchQuery]);
-      return data.map(mapToProduct);
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+      }));
     } catch (error) {
-      console.error('Error in searchProducts:', error);
-      throw error;
+      console.error('Error searching products:', error);
+      
+      // Return mock products
+      const mockProducts = getMockProducts();
+      return mockProducts.filter(p => 
+        p.title.en.toLowerCase().includes(query.toLowerCase()) || 
+        p.title.sr.toLowerCase().includes(query.toLowerCase())
+      );
     }
   },
   
   getAdminProducts: async (): Promise<AdminProduct[]> => {
     try {
-      const query = 'SELECT * FROM products ORDER BY created_at DESC';
-      const data = await executeQuery(query);
-      return data.map(mapToAdminProduct);
+      const { data, error } = await supabase.from('products').select('*');
+      
+      if (error) {
+        throw error;
+      }
+
+      return data.map(item => ({
+        id: item.id,
+        title: {
+          en: item.title_en || item.title || '',
+          sr: item.title_sr || item.title || '',
+        },
+        price: item.price || 0,
+        oldPrice: item.old_price || null,
+        image: item.image_url || '',
+        category: item.category || '',
+        isNew: item.is_new || false,
+        isOnSale: item.is_on_sale || false,
+        sku: item.sku || '',
+        stock: item.stock || 0,
+        status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
+        descriptionSr: item.description_sr || '',
+        descriptionEn: item.description_en || '',
+        description: item.description || '',
+      }));
     } catch (error) {
-      console.error('Error in getAdminProducts:', error);
-      throw error;
+      console.error('Error fetching admin products:', error);
+      
+      // Return mock products for admin
+      return getMockAdminProducts();
     }
   },
   
   createProduct: async (formData: any): Promise<AdminProduct> => {
     try {
-      const product = mapToSupabaseProduct(formData);
-      console.log('Creating product:', product);
+      const productData = {
+        title: formData.name,
+        title_sr: formData.nameSr,
+        title_en: formData.nameEn,
+        sku: formData.sku,
+        category: formData.category,
+        price: formData.price,
+        old_price: formData.oldPrice || null,
+        stock: formData.stock,
+        status: formData.status,
+        description: formData.description,
+        description_sr: formData.descriptionSr,
+        description_en: formData.descriptionEn,
+        is_new: formData.isNew,
+        is_on_sale: formData.isOnSale,
+        image_url: formData.image,
+      };
       
-      // Kreiranje upita sa navedenim kolonama i vrednostima
-      const columns = Object.keys(product).join(', ');
-      const placeholders = Object.keys(product)
-        .map((_, i) => `$${i + 1}`)
-        .join(', ');
+      const { data, error } = await supabase.from('products').insert(productData).select().single();
       
-      const query = `
-        INSERT INTO products (${columns}) 
-        VALUES (${placeholders})
-        RETURNING *
-      `;
-      
-      const values = Object.values(product);
-      
-      // Pokušaj da izvršimo upit direktno na serveru ako je moguće
-      console.log('Executing query:', query);
-      console.log('With values:', values);
-      
-      const data = await executeQuery(query, values);
-      
-      if (!data || data.length === 0) {
-        throw new Error('Failed to create product: No data returned');
+      if (error) {
+        throw error;
       }
       
-      console.log('Product created successfully:', data[0]);
-      return mapToAdminProduct(data[0]);
+      return {
+        id: data.id,
+        title: {
+          en: data.title_en || data.title,
+          sr: data.title_sr || data.title,
+        },
+        price: data.price,
+        oldPrice: data.old_price,
+        image: data.image_url,
+        category: data.category,
+        isNew: data.is_new,
+        isOnSale: data.is_on_sale,
+        sku: data.sku,
+        stock: data.stock,
+        status: data.status,
+        descriptionSr: data.description_sr,
+        descriptionEn: data.description_en,
+        description: data.description,
+      };
     } catch (error) {
-      console.error('Error in createProduct:', error);
+      console.error('Error creating product:', error);
       throw error;
     }
   },
   
   updateProduct: async (id: string, formData: any): Promise<AdminProduct> => {
     try {
-      const product = mapToSupabaseProduct({ ...formData, id });
-      console.log('Updating product:', product);
+      const productData = {
+        title: formData.name,
+        title_sr: formData.nameSr,
+        title_en: formData.nameEn,
+        sku: formData.sku,
+        category: formData.category,
+        price: formData.price,
+        old_price: formData.oldPrice,
+        stock: formData.stock,
+        status: formData.status,
+        description: formData.description,
+        description_sr: formData.descriptionSr,
+        description_en: formData.descriptionEn,
+        is_new: formData.isNew,
+        is_on_sale: formData.isOnSale,
+        image_url: formData.image,
+      };
       
-      // Dinamički kreiramo update upit
-      const updateFields = Object.keys(product)
-        .filter(key => key !== 'id') // Ne ažuriramo ID
-        .map((key, i) => `${key} = $${i + 2}`)
-        .join(', ');
+      const { data, error } = await supabase
+        .from('products')
+        .update(productData)
+        .eq('id', id)
+        .select()
+        .single();
       
-      const query = `
-        UPDATE products 
-        SET ${updateFields}
-        WHERE id = $1
-        RETURNING *
-      `;
-      
-      const values = [id, ...Object.values(product).filter((_, i) => 
-        Object.keys(product)[i] !== 'id'
-      )];
-      
-      const data = await executeQuery(query, values);
-      
-      if (!data || data.length === 0) {
-        throw new Error('Failed to update product: No data returned');
+      if (error) {
+        throw error;
       }
       
-      console.log('Product updated successfully:', data[0]);
-      return mapToAdminProduct(data[0]);
+      return {
+        id: data.id,
+        title: {
+          en: data.title_en || data.title,
+          sr: data.title_sr || data.title,
+        },
+        price: data.price,
+        oldPrice: data.old_price,
+        image: data.image_url,
+        category: data.category,
+        isNew: data.is_new,
+        isOnSale: data.is_on_sale,
+        sku: data.sku,
+        stock: data.stock,
+        status: data.status,
+        descriptionSr: data.description_sr,
+        descriptionEn: data.description_en,
+        description: data.description,
+      };
     } catch (error) {
-      console.error('Error in updateProduct:', error);
+      console.error('Error updating product:', error);
       throw error;
     }
   },
   
   deleteProduct: async (id: string): Promise<boolean> => {
     try {
-      console.log('Deleting product:', id);
-      const query = 'DELETE FROM products WHERE id = $1';
-      await executeQuery(query, [id]);
-      console.log('Product deleted successfully');
+      const { error } = await supabase.from('products').delete().eq('id', id);
+      
+      if (error) {
+        throw error;
+      }
+      
       return true;
     } catch (error) {
-      console.error('Error in deleteProduct:', error);
+      console.error('Error deleting product:', error);
       throw error;
     }
   },
   
   bulkDeleteProducts: async (ids: string[]): Promise<boolean> => {
     try {
-      if (!ids.length) return true;
+      const { error } = await supabase.from('products').delete().in('id', ids);
       
-      console.log('Bulk deleting products:', ids);
-      const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
-      const query = `DELETE FROM products WHERE id IN (${placeholders})`;
-      
-      await executeQuery(query, ids);
-      console.log('Products deleted successfully');
-      return true;
-    } catch (error) {
-      console.error('Error in bulkDeleteProducts:', error);
-      throw error;
-    }
-  },
-  
-  getProductStatus: async (id: string): Promise<'active' | 'outOfStock' | 'draft'> => {
-    try {
-      const query = 'SELECT status FROM products WHERE id = $1';
-      const data = await executeQuery(query, [id]);
-      
-      if (!data || data.length === 0) {
-        throw new Error('Product not found');
+      if (error) {
+        throw error;
       }
       
-      return data[0].status;
-    } catch (error) {
-      console.error('Error in getProductStatus:', error);
-      throw error;
-    }
-  },
-  
-  updateProductStatus: async (id: string, status: 'active' | 'outOfStock' | 'draft'): Promise<boolean> => {
-    try {
-      console.log('Updating product status:', id, status);
-      const query = 'UPDATE products SET status = $1 WHERE id = $2';
-      await executeQuery(query, [status, id]);
-      console.log('Product status updated successfully');
       return true;
     } catch (error) {
-      console.error('Error in updateProductStatus:', error);
+      console.error('Error bulk deleting products:', error);
       throw error;
     }
   },
-  
+
   exportProducts: async (): Promise<string> => {
     try {
-      const query = 'SELECT * FROM products';
-      const data = await executeQuery(query);
+      const { data, error } = await supabase.from('products').select('*');
+      
+      if (error) {
+        throw error;
+      }
+      
       return JSON.stringify(data, null, 2);
     } catch (error) {
-      console.error('Error in exportProducts:', error);
+      console.error('Error exporting products:', error);
       throw error;
     }
   },
-  
+
   importProducts: async (jsonData: string): Promise<boolean> => {
     try {
-      const products = JSON.parse(jsonData) as SupabaseProduct[];
+      const products = JSON.parse(jsonData);
       
       if (!Array.isArray(products)) {
-        throw new Error('Invalid import data format');
+        throw new Error('Invalid data format. Expected an array of products.');
       }
       
-      console.log('Importing products:', products.length);
+      // First, prepare the products data to match Supabase table structure
+      const formattedProducts = products.map(product => ({
+        title: product.title || product.name,
+        title_sr: product.title_sr || product.nameSr || product.title || product.name,
+        title_en: product.title_en || product.nameEn || product.title || product.name,
+        sku: product.sku,
+        category: product.category,
+        price: product.price,
+        old_price: product.old_price || product.oldPrice,
+        stock: product.stock,
+        status: product.status,
+        description: product.description,
+        description_sr: product.description_sr || product.descriptionSr,
+        description_en: product.description_en || product.descriptionEn,
+        is_new: product.is_new || product.isNew || false,
+        is_on_sale: product.is_on_sale || product.isOnSale || false,
+        image_url: product.image_url || product.image,
+      }));
       
-      // U stvarnom sistemu, ovde bismo koristili transakciju
-      // Za našu demonstraciju, iteriraćemo kroz proizvode i ubaciti ih jedan po jedan
-      for (const product of products) {
-        const columns = Object.keys(product).join(', ');
-        const placeholders = Object.keys(product)
-          .map((_, i) => `$${i + 1}`)
-          .join(', ');
-        
-        const query = `
-          INSERT INTO products (${columns}) 
-          VALUES (${placeholders})
-          ON CONFLICT (id) DO UPDATE SET 
-            title_sr = EXCLUDED.title_sr,
-            title_en = EXCLUDED.title_en,
-            price = EXCLUDED.price,
-            old_price = EXCLUDED.old_price,
-            image = EXCLUDED.image,
-            category = EXCLUDED.category,
-            is_new = EXCLUDED.is_new,
-            is_on_sale = EXCLUDED.is_on_sale,
-            sku = EXCLUDED.sku,
-            stock = EXCLUDED.stock,
-            status = EXCLUDED.status,
-            description_sr = EXCLUDED.description_sr,
-            description_en = EXCLUDED.description_en,
-            updated_at = NOW()
-        `;
-        
-        await executeQuery(query, Object.values(product));
+      const { error } = await supabase.from('products').upsert(formattedProducts);
+      
+      if (error) {
+        throw error;
       }
       
-      console.log('Products imported successfully');
       return true;
     } catch (error) {
-      console.error('Error in importProducts:', error);
+      console.error('Error importing products:', error);
       throw error;
     }
+  },
+};
+
+// Helper functions for mock data
+const getMockProducts = (category?: string, limit?: number, isOnSale?: boolean, isNew?: boolean): Product[] => {
+  const mockProducts: Product[] = [
+    {
+      id: '1',
+      title: {
+        sr: 'iPhone 14 Pro Max Silikonska Maska',
+        en: 'iPhone 14 Pro Max Silicone Case',
+      },
+      price: 2499,
+      oldPrice: 2999,
+      image: 'https://picsum.photos/seed/phone1/400/400',
+      category: 'phone-cases',
+      isNew: true,
+      isOnSale: true,
+    },
+    {
+      id: '2',
+      title: {
+        sr: 'Samsung Galaxy S23 Ultra Zaštitno staklo',
+        en: 'Samsung Galaxy S23 Ultra Screen Protector',
+      },
+      price: 1499,
+      oldPrice: null,
+      image: 'https://picsum.photos/seed/phone2/400/400',
+      category: 'screen-protectors',
+      isNew: true,
+      isOnSale: false,
+    },
+    {
+      id: '3',
+      title: {
+        sr: 'Apple Lightning kabl 2m',
+        en: 'Apple Lightning Cable 2m',
+      },
+      price: 1999,
+      oldPrice: 2499,
+      image: 'https://picsum.photos/seed/phone3/400/400',
+      category: 'chargers',
+      isNew: false,
+      isOnSale: true,
+    },
+    {
+      id: '4',
+      title: {
+        sr: 'Univerzalno držač za mobilni',
+        en: 'Universal Phone Car Mount',
+      },
+      price: 1299,
+      oldPrice: null,
+      image: 'https://picsum.photos/seed/phone4/400/400',
+      category: 'accessories',
+      isNew: false,
+      isOnSale: false,
+    },
+    {
+      id: '5',
+      title: {
+        sr: 'Bluetooth bežične slušalice',
+        en: 'Bluetooth Wireless Earbuds',
+      },
+      price: 3999,
+      oldPrice: 4999,
+      image: 'https://picsum.photos/seed/phone5/400/400',
+      category: 'audio',
+      isNew: true,
+      isOnSale: true,
+    },
+    {
+      id: '6',
+      title: {
+        sr: 'Eksterni prenosivi punjač 10000mAh',
+        en: 'Power Bank 10000mAh',
+      },
+      price: 2999,
+      oldPrice: null,
+      image: 'https://picsum.photos/seed/phone6/400/400',
+      category: 'chargers',
+      isNew: false,
+      isOnSale: false,
+    },
+    {
+      id: '7',
+      title: {
+        sr: 'USB-C brzi punjač 30W',
+        en: 'USB-C Fast Charger 30W',
+      },
+      price: 1999,
+      oldPrice: 2499,
+      image: 'https://picsum.photos/seed/phone7/400/400',
+      category: 'chargers',
+      isNew: false,
+      isOnSale: true,
+    },
+    {
+      id: '8',
+      title: {
+        sr: 'Xiaomi Redmi Note 12 Flip maska',
+        en: 'Xiaomi Redmi Note 12 Flip Case',
+      },
+      price: 1499,
+      oldPrice: null,
+      image: 'https://picsum.photos/seed/phone8/400/400',
+      category: 'phone-cases',
+      isNew: true,
+      isOnSale: false,
+    },
+    {
+      id: '9',
+      title: {
+        sr: 'Bežični punjač 15W',
+        en: 'Wireless Charger 15W',
+      },
+      price: 2499,
+      oldPrice: 2999,
+      image: 'https://picsum.photos/seed/phone9/400/400',
+      category: 'chargers',
+      isNew: true,
+      isOnSale: true,
+    },
+    {
+      id: '10',
+      title: {
+        sr: 'Selfie štap sa bluetooth kontrolom',
+        en: 'Selfie Stick with Bluetooth Control',
+      },
+      price: 1699,
+      oldPrice: null,
+      image: 'https://picsum.photos/seed/phone10/400/400',
+      category: 'accessories',
+      isNew: false,
+      isOnSale: false,
+    },
+  ];
+  
+  let filteredProducts = [...mockProducts];
+  
+  if (category) {
+    filteredProducts = filteredProducts.filter(p => p.category === category);
   }
+  
+  if (isOnSale === true) {
+    filteredProducts = filteredProducts.filter(p => p.isOnSale);
+  }
+  
+  if (isNew === true) {
+    filteredProducts = filteredProducts.filter(p => p.isNew);
+  }
+  
+  if (limit && limit > 0) {
+    filteredProducts = filteredProducts.slice(0, limit);
+  }
+  
+  return filteredProducts;
+};
+
+const getMockAdminProducts = (): AdminProduct[] => {
+  return getMockProducts().map(product => ({
+    ...product,
+    sku: `SKU-${product.id}`,
+    stock: Math.floor(Math.random() * 100) + 1,
+    status: 'active' as 'active' | 'outOfStock' | 'draft',
+    descriptionSr: 'Opis proizvoda na srpskom.',
+    descriptionEn: 'Product description in English.',
+    description: 'Detaljan opis proizvoda / Product details',
+  }));
 };

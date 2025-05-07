@@ -14,6 +14,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { ArrowRight, TruckIcon, ShieldCheck, Headphones, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { siteConfig } from '@/lib/config';
 
 const Index: React.FC = () => {
   const { language } = useLanguage();
@@ -72,7 +73,12 @@ const Index: React.FC = () => {
   return (
     <>
       <SaleBanner discount={30} endDate={saleEndDate.toISOString()} />
-      <MainLayout fullWidth>
+      <MainLayout 
+        fullWidth
+        title={language === 'sr' ? 'Početna' : 'Home'}
+        description={siteConfig.description[language]}
+        keywords={siteConfig.keywords[language]}
+      >
         {/* Hero slider */}
         <HeroSlider />
         
@@ -151,7 +157,6 @@ const Index: React.FC = () => {
           </div>
         </div>
       </MainLayout>
-      <Link to="/admin/login" className="text-sm text-muted-foreground hover:text-primary">Admin Login</Link>
     </>
   );
 };

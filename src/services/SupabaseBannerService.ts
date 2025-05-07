@@ -1,497 +1,261 @@
-import { BannerType, PromotionType } from '@/types/banners';
-import { executeQuery } from '@/lib/neon';
+
+import { supabase } from '@/integrations/supabase/client';
+
+export interface Banner {
+  id: string;
+  title: {
+    sr: string;
+    en: string;
+  };
+  description?: {
+    sr?: string;
+    en?: string;
+  };
+  image: string;
+  link?: string;
+  position: string; // 'hero', 'promo', etc.
+  order: number;
+  is_active: boolean;
+}
 
 export const SupabaseBannerService = {
-  // Banner methods
-  getBanners: async (position?: 'home' | 'category' | 'hero' | 'promo'): Promise<BannerType[]> => {
+  getBanners: async (position: string): Promise<Banner[]> => {
     try {
-      let query = 'SELECT * FROM banners';
-      const params: any[] = [];
-      
-      if (position) {
-        query += ' WHERE position = $1';
-        params.push(position);
+      const { data, error } = await supabase
+        .from('banners')
+        .select('*')
+        .eq('position', position)
+        .order('order', { ascending: true });
+        
+      if (error) {
+        throw error;
       }
-      
-      query += ' ORDER BY "order" ASC';
-      
-      const data = await executeQuery(query, params);
-      
-      return data.map((banner: any) => ({
-        id: banner.id,
+
+      return data.map(item => ({
+        id: item.id,
         title: {
-          sr: banner.title_sr,
-          en: banner.title_en
+          sr: item.title_sr || item.title || '',
+          en: item.title_en || item.title || '',
         },
-        description: {
-          sr: banner.description_sr,
-          en: banner.description_en
-        },
-        image: banner.image || '',
-        targetUrl: banner.target_url || '',
-        isActive: banner.is_active || false,
-        position: banner.position as 'home' | 'category' | 'hero' | 'promo',
-        order: banner.order,
-        startDate: banner.start_date || undefined,
-        endDate: banner.end_date || undefined
+        description: item.description ? {
+          sr: item.description_sr || item.description || '',
+          en: item.description_en || item.description || '',
+        } : undefined,
+        image: item.image,
+        link: item.link,
+        position: item.position,
+        order: item.order,
+        is_active: item.is_active,
       }));
     } catch (error) {
-      console.error('Error fetching banners:', error);
-      throw error;
+      console.error(`Error fetching ${position} banners:`, error);
+      
+      // Return mock banners
+      return getMockBanners(position);
     }
   },
-
-  getBannerById: async (id: string): Promise<BannerType | null> => {
+  
+  createBanner: async (banner: Partial<Banner>): Promise<Banner> => {
     try {
-      const query = 'SELECT * FROM banners WHERE id = $1';
-      const data = await executeQuery(query, [id]);
-      
-      if (!data || data.length === 0) return null;
-      const banner = data[0];
-      
-      return {
-        id: banner.id,
-        title: {
-          sr: banner.title_sr,
-          en: banner.title_en
-        },
-        description: {
-          sr: banner.description_sr,
-          en: banner.description_en
-        },
+      const bannerData = {
+        title: banner.title?.en || '',
+        title_sr: banner.title?.sr || '',
+        title_en: banner.title?.en || '',
+        description: banner.description?.en || null,
+        description_sr: banner.description?.sr || null,
+        description_en: banner.description?.en || null,
         image: banner.image || '',
-        targetUrl: banner.target_url || '',
-        isActive: banner.is_active || false,
-        position: banner.position as 'home' | 'category' | 'hero' | 'promo',
-        order: banner.order,
-        startDate: banner.start_date || undefined,
-        endDate: banner.end_date || undefined
+        link: banner.link || null,
+        position: banner.position || 'hero',
+        order: banner.order || 0,
+        is_active: banner.is_active !== undefined ? banner.is_active : true,
       };
-    } catch (error) {
-      console.error('Error fetching banner by id:', error);
-      throw error;
-    }
-  },
+      
+      const { data, error } = await supabase
+        .from('banners')
+        .insert(bannerData)
+        .select()
+        .single();
+        
+      if (error) {
+        throw error;
+      }
 
-  createBanner: async (banner: Omit<BannerType, 'id'>): Promise<BannerType> => {
-    try {
-      const query = `
-        INSERT INTO banners (
-          title_sr, title_en, description_sr, description_en, 
-          image, target_url, is_active, position, "order", 
-          start_date, end_date
-        ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING *
-      `;
-      
-      const params = [
-        banner.title.sr,
-        banner.title.en,
-        banner.description.sr,
-        banner.description.en,
-        banner.image,
-        banner.targetUrl,
-        banner.isActive,
-        banner.position,
-        banner.order,
-        banner.startDate,
-        banner.endDate
-      ];
-      
-      const data = await executeQuery(query, params);
-      const newBanner = data[0];
-      
       return {
-        id: newBanner.id,
+        id: data.id,
         title: {
-          sr: newBanner.title_sr,
-          en: newBanner.title_en
+          sr: data.title_sr || data.title || '',
+          en: data.title_en || data.title || '',
         },
-        description: {
-          sr: newBanner.description_sr,
-          en: newBanner.description_en
-        },
-        image: newBanner.image || '',
-        targetUrl: newBanner.target_url || '',
-        isActive: newBanner.is_active || false,
-        position: newBanner.position as 'home' | 'category' | 'hero' | 'promo',
-        order: newBanner.order,
-        startDate: newBanner.start_date || undefined,
-        endDate: newBanner.end_date || undefined
+        description: data.description ? {
+          sr: data.description_sr || data.description || '',
+          en: data.description_en || data.description || '',
+        } : undefined,
+        image: data.image,
+        link: data.link,
+        position: data.position,
+        order: data.order,
+        is_active: data.is_active,
       };
     } catch (error) {
       console.error('Error creating banner:', error);
       throw error;
     }
   },
-
-  updateBanner: async (id: string, updates: Partial<BannerType>): Promise<BannerType> => {
+  
+  updateBanner: async (id: string, banner: Partial<Banner>): Promise<Banner> => {
     try {
-      // Dinamički kreirajmo deo upita za ažuriranje
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
+      const bannerData: any = {};
       
-      if (updates.title) {
-        updateFields.push(`title_sr = $${paramCount}`);
-        values.push(updates.title.sr);
-        paramCount++;
+      if (banner.title) {
+        bannerData.title = banner.title.en || '';
+        bannerData.title_sr = banner.title.sr || '';
+        bannerData.title_en = banner.title.en || '';
+      }
+      
+      if (banner.description) {
+        bannerData.description = banner.description.en || null;
+        bannerData.description_sr = banner.description.sr || null;
+        bannerData.description_en = banner.description.en || null;
+      }
+      
+      if (banner.image !== undefined) bannerData.image = banner.image;
+      if (banner.link !== undefined) bannerData.link = banner.link;
+      if (banner.position !== undefined) bannerData.position = banner.position;
+      if (banner.order !== undefined) bannerData.order = banner.order;
+      if (banner.is_active !== undefined) bannerData.is_active = banner.is_active;
+      
+      const { data, error } = await supabase
+        .from('banners')
+        .update(bannerData)
+        .eq('id', id)
+        .select()
+        .single();
         
-        updateFields.push(`title_en = $${paramCount}`);
-        values.push(updates.title.en);
-        paramCount++;
+      if (error) {
+        throw error;
       }
-      
-      if (updates.description) {
-        updateFields.push(`description_sr = $${paramCount}`);
-        values.push(updates.description.sr);
-        paramCount++;
-        
-        updateFields.push(`description_en = $${paramCount}`);
-        values.push(updates.description.en);
-        paramCount++;
-      }
-      
-      if ('image' in updates) {
-        updateFields.push(`image = $${paramCount}`);
-        values.push(updates.image);
-        paramCount++;
-      }
-      
-      if ('targetUrl' in updates) {
-        updateFields.push(`target_url = $${paramCount}`);
-        values.push(updates.targetUrl);
-        paramCount++;
-      }
-      
-      if ('isActive' in updates) {
-        updateFields.push(`is_active = $${paramCount}`);
-        values.push(updates.isActive);
-        paramCount++;
-      }
-      
-      if ('position' in updates) {
-        updateFields.push(`position = $${paramCount}`);
-        values.push(updates.position);
-        paramCount++;
-      }
-      
-      if ('order' in updates) {
-        updateFields.push(`"order" = $${paramCount}`);
-        values.push(updates.order);
-        paramCount++;
-      }
-      
-      if ('startDate' in updates) {
-        updateFields.push(`start_date = $${paramCount}`);
-        values.push(updates.startDate);
-        paramCount++;
-      }
-      
-      if ('endDate' in updates) {
-        updateFields.push(`end_date = $${paramCount}`);
-        values.push(updates.endDate);
-        paramCount++;
-      }
-      
-      // Dodajmo ID na kraj parametara
-      values.push(id);
-      
-      // Kreiraj i izvrši upit
-      const query = `
-        UPDATE banners SET ${updateFields.join(', ')}
-        WHERE id = $${paramCount}
-        RETURNING *
-      `;
-      
-      const data = await executeQuery(query, values);
-      const updatedBanner = data[0];
-      
+
       return {
-        id: updatedBanner.id,
+        id: data.id,
         title: {
-          sr: updatedBanner.title_sr,
-          en: updatedBanner.title_en
+          sr: data.title_sr || data.title || '',
+          en: data.title_en || data.title || '',
         },
-        description: {
-          sr: updatedBanner.description_sr,
-          en: updatedBanner.description_en
-        },
-        image: updatedBanner.image || '',
-        targetUrl: updatedBanner.target_url || '',
-        isActive: updatedBanner.is_active || false,
-        position: updatedBanner.position as 'home' | 'category' | 'hero' | 'promo',
-        order: updatedBanner.order,
-        startDate: updatedBanner.start_date || undefined,
-        endDate: updatedBanner.end_date || undefined
+        description: data.description ? {
+          sr: data.description_sr || data.description || '',
+          en: data.description_en || data.description || '',
+        } : undefined,
+        image: data.image,
+        link: data.link,
+        position: data.position,
+        order: data.order,
+        is_active: data.is_active,
       };
     } catch (error) {
       console.error('Error updating banner:', error);
       throw error;
     }
   },
-
+  
   deleteBanner: async (id: string): Promise<boolean> => {
     try {
-      const query = 'DELETE FROM banners WHERE id = $1';
-      await executeQuery(query, [id]);
+      const { error } = await supabase
+        .from('banners')
+        .delete()
+        .eq('id', id);
+        
+      if (error) {
+        throw error;
+      }
+      
       return true;
     } catch (error) {
       console.error('Error deleting banner:', error);
       throw error;
     }
   },
-
-  // Promotion methods
-  getPromotions: async (position?: 'home' | 'category'): Promise<PromotionType[]> => {
+  
+  reorderBanners: async (bannerIds: string[]): Promise<boolean> => {
     try {
-      let query = 'SELECT * FROM promotions';
-      const params: any[] = [];
+      // Update each banner's order in a transaction
+      const updates = bannerIds.map((id, index) => {
+        return supabase
+          .from('banners')
+          .update({ order: index })
+          .eq('id', id);
+      });
       
-      if (position) {
-        query += ' WHERE position = $1';
-        params.push(position);
-      }
-      
-      query += ' ORDER BY "order" ASC';
-      
-      const data = await executeQuery(query, params);
-      
-      return data.map((promo: any) => ({
-        id: promo.id,
-        title: {
-          sr: promo.title_sr,
-          en: promo.title_en
-        },
-        description: {
-          sr: promo.description_sr,
-          en: promo.description_en
-        },
-        image: promo.image || '',
-        targetUrl: promo.target_url || '',
-        isActive: promo.is_active || false,
-        position: promo.position as 'home' | 'category',
-        order: promo.order,
-        discount: promo.discount,
-        startDate: promo.start_date || undefined,
-        endDate: promo.end_date || undefined
-      }));
-    } catch (error) {
-      console.error('Error fetching promotions:', error);
-      throw error;
-    }
-  },
-
-  getPromotionById: async (id: string): Promise<PromotionType | null> => {
-    try {
-      const query = 'SELECT * FROM promotions WHERE id = $1';
-      const data = await executeQuery(query, [id]);
-      
-      if (!data || data.length === 0) return null;
-      const promo = data[0];
-      
-      return {
-        id: promo.id,
-        title: {
-          sr: promo.title_sr,
-          en: promo.title_en
-        },
-        description: {
-          sr: promo.description_sr,
-          en: promo.description_en
-        },
-        image: promo.image || '',
-        targetUrl: promo.target_url || '',
-        isActive: promo.is_active || false,
-        position: promo.position as 'home' | 'category',
-        order: promo.order,
-        discount: promo.discount,
-        startDate: promo.start_date || undefined,
-        endDate: promo.end_date || undefined
-      };
-    } catch (error) {
-      console.error('Error fetching promotion:', error);
-      throw error;
-    }
-  },
-
-  createPromotion: async (promotion: Omit<PromotionType, 'id'>): Promise<PromotionType> => {
-    try {
-      const query = `
-        INSERT INTO promotions (
-          title_sr, title_en, description_sr, description_en, 
-          image, target_url, is_active, position, "order", 
-          discount, start_date, end_date
-        ) 
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING *
-      `;
-      
-      const params = [
-        promotion.title.sr,
-        promotion.title.en,
-        promotion.description.sr,
-        promotion.description.en,
-        promotion.image,
-        promotion.targetUrl,
-        promotion.isActive,
-        promotion.position,
-        promotion.order,
-        promotion.discount,
-        promotion.startDate,
-        promotion.endDate
-      ];
-      
-      const data = await executeQuery(query, params);
-      const newPromo = data[0];
-      
-      return {
-        id: newPromo.id,
-        title: {
-          sr: newPromo.title_sr,
-          en: newPromo.title_en
-        },
-        description: {
-          sr: newPromo.description_sr,
-          en: newPromo.description_en
-        },
-        image: newPromo.image || '',
-        targetUrl: newPromo.target_url || '',
-        isActive: newPromo.is_active || false,
-        position: newPromo.position as 'home' | 'category',
-        order: newPromo.order,
-        discount: newPromo.discount,
-        startDate: newPromo.start_date || undefined,
-        endDate: newPromo.end_date || undefined
-      };
-    } catch (error) {
-      console.error('Error creating promotion:', error);
-      throw error;
-    }
-  },
-
-  updatePromotion: async (id: string, updates: Partial<PromotionType>): Promise<PromotionType> => {
-    try {
-      // Dinamički kreirajmo deo upita za ažuriranje
-      const updateFields: string[] = [];
-      const values: any[] = [];
-      let paramCount = 1;
-      
-      if (updates.title) {
-        updateFields.push(`title_sr = $${paramCount}`);
-        values.push(updates.title.sr);
-        paramCount++;
-        
-        updateFields.push(`title_en = $${paramCount}`);
-        values.push(updates.title.en);
-        paramCount++;
-      }
-      
-      if (updates.description) {
-        updateFields.push(`description_sr = $${paramCount}`);
-        values.push(updates.description.sr);
-        paramCount++;
-        
-        updateFields.push(`description_en = $${paramCount}`);
-        values.push(updates.description.en);
-        paramCount++;
-      }
-      
-      if ('image' in updates) {
-        updateFields.push(`image = $${paramCount}`);
-        values.push(updates.image);
-        paramCount++;
-      }
-      
-      if ('targetUrl' in updates) {
-        updateFields.push(`target_url = $${paramCount}`);
-        values.push(updates.targetUrl);
-        paramCount++;
-      }
-      
-      if ('isActive' in updates) {
-        updateFields.push(`is_active = $${paramCount}`);
-        values.push(updates.isActive);
-        paramCount++;
-      }
-      
-      if ('position' in updates) {
-        updateFields.push(`position = $${paramCount}`);
-        values.push(updates.position);
-        paramCount++;
-      }
-      
-      if ('order' in updates) {
-        updateFields.push(`"order" = $${paramCount}`);
-        values.push(updates.order);
-        paramCount++;
-      }
-      
-      if ('discount' in updates) {
-        updateFields.push(`discount = $${paramCount}`);
-        values.push(updates.discount);
-        paramCount++;
-      }
-      
-      if ('startDate' in updates) {
-        updateFields.push(`start_date = $${paramCount}`);
-        values.push(updates.startDate);
-        paramCount++;
-      }
-      
-      if ('endDate' in updates) {
-        updateFields.push(`end_date = $${paramCount}`);
-        values.push(updates.endDate);
-        paramCount++;
-      }
-      
-      // Dodajmo ID na kraj parametara
-      values.push(id);
-      
-      // Kreiraj i izvrši upit
-      const query = `
-        UPDATE promotions SET ${updateFields.join(', ')}
-        WHERE id = $${paramCount}
-        RETURNING *
-      `;
-      
-      const data = await executeQuery(query, values);
-      const updatedPromo = data[0];
-      
-      return {
-        id: updatedPromo.id,
-        title: {
-          sr: updatedPromo.title_sr,
-          en: updatedPromo.title_en
-        },
-        description: {
-          sr: updatedPromo.description_sr,
-          en: updatedPromo.description_en
-        },
-        image: updatedPromo.image || '',
-        targetUrl: updatedPromo.target_url || '',
-        isActive: updatedPromo.is_active || false,
-        position: updatedPromo.position as 'home' | 'category',
-        order: updatedPromo.order,
-        discount: updatedPromo.discount,
-        startDate: updatedPromo.start_date || undefined,
-        endDate: updatedPromo.end_date || undefined
-      };
-    } catch (error) {
-      console.error('Error updating promotion:', error);
-      throw error;
-    }
-  },
-
-  deletePromotion: async (id: string): Promise<boolean> => {
-    try {
-      const query = 'DELETE FROM promotions WHERE id = $1';
-      await executeQuery(query, [id]);
+      await Promise.all(updates);
       return true;
     } catch (error) {
-      console.error('Error deleting promotion:', error);
+      console.error('Error reordering banners:', error);
       throw error;
     }
+  }
+};
+
+// Helper functions for mock data
+const getMockBanners = (position: string): Banner[] => {
+  const mockHeroBanners: Banner[] = [
+    {
+      id: '1',
+      title: {
+        sr: 'Nova kolekcija zaštitnih maski',
+        en: 'New Collection of Phone Cases',
+      },
+      description: {
+        sr: 'Istražite našu novu kolekciju vrhunskih zaštitnih maski za najnovije modele telefona',
+        en: 'Explore our new collection of premium phone cases for the latest models',
+      },
+      image: 'https://picsum.photos/seed/banner1/1200/400',
+      link: '/kategorija/phone-cases',
+      position: 'hero',
+      order: 1,
+      is_active: true,
+    },
+    {
+      id: '2',
+      title: {
+        sr: 'Popust na punjače',
+        en: 'Discount on Chargers',
+      },
+      description: {
+        sr: 'Uštedite do 30% na sve punjače i kablove',
+        en: 'Save up to 30% on all chargers and cables',
+      },
+      image: 'https://picsum.photos/seed/banner2/1200/400',
+      link: '/kategorija/chargers',
+      position: 'hero',
+      order: 2,
+      is_active: true,
+    },
+  ];
+  
+  const mockPromoBanners: Banner[] = [
+    {
+      id: '3',
+      title: {
+        sr: 'Besplatna dostava',
+        en: 'Free Shipping',
+      },
+      description: {
+        sr: 'Za sve porudžbine preko 3000 dinara',
+        en: 'For all orders over 3000 RSD',
+      },
+      image: 'https://picsum.photos/seed/promo1/800/400',
+      link: '/about',
+      position: 'promo',
+      order: 1,
+      is_active: true,
+    },
+  ];
+  
+  if (position === 'hero') {
+    return mockHeroBanners;
+  } else if (position === 'promo') {
+    return mockPromoBanners;
+  } else {
+    return [];
   }
 };

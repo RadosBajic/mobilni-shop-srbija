@@ -1,73 +1,57 @@
-# Welcome to your Lovable project
 
-## Project info
+# MobiliSrbija - Online Shop
 
-**URL**: https://lovable.dev/projects/78acd99d-2a40-4413-9d25-99b227d865cd
+E-commerce aplikacija za prodaju mobilne opreme i dodataka u Srbiji.
 
-## How can I edit this code?
+## Tehnologije
 
-There are several ways of editing your application.
+- React 
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- React Router
+- Supabase
 
-**Use Lovable**
+## Funkcionalnosti
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/78acd99d-2a40-4413-9d25-99b227d865cd) and start prompting.
+- Višejezični interfejs (srpski/engleski)
+- Pretraživanje proizvoda
+- Filtriranje po kategorijama
+- Korpa za kupovinu
+- Online plaćanje
+- Admin panel za upravljanje proizvodima, kategorijama, porudžbinama
 
-Changes made via Lovable will be committed automatically to this repo.
+## Razvoj
 
-**Use your preferred IDE**
+1. Klonirajte repozitorijum:
+```bash
+git clone https://github.com/vasdomain/mobilisrbija.git
+cd mobilisrbija
+```
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+2. Instalirajte zavisnosti:
+```bash
+npm install
+```
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+3. Pokrenite razvojni server:
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+## Deployment
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Za produkcijski build:
+```bash
+npm run build
+```
 
-**Use GitHub Codespaces**
+Ili koristite pripremljenu skriptu za deployment:
+```bash
+chmod +x deploy.sh
+./deploy.sh
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Licenca
 
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/78acd99d-2a40-4413-9d25-99b227d865cd) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes it is!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+MIT

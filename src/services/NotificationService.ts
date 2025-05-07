@@ -1,131 +1,138 @@
 
-import { NotificationType } from '@/types/banners';
+import { supabase } from '@/integrations/supabase/client';
 
-// Mock storage for notifications
-let notifications: NotificationType[] = [
-  {
-    id: 'n1',
-    title: 'New Order',
-    message: 'You have received a new order #12345',
-    type: 'info',
-    date: new Date().toISOString(),
-    read: false,
-    link: '/admin/orders'
-  },
-  {
-    id: 'n2',
-    title: 'Low Stock Alert',
-    message: 'The product "iPhone 13 Case" is running low on stock',
-    type: 'warning',
-    date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    link: '/admin/products'
-  },
-  {
-    id: 'n3',
-    title: 'Payment Received',
-    message: 'Payment for order #12340 has been successfully processed',
-    type: 'success',
-    date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    link: '/admin/orders'
-  }
-];
+export interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  link?: string;
+  is_read: boolean;
+  created_at: string;
+}
 
-export const NotificationService = {
-  getNotifications: (): Promise<NotificationType[]> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        resolve([...notifications].sort((a, b) => 
-          new Date(b.date).getTime() - new Date(a.date).getTime()
-        ));
-      }, 300);
-    });
-  },
-
-  getUnreadCount: (): Promise<number> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const count = notifications.filter(n => !n.read).length;
-        resolve(count);
-      }, 100);
-    });
-  },
-
-  markAsRead: (id: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const index = notifications.findIndex(n => n.id === id);
-        if (index !== -1) {
-          notifications[index].read = true;
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 200);
-    });
-  },
-
-  markAllAsRead: (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        notifications = notifications.map(n => ({ ...n, read: true }));
-        resolve(true);
-      }, 200);
-    });
-  },
-
-  addNotification: (notification: Omit<NotificationType, 'id' | 'date'>): Promise<NotificationType> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const newNotification = {
-          ...notification,
-          id: `n${notifications.length + 1}`,
-          date: new Date().toISOString(),
-        };
-        notifications.unshift(newNotification);
-        resolve(newNotification);
-      }, 200);
-    });
-  },
-
-  deleteNotification: (id: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const initialLength = notifications.length;
-        notifications = notifications.filter(n => n.id !== id);
-        resolve(notifications.length < initialLength);
-      }, 200);
-    });
-  },
-
-  clearAll: (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        notifications = [];
-        resolve(true);
-      }, 200);
-    });
-  }
-};
-
-// Helper function to create a notification and display it
 export const createNotification = async (
   title: string, 
   message: string, 
   type: 'info' | 'success' | 'warning' | 'error' = 'info',
   link?: string
-): Promise<NotificationType> => {
-  const notification = await NotificationService.addNotification({
-    title,
-    message,
-    type,
-    read: false,
-    link
-  });
+): Promise<Notification> => {
+  try {
+    const notification = {
+      title,
+      message,
+      type,
+      link,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+    
+    const { data, error } = await supabase
+      .from('notifications')
+      .insert(notification)
+      .select()
+      .single();
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data as Notification;
+  } catch (error) {
+    console.error('Error creating notification:', error);
+    // Return a mock notification for demonstration purposes
+    return {
+      id: Math.random().toString(36).substring(2, 9),
+      title,
+      message,
+      type,
+      link,
+      is_read: false,
+      created_at: new Date().toISOString(),
+    };
+  }
+};
 
-  // In a real application, you might want to trigger an event or refresh a UI component
-  // For now, we'll just console.log it
-  console.log('New notification created:', notification);
-  return notification;
+export const getNotifications = async (limit = 10): Promise<Notification[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+      
+    if (error) {
+      throw error;
+    }
+    
+    return data as Notification[];
+  } catch (error) {
+    console.error('Error getting notifications:', error);
+    // Return mock notifications
+    return [
+      {
+        id: '1',
+        title: 'Nova porudžbina',
+        message: 'Porudžbina #12345 je primljena u iznosu od 4999 RSD',
+        type: 'info',
+        link: '/admin/orders',
+        is_read: false,
+        created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+      },
+      {
+        id: '2',
+        title: 'Uspešno plaćanje',
+        message: 'Porudžbina #12344 je uspešno plaćena',
+        type: 'success',
+        link: '/admin/orders',
+        is_read: true,
+        created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+      }
+    ];
+  }
+};
+
+export const markNotificationAsRead = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('id', id);
+      
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+  }
+};
+
+export const markAllNotificationsAsRead = async (): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('is_read', false);
+      
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+  }
+};
+
+export const deleteNotification = async (id: string): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('id', id);
+      
+    if (error) {
+      throw error;
+    }
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+  }
 };

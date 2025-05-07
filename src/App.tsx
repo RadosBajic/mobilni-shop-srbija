@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -12,6 +11,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
 import { isNeonConfigured } from "@/lib/neon";
 import { AdminAuthService } from "@/services/AdminAuthService";
+import { HelmetProvider } from "react-helmet-async";
 
 // Public pages
 import Index from "./pages/Index";
@@ -102,67 +102,69 @@ const App = () => {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <LanguageProvider>
-          <ThemeProvider>
-            <CartProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <Routes>
-                    {/* Public routes */}
-                    <Route path="/" element={<Index />} />
-                    <Route path="/proizvodi" element={<Products />} />
-                    <Route path="/proizvod/:id" element={<ProductDetail />} />
-                    <Route path="/kontakt" element={<Contact />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/search" element={<SearchPage />} />
-                    
-                    {/* Auth routes */}
-                    <Route path="/auth/login" element={<Login />} />
-                    <Route path="/auth/register" element={<Register />} />
-                    
-                    {/* Admin auth route - this should NOT be protected */}
-                    <Route path="/admin/login" element={<AdminLogin />} />
-                    
-                    {/* Protected admin routes */}
-                    <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                    <Route 
-                      path="/admin/*" 
-                      element={
-                        <AdminProtectedRoute>
-                          <AdminLayout />
-                        </AdminProtectedRoute>
-                      }
-                    >
-                      <Route path="dashboard" element={<Dashboard />} />
-                      <Route path="products" element={<AdminProducts />} />
-                      <Route path="categories" element={<Categories />} />
-                      <Route path="orders" element={<Orders />} />
-                      <Route path="customers" element={<Customers />} />
-                      <Route path="banners" element={<Banners />} />
-                      <Route path="mail" element={<MailPage />} />
-                      <Route path="import-export" element={<ImportExport />} />
-                      <Route path="settings" element={<Settings />} />
-                    </Route>
-                    
-                    {/* Category products - fixed route path */}
-                    <Route path="/kategorija/:slug" element={<CategoryProducts />} />
-                    
-                    {/* 404 catch-all */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </BrowserRouter>
-              </TooltipProvider>
-            </CartProvider>
-          </ThemeProvider>
-        </LanguageProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <HelmetProvider>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <LanguageProvider>
+            <ThemeProvider>
+              <CartProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <Routes>
+                      {/* Public routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/proizvodi" element={<Products />} />
+                      <Route path="/proizvod/:id" element={<ProductDetail />} />
+                      <Route path="/kontakt" element={<Contact />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/cart" element={<Cart />} />
+                      <Route path="/checkout" element={<Checkout />} />
+                      <Route path="/search" element={<SearchPage />} />
+                      
+                      {/* Auth routes */}
+                      <Route path="/auth/login" element={<Login />} />
+                      <Route path="/auth/register" element={<Register />} />
+                      
+                      {/* Admin auth route - this should NOT be protected */}
+                      <Route path="/admin/login" element={<AdminLogin />} />
+                      
+                      {/* Protected admin routes */}
+                      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                      <Route 
+                        path="/admin/*" 
+                        element={
+                          <AdminProtectedRoute>
+                            <AdminLayout />
+                          </AdminProtectedRoute>
+                        }
+                      >
+                        <Route path="dashboard" element={<Dashboard />} />
+                        <Route path="products" element={<AdminProducts />} />
+                        <Route path="categories" element={<Categories />} />
+                        <Route path="orders" element={<Orders />} />
+                        <Route path="customers" element={<Customers />} />
+                        <Route path="banners" element={<Banners />} />
+                        <Route path="mail" element={<MailPage />} />
+                        <Route path="import-export" element={<ImportExport />} />
+                        <Route path="settings" element={<Settings />} />
+                      </Route>
+                      
+                      {/* Category products - fixed route path */}
+                      <Route path="/kategorija/:slug" element={<CategoryProducts />} />
+                      
+                      {/* 404 catch-all */}
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </BrowserRouter>
+                </TooltipProvider>
+              </CartProvider>
+            </ThemeProvider>
+          </LanguageProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </HelmetProvider>
   );
 };
 
