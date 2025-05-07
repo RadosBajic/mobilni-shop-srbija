@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface Notification {
@@ -10,24 +11,22 @@ export interface Notification {
   created_at: string;
 }
 
-// Create a NotificationService class to match what's expected in NotificationsDropdown.tsx
+// NotificationService klasa za rad sa notifikacijama
 export class NotificationService {
   static async getNotifications(limit = 10): Promise<Notification[]> {
     try {
-      const { data, error } = await supabase
-        .from('notifications')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(limit);
-        
-      if (error) {
-        throw error;
-      }
+      // Supabaze tabela za notifikacije trenutno ne postoji
+      // U produkciji bi ovo bilo:
+      // const { data, error } = await supabase
+      //   .from('notifications')
+      //   .select('*')
+      //   .order('created_at', { ascending: false })
+      //   .limit(limit);
+      //
+      // if (error) throw error;
+      // return data as Notification[];
       
-      return data as Notification[];
-    } catch (error) {
-      console.error('Error getting notifications:', error);
-      // Return mock notifications
+      // Mock notifikacije za demonstraciju
       return [
         {
           id: '1',
@@ -48,38 +47,42 @@ export class NotificationService {
           created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
         }
       ];
+    } catch (error) {
+      console.error('Error getting notifications:', error);
+      return [];
     }
   }
 
   static async getUnreadCount(): Promise<number> {
     try {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('is_read', false);
-        
-      if (error) {
-        throw error;
-      }
+      // U produkciji:
+      // const { count, error } = await supabase
+      //   .from('notifications')
+      //   .select('*', { count: 'exact', head: true })
+      //   .eq('is_read', false);
+      //    
+      // if (error) throw error;
+      // return count || 0;
       
-      return count || 0;
+      // Mock broj nepročitanih notifikacija
+      return 1;
     } catch (error) {
       console.error('Error getting unread count:', error);
-      // Return mock unread count
-      return 1;
+      return 0;
     }
   }
 
   static async markAsRead(id: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
+      // U produkciji:
+      // const { error } = await supabase
+      //   .from('notifications')
+      //   .update({ is_read: true })
+      //   .eq('id', id);
+      //    
+      // if (error) throw error;
+      
+      console.log(`Marking notification ${id} as read`);
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
@@ -87,14 +90,15 @@ export class NotificationService {
 
   static async markAllAsRead(): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ is_read: true })
-        .eq('is_read', false);
-        
-      if (error) {
-        throw error;
-      }
+      // U produkciji:
+      // const { error } = await supabase
+      //   .from('notifications')
+      //   .update({ is_read: true })
+      //   .eq('is_read', false);
+      //    
+      // if (error) throw error;
+      
+      console.log('Marking all notifications as read');
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
@@ -102,14 +106,15 @@ export class NotificationService {
 
   static async deleteNotification(id: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notifications')
-        .delete()
-        .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
+      // U produkciji:
+      // const { error } = await supabase
+      //   .from('notifications')
+      //   .delete()
+      //   .eq('id', id);
+      //    
+      // if (error) throw error;
+      
+      console.log(`Deleting notification ${id}`);
     } catch (error) {
       console.error('Error deleting notification:', error);
     }
@@ -123,6 +128,7 @@ export class NotificationService {
   ): Promise<Notification> {
     try {
       const notification = {
+        id: Math.random().toString(36).substring(2, 9),
         title,
         message,
         type,
@@ -131,17 +137,21 @@ export class NotificationService {
         created_at: new Date().toISOString(),
       };
       
-      // Due to potential schema issues, we'll return a mock response for now
-      // In a production environment, this would actually insert into the database
-      console.info('Creating notification (mock):', notification);
+      // U produkciji bi bilo ubacivanje u bazu
+      // const { data, error } = await supabase
+      //   .from('notifications')
+      //   .insert(notification)
+      //   .select()
+      //   .single();
+      //    
+      // if (error) throw error;
+      // return data as Notification;
       
-      return {
-        id: Math.random().toString(36).substring(2, 9),
-        ...notification
-      };
+      console.log('Creating notification:', notification);
+      return notification;
     } catch (error) {
       console.error('Error creating notification:', error);
-      // Return a mock notification for demonstration purposes
+      // Vraćamo mock notifikaciju ako je došlo do greške
       return {
         id: Math.random().toString(36).substring(2, 9),
         title,
@@ -155,7 +165,7 @@ export class NotificationService {
   }
 }
 
-// Also keep the original functions for backward compatibility
+// Takođe zadržavamo originalne funkcije za kompatibilnost sa postojećim kodom
 export const createNotification = async (
   title: string, 
   message: string, 
