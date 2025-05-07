@@ -3,21 +3,44 @@ import { supabase } from '@/integrations/supabase/client';
 
 export interface Banner {
   id: string;
-  title: {
-    sr: string;
-    en: string;
-  };
-  description?: {
-    sr?: string;
-    en?: string;
-  };
-  image: string;
-  link?: string;
-  position: string; // 'hero', 'promo', etc.
-  order: number;
+  title_sr: string;
+  title_en: string;
+  description_sr: string | null;
+  description_en: string | null;
+  image: string | null;
+  target_url: string | null;
   is_active: boolean;
+  position: string;
+  order: number;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
+// Helper function to map to frontend banner object
+export const mapToBanner = (data: any): Banner => ({
+  id: data.id,
+  title_sr: data.title_sr,
+  title_en: data.title_en,
+  description_sr: data.description_sr,
+  description_en: data.description_en,
+  image: data.image,
+  target_url: data.target_url,
+  is_active: data.is_active,
+  position: data.position,
+  order: data.order,
+  start_date: data.start_date,
+  end_date: data.end_date,
+  created_at: data.created_at,
+  updated_at: data.updated_at
+});
+
+export interface Promotion extends Banner {
+  discount: number | null;
+}
+
+// Export the Supabase banner service
 export const SupabaseBannerService = {
   getBanners: async (position: string): Promise<Banner[]> => {
     try {
@@ -25,237 +48,201 @@ export const SupabaseBannerService = {
         .from('banners')
         .select('*')
         .eq('position', position)
-        .order('order', { ascending: true });
-        
-      if (error) {
-        throw error;
-      }
+        .order('order');
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          sr: item.title_sr || item.title || '',
-          en: item.title_en || item.title || '',
-        },
-        description: item.description ? {
-          sr: item.description_sr || item.description || '',
-          en: item.description_en || item.description || '',
-        } : undefined,
-        image: item.image,
-        link: item.link,
-        position: item.position,
-        order: item.order,
-        is_active: item.is_active,
-      }));
-    } catch (error) {
-      console.error(`Error fetching ${position} banners:`, error);
+      if (error) throw error;
       
-      // Return mock banners
-      return getMockBanners(position);
+      return data.map(mapToBanner);
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+      return [];
     }
   },
   
-  createBanner: async (banner: Partial<Banner>): Promise<Banner> => {
+  getPromotions: async (limit?: number): Promise<Promotion[]> => {
     try {
-      const bannerData = {
-        title: banner.title?.en || '',
-        title_sr: banner.title?.sr || '',
-        title_en: banner.title?.en || '',
-        description: banner.description?.en || null,
-        description_sr: banner.description?.sr || null,
-        description_en: banner.description?.en || null,
-        image: banner.image || '',
-        link: banner.link || null,
-        position: banner.position || 'hero',
-        order: banner.order || 0,
-        is_active: banner.is_active !== undefined ? banner.is_active : true,
-      };
-      
-      const { data, error } = await supabase
-        .from('banners')
-        .insert(bannerData)
-        .select()
-        .single();
+      let query = supabase
+        .from('promotions')
+        .select('*')
+        .eq('is_active', true)
+        .order('order');
         
-      if (error) {
-        throw error;
+      if (limit) {
+        query = query.limit(limit);
       }
 
-      return {
-        id: data.id,
-        title: {
-          sr: data.title_sr || data.title || '',
-          en: data.title_en || data.title || '',
-        },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
-        } : undefined,
-        image: data.image,
-        link: data.link,
-        position: data.position,
-        order: data.order,
-        is_active: data.is_active,
-      };
+      const { data, error } = await query;
+
+      if (error) throw error;
+      
+      return data.map((promo: any) => ({
+        id: promo.id,
+        title_sr: promo.title_sr,
+        title_en: promo.title_en,
+        description_sr: promo.description_sr,
+        description_en: promo.description_en,
+        image: promo.image,
+        target_url: promo.target_url,
+        is_active: promo.is_active,
+        position: promo.position,
+        order: promo.order,
+        discount: promo.discount,
+        start_date: promo.start_date,
+        end_date: promo.end_date,
+        created_at: promo.created_at,
+        updated_at: promo.updated_at
+      }));
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      return [];
+    }
+  },
+
+  createBanner: async (banner: Partial<Banner>): Promise<Banner> => {
+    try {
+      const { data, error } = await supabase
+        .from('banners')
+        .insert(banner)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      return mapToBanner(data);
     } catch (error) {
       console.error('Error creating banner:', error);
       throw error;
     }
   },
   
+  createPromotion: async (promotion: Partial<Promotion>): Promise<Promotion> => {
+    try {
+      const { data, error } = await supabase
+        .from('promotions')
+        .insert(promotion)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      return {
+        ...mapToBanner(data),
+        discount: data.discount
+      };
+    } catch (error) {
+      console.error('Error creating promotion:', error);
+      throw error;
+    }
+  },
+
   updateBanner: async (id: string, banner: Partial<Banner>): Promise<Banner> => {
     try {
-      const bannerData: any = {};
-      
-      if (banner.title) {
-        bannerData.title = banner.title.en || '';
-        bannerData.title_sr = banner.title.sr || '';
-        bannerData.title_en = banner.title.en || '';
-      }
-      
-      if (banner.description) {
-        bannerData.description = banner.description.en || null;
-        bannerData.description_sr = banner.description.sr || null;
-        bannerData.description_en = banner.description.en || null;
-      }
-      
-      if (banner.image !== undefined) bannerData.image = banner.image;
-      if (banner.link !== undefined) bannerData.link = banner.link;
-      if (banner.position !== undefined) bannerData.position = banner.position;
-      if (banner.order !== undefined) bannerData.order = banner.order;
-      if (banner.is_active !== undefined) bannerData.is_active = banner.is_active;
-      
       const { data, error } = await supabase
         .from('banners')
-        .update(bannerData)
+        .update(banner)
         .eq('id', id)
         .select()
         .single();
-        
-      if (error) {
-        throw error;
-      }
 
-      return {
-        id: data.id,
-        title: {
-          sr: data.title_sr || data.title || '',
-          en: data.title_en || data.title || '',
-        },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
-        } : undefined,
-        image: data.image,
-        link: data.link,
-        position: data.position,
-        order: data.order,
-        is_active: data.is_active,
-      };
+      if (error) throw error;
+      
+      return mapToBanner(data);
     } catch (error) {
       console.error('Error updating banner:', error);
       throw error;
     }
   },
   
+  updatePromotion: async (id: string, promotion: Partial<Promotion>): Promise<Promotion> => {
+    try {
+      const { data, error } = await supabase
+        .from('promotions')
+        .update(promotion)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      return {
+        ...mapToBanner(data),
+        discount: data.discount
+      };
+    } catch (error) {
+      console.error('Error updating promotion:', error);
+      throw error;
+    }
+  },
+
   deleteBanner: async (id: string): Promise<boolean> => {
     try {
       const { error } = await supabase
         .from('banners')
         .delete()
         .eq('id', id);
-        
-      if (error) {
-        throw error;
-      }
+
+      if (error) throw error;
       
       return true;
     } catch (error) {
       console.error('Error deleting banner:', error);
-      throw error;
+      return false;
     }
   },
   
+  deletePromotion: async (id: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('promotions')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting promotion:', error);
+      return false;
+    }
+  },
+
   reorderBanners: async (bannerIds: string[]): Promise<boolean> => {
     try {
-      // Update each banner's order in a transaction
-      const updates = bannerIds.map((id, index) => {
-        return supabase
+      // Update each banner's order in sequence
+      for (let i = 0; i < bannerIds.length; i++) {
+        const { error } = await supabase
           .from('banners')
-          .update({ order: index })
-          .eq('id', id);
-      });
+          .update({ order: i })
+          .eq('id', bannerIds[i]);
+
+        if (error) throw error;
+      }
       
-      await Promise.all(updates);
       return true;
     } catch (error) {
       console.error('Error reordering banners:', error);
-      throw error;
+      return false;
+    }
+  },
+  
+  reorderPromotions: async (promotionIds: string[]): Promise<boolean> => {
+    try {
+      // Update each promotion's order in sequence
+      for (let i = 0; i < promotionIds.length; i++) {
+        const { error } = await supabase
+          .from('promotions')
+          .update({ order: i })
+          .eq('id', promotionIds[i]);
+
+        if (error) throw error;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error reordering promotions:', error);
+      return false;
     }
   }
 };
 
-// Helper functions for mock data
-const getMockBanners = (position: string): Banner[] => {
-  const mockHeroBanners: Banner[] = [
-    {
-      id: '1',
-      title: {
-        sr: 'Nova kolekcija zaštitnih maski',
-        en: 'New Collection of Phone Cases',
-      },
-      description: {
-        sr: 'Istražite našu novu kolekciju vrhunskih zaštitnih maski za najnovije modele telefona',
-        en: 'Explore our new collection of premium phone cases for the latest models',
-      },
-      image: 'https://picsum.photos/seed/banner1/1200/400',
-      link: '/kategorija/phone-cases',
-      position: 'hero',
-      order: 1,
-      is_active: true,
-    },
-    {
-      id: '2',
-      title: {
-        sr: 'Popust na punjače',
-        en: 'Discount on Chargers',
-      },
-      description: {
-        sr: 'Uštedite do 30% na sve punjače i kablove',
-        en: 'Save up to 30% on all chargers and cables',
-      },
-      image: 'https://picsum.photos/seed/banner2/1200/400',
-      link: '/kategorija/chargers',
-      position: 'hero',
-      order: 2,
-      is_active: true,
-    },
-  ];
-  
-  const mockPromoBanners: Banner[] = [
-    {
-      id: '3',
-      title: {
-        sr: 'Besplatna dostava',
-        en: 'Free Shipping',
-      },
-      description: {
-        sr: 'Za sve porudžbine preko 3000 dinara',
-        en: 'For all orders over 3000 RSD',
-      },
-      image: 'https://picsum.photos/seed/promo1/800/400',
-      link: '/about',
-      position: 'promo',
-      order: 1,
-      is_active: true,
-    },
-  ];
-  
-  if (position === 'hero') {
-    return mockHeroBanners;
-  } else if (position === 'promo') {
-    return mockPromoBanners;
-  } else {
-    return [];
-  }
-};
+export default SupabaseBannerService;

@@ -1,5 +1,6 @@
-
 import { executeQuery } from '@/lib/neon';
+import { supabase } from '@/integrations/supabase/client';
+import { EmailService } from './EmailService';
 
 export interface OrderItem {
   productId: string;
@@ -53,6 +54,46 @@ const mapToOrder = (order: any): Order => ({
 export const OrderService = {
   createOrder: async (orderData: CreateOrderData): Promise<Order> => {
     try {
+      // Try to insert into Supabase first
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .insert({
+            customer_id: orderData.customerId,
+            customer_name: orderData.customerName,
+            customer_email: orderData.customerEmail,
+            customer_phone: orderData.customerPhone,
+            shipping_address: orderData.shippingAddress,
+            items: orderData.items,
+            total_amount: orderData.totalAmount,
+            status: orderData.status,
+            payment_method: orderData.paymentMethod,
+            payment_status: orderData.paymentStatus,
+            notes: orderData.notes
+          })
+          .select()
+          .single();
+          
+        if (!error && data) {
+          // Send order confirmation email
+          try {
+            await EmailService.sendOrderConfirmationEmail(
+              orderData.customerEmail,
+              orderData.customerName,
+              data.id,
+              orderData.totalAmount
+            );
+          } catch (emailError) {
+            console.error('Error sending order confirmation email:', emailError);
+          }
+          
+          return mapToOrder(data);
+        }
+      } catch (dbError) {
+        console.warn('Error creating order in Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database if Supabase fails
       const query = `
         INSERT INTO orders (
           customer_id, customer_name, customer_email, customer_phone,
@@ -77,6 +118,19 @@ export const OrderService = {
       ];
       
       const data = await executeQuery(query, params);
+      
+      // Send order confirmation email
+      try {
+        await EmailService.sendOrderConfirmationEmail(
+          orderData.customerEmail,
+          orderData.customerName,
+          data[0].id,
+          orderData.totalAmount
+        );
+      } catch (emailError) {
+        console.error('Error sending order confirmation email:', emailError);
+      }
+      
       return mapToOrder(data[0]);
     } catch (error) {
       console.error('Error in createOrder:', error);
@@ -86,6 +140,21 @@ export const OrderService = {
   
   getOrders: async (): Promise<Order[]> => {
     try {
+      // Try to get from Supabase first
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+          
+        if (!error && data) {
+          return data.map(mapToOrder);
+        }
+      } catch (dbError) {
+        console.warn('Error getting orders from Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = `
         SELECT * FROM orders
         ORDER BY created_at DESC
@@ -101,6 +170,22 @@ export const OrderService = {
   
   getOrderById: async (id: string): Promise<Order | null> => {
     try {
+      // Try to get from Supabase first
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('id', id)
+          .single();
+          
+        if (!error && data) {
+          return mapToOrder(data);
+        }
+      } catch (dbError) {
+        console.warn('Error getting order from Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = 'SELECT * FROM orders WHERE id = $1';
       const data = await executeQuery(query, [id]);
       
@@ -117,6 +202,21 @@ export const OrderService = {
   
   updateOrderStatus: async (id: string, status: Order['status']): Promise<boolean> => {
     try {
+      // Try to update in Supabase first
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ status, updated_at: new Date().toISOString() })
+          .eq('id', id);
+          
+        if (!error) {
+          return true;
+        }
+      } catch (dbError) {
+        console.warn('Error updating order status in Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = `
         UPDATE orders 
         SET status = $1, updated_at = NOW() 
@@ -133,6 +233,21 @@ export const OrderService = {
   
   updatePaymentStatus: async (id: string, paymentStatus: Order['paymentStatus']): Promise<boolean> => {
     try {
+      // Try to update in Supabase first
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ payment_status: paymentStatus, updated_at: new Date().toISOString() })
+          .eq('id', id);
+          
+        if (!error) {
+          return true;
+        }
+      } catch (dbError) {
+        console.warn('Error updating payment status in Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = `
         UPDATE orders 
         SET payment_status = $1, updated_at = NOW() 
@@ -149,6 +264,21 @@ export const OrderService = {
   
   deleteOrder: async (id: string): Promise<boolean> => {
     try {
+      // Try to delete from Supabase first
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .delete()
+          .eq('id', id);
+          
+        if (!error) {
+          return true;
+        }
+      } catch (dbError) {
+        console.warn('Error deleting order from Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = 'DELETE FROM orders WHERE id = $1';
       await executeQuery(query, [id]);
       return true;
@@ -160,6 +290,21 @@ export const OrderService = {
   
   updateOrderNotes: async (id: string, notes: string): Promise<boolean> => {
     try {
+      // Try to update in Supabase first
+      try {
+        const { error } = await supabase
+          .from('orders')
+          .update({ notes, updated_at: new Date().toISOString() })
+          .eq('id', id);
+          
+        if (!error) {
+          return true;
+        }
+      } catch (dbError) {
+        console.warn('Error updating order notes in Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = `
         UPDATE orders 
         SET notes = $1, updated_at = NOW() 
@@ -176,6 +321,22 @@ export const OrderService = {
   
   getOrdersByStatus: async (status: Order['status']): Promise<Order[]> => {
     try {
+      // Try to get from Supabase first
+      try {
+        const { data, error } = await supabase
+          .from('orders')
+          .select('*')
+          .eq('status', status)
+          .order('created_at', { ascending: false });
+          
+        if (!error && data) {
+          return data.map(mapToOrder);
+        }
+      } catch (dbError) {
+        console.warn('Error getting orders by status from Supabase:', dbError);
+      }
+      
+      // Fall back to Neon database
       const query = `
         SELECT * FROM orders 
         WHERE status = $1 

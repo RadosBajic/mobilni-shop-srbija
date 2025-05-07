@@ -1,171 +1,141 @@
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { LanguageProvider } from "@/contexts/LanguageContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
-import { CartProvider } from "@/contexts/CartContext";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
-import { isNeonConfigured } from "@/lib/neon";
-import { AdminAuthService } from "@/services/AdminAuthService";
-import { HelmetProvider } from "react-helmet-async";
 
-// Public pages
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
-import Products from "./pages/Products";
-import ProductDetail from "./pages/ProductDetail";
-import Contact from "./pages/Contact";
-import Cart from "./pages/Cart";
-import Checkout from "./pages/Checkout";
-import About from "./pages/About";
-import CategoryProducts from "./pages/CategoryProducts";
-import SearchPage from "./pages/SearchPage";
+import React, { lazy, Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
+import Loading from './components/ui/loading';
+import ErrorBoundary from './components/ui/error-boundary';
+import { useAuth } from './contexts/AuthContext';
+import { Toaster } from '@/components/ui/toaster';
+
+// Pages
+const Home = lazy(() => import('./pages/Home'));
+const Products = lazy(() => import('./pages/Products'));
+const ProductDetails = lazy(() => import('./pages/ProductDetails'));
+const Categories = lazy(() => import('./pages/Categories'));
+const CategoryProducts = lazy(() => import('./pages/CategoryProducts'));
+const AboutUs = lazy(() => import('./pages/AboutUs'));
+const Cart = lazy(() => import('./pages/Cart'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const ContactUs = lazy(() => import('./pages/ContactUs'));
+const Page404 = lazy(() => import('./pages/404'));
 
 // Admin pages
-import AdminLogin from "./pages/Admin/AdminLogin";
-import AdminLayout from "./components/Admin/AdminLayout";
-import Dashboard from "./pages/Admin/Dashboard";
-import { default as AdminProducts } from "./pages/Admin/Products";
-import Categories from "./pages/Admin/Categories";
-import Orders from "./pages/Admin/Orders";
-import ImportExport from "./pages/Admin/ImportExport";
-import Banners from "./pages/Admin/Banners";
-import Settings from "./pages/Admin/Settings";
-import Customers from "./pages/Admin/Customers";
-import MailPage from "./pages/Admin/Mail";
+const AdminLogin = lazy(() => import('./pages/Admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
+const AdminProducts = lazy(() => import('./pages/Admin/Products'));
+const AdminCategories = lazy(() => import('./pages/Admin/Categories'));
+const AdminOrders = lazy(() => import('./pages/Admin/Orders'));
+const AdminOrderDetails = lazy(() => import('./pages/Admin/OrderDetails'));
+const AdminBanners = lazy(() => import('./pages/Admin/Banners'));
+const AdminPromotions = lazy(() => import('./pages/Admin/Promotions'));
+const AdminCustomers = lazy(() => import('./pages/Admin/Customers'));
+const AdminSettings = lazy(() => import('./pages/Admin/Settings'));
+const AdminNotifications = lazy(() => import('./pages/Admin/Notifications'));
+const AdminAnalytics = lazy(() => import('./pages/Admin/Analytics'));
+const AdminEmailSettings = lazy(() => import('./pages/Admin/EmailSettings'));
 
-// Auth pages
-import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
+function App() {
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-const queryClient = new QueryClient();
-
-// Protected Route component for regular users
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, loading } = useAuth();
+  const isAdmin = location.pathname.startsWith('/admin');
   
-  if (loading) {
-    return <div>Loading...</div>;
-  }
-  
-  if (!user) {
-    return <Navigate to="/auth/login" />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Protected Route component for admin users
-const AdminProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  
+  // Redirect non-authenticated users from admin sections
   useEffect(() => {
-    const checkAuth = () => {
-      const authenticated = AdminAuthService.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      setIsLoading(false);
-    };
-    
-    checkAuth();
-  }, []);
+    if (!authLoading && !isAuthenticated && isAdmin && location.pathname !== '/admin/login') {
+      navigate('/admin/login');
+    }
+  }, [isAuthenticated, isAdmin, location.pathname, authLoading, navigate]);
   
-  if (isLoading) {
-    return <div>Loading...</div>;
+  // Fallback for loading state
+  if (authLoading && isAdmin && location.pathname !== '/admin/login') {
+    return <Loading />;
   }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/admin/login" />;
-  }
-  
-  return <>{children}</>;
-};
-
-const App = () => {
-  const [isDatabaseReady, setIsDatabaseReady] = useState<boolean>(false);
-
-  useEffect(() => {
-    const checkDatabase = () => {
-      const configured = isNeonConfigured();
-      setIsDatabaseReady(configured);
-      
-      if (!configured) {
-        console.error("Database is not properly configured. Check your connection string.");
-      }
-    };
-    
-    checkDatabase();
-  }, []);
 
   return (
-    <HelmetProvider>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <LanguageProvider>
-            <ThemeProvider>
-              <CartProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <Routes>
-                      {/* Public routes */}
-                      <Route path="/" element={<Index />} />
-                      <Route path="/proizvodi" element={<Products />} />
-                      <Route path="/proizvod/:id" element={<ProductDetail />} />
-                      <Route path="/kontakt" element={<Contact />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/cart" element={<Cart />} />
-                      <Route path="/checkout" element={<Checkout />} />
-                      <Route path="/search" element={<SearchPage />} />
-                      
-                      {/* Auth routes */}
-                      <Route path="/auth/login" element={<Login />} />
-                      <Route path="/auth/register" element={<Register />} />
-                      
-                      {/* Admin auth route - this should NOT be protected */}
-                      <Route path="/admin/login" element={<AdminLogin />} />
-                      
-                      {/* Protected admin routes */}
-                      <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-                      <Route 
-                        path="/admin/*" 
-                        element={
-                          <AdminProtectedRoute>
-                            <AdminLayout />
-                          </AdminProtectedRoute>
-                        }
-                      >
-                        <Route path="dashboard" element={<Dashboard />} />
-                        <Route path="products" element={<AdminProducts />} />
-                        <Route path="categories" element={<Categories />} />
-                        <Route path="orders" element={<Orders />} />
-                        <Route path="customers" element={<Customers />} />
-                        <Route path="banners" element={<Banners />} />
-                        <Route path="mail" element={<MailPage />} />
-                        <Route path="import-export" element={<ImportExport />} />
-                        <Route path="settings" element={<Settings />} />
-                      </Route>
-                      
-                      {/* Category products - fixed route path */}
-                      <Route path="/kategorija/:slug" element={<CategoryProducts />} />
-                      
-                      {/* 404 catch-all */}
-                      <Route path="*" element={<NotFound />} />
-                    </Routes>
-                  </BrowserRouter>
-                </TooltipProvider>
-              </CartProvider>
-            </ThemeProvider>
-          </LanguageProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </HelmetProvider>
+    <>
+      <ErrorBoundary>
+        <Suspense fallback={<Loading />}>
+          <Routes>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/products/:id" element={<ProductDetails />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/categories/:slug" element={<CategoryProducts />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/contact" element={<ContactUs />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            
+            {/* Admin routes - protected by authentication */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route
+              path="/admin"
+              element={
+                isAuthenticated ? <Navigate to="/admin/dashboard" /> : <Navigate to="/admin/login" />
+              }
+            />
+            <Route
+              path="/admin/dashboard"
+              element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/products"
+              element={isAuthenticated ? <AdminProducts /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/categories"
+              element={isAuthenticated ? <AdminCategories /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/orders"
+              element={isAuthenticated ? <AdminOrders /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/orders/:id"
+              element={isAuthenticated ? <AdminOrderDetails /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/banners"
+              element={isAuthenticated ? <AdminBanners /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/promotions"
+              element={isAuthenticated ? <AdminPromotions /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/customers"
+              element={isAuthenticated ? <AdminCustomers /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/settings"
+              element={isAuthenticated ? <AdminSettings /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/notifications"
+              element={isAuthenticated ? <AdminNotifications /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/analytics"
+              element={isAuthenticated ? <AdminAnalytics /> : <Navigate to="/admin/login" />}
+            />
+            <Route
+              path="/admin/email-settings"
+              element={isAuthenticated ? <AdminEmailSettings /> : <Navigate to="/admin/login" />}
+            />
+            
+            {/* 404 route */}
+            <Route path="*" element={<Page404 />} />
+          </Routes>
+        </Suspense>
+      </ErrorBoundary>
+      
+      <Toaster />
+      <Analytics />
+    </>
   );
-};
+}
 
 export default App;

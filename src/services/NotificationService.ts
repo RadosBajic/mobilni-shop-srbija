@@ -15,18 +15,34 @@ export interface Notification {
 export class NotificationService {
   static async getNotifications(limit = 10): Promise<Notification[]> {
     try {
-      // Supabaze tabela za notifikacije trenutno ne postoji
-      // U produkciji bi ovo bilo:
-      // const { data, error } = await supabase
-      //   .from('notifications')
-      //   .select('*')
-      //   .order('created_at', { ascending: false })
-      //   .limit(limit);
-      //
-      // if (error) throw error;
-      // return data as Notification[];
+      // Create notifications table on Supabase:
+      // CREATE TABLE public.notifications (
+      //   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      //   title TEXT NOT NULL,
+      //   message TEXT NOT NULL,
+      //   type TEXT NOT NULL,
+      //   link TEXT,
+      //   is_read BOOLEAN DEFAULT false,
+      //   created_at TIMESTAMPTZ DEFAULT now()
+      // );
+
+      // Try to get from database
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(limit);
+          
+        if (!error && data) {
+          return data as Notification[];
+        }
+      } catch (dbError) {
+        console.warn('Database error getting notifications:', dbError);
+        // Fall back to mock data
+      }
       
-      // Mock notifikacije za demonstraciju
+      // Mock notifikacije kao rezerva
       return [
         {
           id: '1',
@@ -55,16 +71,21 @@ export class NotificationService {
 
   static async getUnreadCount(): Promise<number> {
     try {
-      // U produkciji:
-      // const { count, error } = await supabase
-      //   .from('notifications')
-      //   .select('*', { count: 'exact', head: true })
-      //   .eq('is_read', false);
-      //    
-      // if (error) throw error;
-      // return count || 0;
+      // Try to get from database
+      try {
+        const { count, error } = await supabase
+          .from('notifications')
+          .select('*', { count: 'exact', head: true })
+          .eq('is_read', false);
+          
+        if (!error && count !== null) {
+          return count;
+        }
+      } catch (dbError) {
+        console.warn('Database error getting unread count:', dbError);
+      }
       
-      // Mock broj nepročitanih notifikacija
+      // Mock broj nepročitanih notifikacija kao rezerva
       return 1;
     } catch (error) {
       console.error('Error getting unread count:', error);
@@ -74,14 +95,22 @@ export class NotificationService {
 
   static async markAsRead(id: string): Promise<void> {
     try {
-      // U produkciji:
-      // const { error } = await supabase
-      //   .from('notifications')
-      //   .update({ is_read: true })
-      //   .eq('id', id);
-      //    
-      // if (error) throw error;
+      // Try to update in database
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('id', id);
+          
+        if (!error) {
+          console.log(`Notification ${id} marked as read in database`);
+          return;
+        }
+      } catch (dbError) {
+        console.warn('Database error marking notification as read:', dbError);
+      }
       
+      // Fallback console log
       console.log(`Marking notification ${id} as read`);
     } catch (error) {
       console.error('Error marking notification as read:', error);
@@ -90,14 +119,22 @@ export class NotificationService {
 
   static async markAllAsRead(): Promise<void> {
     try {
-      // U produkciji:
-      // const { error } = await supabase
-      //   .from('notifications')
-      //   .update({ is_read: true })
-      //   .eq('is_read', false);
-      //    
-      // if (error) throw error;
+      // Try to update in database
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('is_read', false);
+          
+        if (!error) {
+          console.log('All notifications marked as read in database');
+          return;
+        }
+      } catch (dbError) {
+        console.warn('Database error marking all notifications as read:', dbError);
+      }
       
+      // Fallback console log
       console.log('Marking all notifications as read');
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
@@ -106,14 +143,22 @@ export class NotificationService {
 
   static async deleteNotification(id: string): Promise<void> {
     try {
-      // U produkciji:
-      // const { error } = await supabase
-      //   .from('notifications')
-      //   .delete()
-      //   .eq('id', id);
-      //    
-      // if (error) throw error;
+      // Try to delete from database
+      try {
+        const { error } = await supabase
+          .from('notifications')
+          .delete()
+          .eq('id', id);
+          
+        if (!error) {
+          console.log(`Notification ${id} deleted from database`);
+          return;
+        }
+      } catch (dbError) {
+        console.warn('Database error deleting notification:', dbError);
+      }
       
+      // Fallback console log
       console.log(`Deleting notification ${id}`);
     } catch (error) {
       console.error('Error deleting notification:', error);
@@ -137,21 +182,33 @@ export class NotificationService {
         created_at: new Date().toISOString(),
       };
       
-      // U produkciji bi bilo ubacivanje u bazu
-      // const { data, error } = await supabase
-      //   .from('notifications')
-      //   .insert(notification)
-      //   .select()
-      //   .single();
-      //    
-      // if (error) throw error;
-      // return data as Notification;
+      // Try to insert into database
+      try {
+        const { data, error } = await supabase
+          .from('notifications')
+          .insert({
+            title,
+            message, 
+            type,
+            link,
+            is_read: false
+          })
+          .select()
+          .single();
+          
+        if (!error && data) {
+          return data as Notification;
+        }
+      } catch (dbError) {
+        console.warn('Database error creating notification:', dbError);
+      }
       
+      // Fallback local notification
       console.log('Creating notification:', notification);
       return notification;
     } catch (error) {
       console.error('Error creating notification:', error);
-      // Vraćamo mock notifikaciju ako je došlo do greške
+      // Return mock notification if there was an error
       return {
         id: Math.random().toString(36).substring(2, 9),
         title,
