@@ -9,14 +9,14 @@ import PromotionsGrid from '@/components/Home/PromotionsGrid';
 import SaleBanner from '@/components/Home/SaleBanner';
 import WhatsNew from '@/components/Home/WhatsNew';
 import FeatureBox, { Feature } from '@/components/Home/FeatureBox';
+import Testimonials from '@/components/Home/Testimonials';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Cpu, ShieldCheck, TruckIcon, Headphones, ArrowRight, Heart } from 'lucide-react';
+import { ArrowRight, TruckIcon, ShieldCheck, Headphones, Cpu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 
 const Index: React.FC = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
 
   const features: Feature[] = [
     {
@@ -126,56 +126,9 @@ const Index: React.FC = () => {
           />
         </div>
         
-        {/* Korisnički raving */}
-        <div className="container py-16">
-          <div className="bg-primary/5 rounded-xl p-10">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold mb-4">
-                {language === 'sr' ? 'Šta naši kupci kažu' : 'What Our Customers Say'}
-              </h2>
-              <p className="text-muted-foreground max-w-xl mx-auto">
-                {language === 'sr' 
-                  ? 'Pogledajte iskustva naših zadovoljnih kupaca' 
-                  : 'See what our satisfied customers have to say'}
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {[
-                {
-                  name: 'Marko P.',
-                  comment: {
-                    sr: 'Odlična usluga i brza dostava. Proizvod je upravo onakav kakav sam očekivao!',
-                    en: 'Excellent service and fast delivery. The product is exactly what I expected!'
-                  }
-                },
-                {
-                  name: 'Ana S.',
-                  comment: {
-                    sr: 'Veoma sam zadovoljna kvalitetom. Definitivno ću ponovo kupovati ovde.',
-                    en: 'I am very satisfied with the quality. I will definitely shop here again.'
-                  }
-                },
-                {
-                  name: 'Nikola M.',
-                  comment: {
-                    sr: 'Najpouzdanija online prodavnica mobilnih dodataka. Preporučujem!',
-                    en: 'The most reliable online store for mobile accessories. I recommend it!'
-                  }
-                }
-              ].map((review, index) => (
-                <div key={index} className="bg-card p-6 rounded-lg shadow-sm">
-                  <div className="flex items-center text-amber-500 mb-3">
-                    {[...Array(5)].map((_, i) => (
-                      <Heart key={i} className="h-4 w-4 fill-current" />
-                    ))}
-                  </div>
-                  <p className="mb-4 text-muted-foreground">"{review.comment[language]}"</p>
-                  <p className="font-medium text-sm">{review.name}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+        {/* Testimonials */}
+        <div className="container">
+          <Testimonials />
         </div>
         
         {/* CTA Section */}

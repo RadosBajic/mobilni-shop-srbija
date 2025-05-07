@@ -7,6 +7,8 @@ import { ProductService } from '@/services/ProductService';
 import { Product } from '@/components/Products/ProductCard';
 import EnhancedProductCard from '@/components/Products/EnhancedProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toast } from '@/hooks/use-toast';
+import { motion } from 'framer-motion';
 
 interface RelatedProductsProps {
   productId: string;
@@ -35,13 +37,20 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
         setProducts(data);
       } catch (error) {
         console.error('Error fetching related products:', error);
+        toast({
+          title: language === 'sr' ? 'Greška' : 'Error',
+          description: language === 'sr' 
+            ? 'Nije moguće učitati slične proizvode' 
+            : 'Could not load related products',
+          variant: 'destructive',
+        });
       } finally {
         setLoading(false);
       }
     };
 
     fetchRelatedProducts();
-  }, [productId, currentProductId, limit]);
+  }, [productId, currentProductId, limit, language]);
 
   const title = language === 'sr' ? 'Slični proizvodi' : 'Related Products';
 
@@ -49,8 +58,23 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
     return null;
   }
 
+  const container = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const item = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
-    <div className="py-10">
+    <div className="py-10 border-t border-border/40 mt-10">
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold text-primary">{title}</h2>
         <Link
@@ -69,15 +93,23 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
               <Skeleton className="h-48 w-full rounded-lg" />
               <Skeleton className="h-4 w-3/4" />
               <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full rounded" />
             </div>
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+        <motion.div 
+          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6"
+          variants={container}
+          initial="hidden"
+          animate="show"
+        >
           {products.map((product) => (
-            <EnhancedProductCard key={product.id} product={product} />
+            <motion.div key={product.id} variants={item}>
+              <EnhancedProductCard key={product.id} product={product} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
     </div>
   );
