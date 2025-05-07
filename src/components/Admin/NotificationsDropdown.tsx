@@ -14,11 +14,11 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { NotificationType } from '@/types/banners';
-import { NotificationService } from '@/services/NotificationService';
+import { NotificationService, Notification } from '@/services/NotificationService';
 import { useToast } from '@/hooks/use-toast';
 
 const NotificationsDropdown: React.FC = () => {
-  const [notifications, setNotifications] = useState<NotificationType[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -42,9 +42,9 @@ const NotificationsDropdown: React.FC = () => {
   }, []);
 
   // Handle clicking on a notification
-  const handleNotificationClick = async (notification: NotificationType) => {
+  const handleNotificationClick = async (notification: Notification) => {
     // Mark as read
-    if (!notification.read) {
+    if (!notification.is_read) {
       await NotificationService.markAsRead(notification.id);
       fetchNotifications();
     }
@@ -70,7 +70,7 @@ const NotificationsDropdown: React.FC = () => {
   };
 
   // Get badge color based on notification type
-  const getBadgeVariant = (type: NotificationType['type']) => {
+  const getBadgeVariant = (type: Notification['type']) => {
     switch (type) {
       case 'success': return 'outline';
       case 'warning': return 'secondary';
@@ -135,7 +135,7 @@ const NotificationsDropdown: React.FC = () => {
             notifications.map((notification) => (
               <DropdownMenuItem 
                 key={notification.id}
-                className={`cursor-pointer ${!notification.read ? 'font-medium bg-muted/50' : ''}`}
+                className={`cursor-pointer ${!notification.is_read ? 'font-medium bg-muted/50' : ''}`}
                 onClick={() => handleNotificationClick(notification)}
               >
                 <div className="flex items-start gap-2 w-full">
@@ -144,7 +144,7 @@ const NotificationsDropdown: React.FC = () => {
                     <div className="flex justify-between w-full">
                       <span className="font-medium">{notification.title}</span>
                       <span className="text-xs text-muted-foreground">
-                        {formatRelativeTime(notification.date)}
+                        {formatRelativeTime(notification.created_at)}
                       </span>
                     </div>
                     <p className="text-sm text-muted-foreground">{notification.message}</p>
