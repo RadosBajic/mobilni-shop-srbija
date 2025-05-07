@@ -11,7 +11,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbSeparator,
+  BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
 import { ChevronRight, MapPin, Phone, Mail, Clock } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
@@ -50,13 +50,15 @@ const Contact: React.FC = () => {
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Početna</BreadcrumbLink>
+              <BreadcrumbLink asChild>
+                <a href="/">Početna</a>
+              </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator>
               <ChevronRight className="h-4 w-4" />
             </BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbLink className="text-muted-foreground">Kontakt</BreadcrumbLink>
+              <span className="text-muted-foreground">Kontakt</span>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>

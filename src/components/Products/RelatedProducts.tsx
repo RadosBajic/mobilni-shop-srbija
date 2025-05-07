@@ -10,11 +10,15 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 interface RelatedProductsProps {
   productId: string;
+  categoryId?: string;
+  currentProductId?: string;
   limit?: number;
 }
 
 const RelatedProducts: React.FC<RelatedProductsProps> = ({ 
   productId, 
+  categoryId,
+  currentProductId,
   limit = 4 
 }) => {
   const { language } = useLanguage();
@@ -25,7 +29,9 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
     const fetchRelatedProducts = async () => {
       setLoading(true);
       try {
-        const data = await ProductService.getRelatedProducts(productId, limit);
+        // Use either productId or currentProductId (for backward compatibility)
+        const id = currentProductId || productId;
+        const data = await ProductService.getRelatedProducts(id, limit);
         setProducts(data);
       } catch (error) {
         console.error('Error fetching related products:', error);
@@ -35,7 +41,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
     };
 
     fetchRelatedProducts();
-  }, [productId, limit]);
+  }, [productId, currentProductId, limit]);
 
   const title = language === 'sr' ? 'Slični proizvodi' : 'Related Products';
 

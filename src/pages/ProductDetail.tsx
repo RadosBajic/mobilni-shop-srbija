@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/Layout/MainLayout';
@@ -493,8 +492,9 @@ const ProductDetail: React.FC<ProductDetailProps> = () => {
             {language === 'sr' ? 'Slični proizvodi' : 'Related Products'}
           </h2>
           <RelatedProducts 
-            categoryId={product.category} 
+            productId={product.id}
             currentProductId={product.id}
+            categoryId={product.category}
           />
         </div>
       </div>

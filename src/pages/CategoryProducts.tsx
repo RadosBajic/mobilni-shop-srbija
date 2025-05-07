@@ -2,7 +2,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Breadcrumb, BreadcrumbItem, BreadcrumbLink } from '@/components/ui/breadcrumb';
+import { 
+  Breadcrumb, 
+  BreadcrumbItem, 
+  BreadcrumbLink, 
+  BreadcrumbList, 
+  BreadcrumbSeparator 
+} from '@/components/ui/breadcrumb';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -124,21 +130,25 @@ const CategoryProducts = () => {
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
       <Breadcrumb className="mb-6">
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/">{language === 'sr' ? 'Početna' : 'Home'}</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <Link to="/proizvodi">{language === 'sr' ? 'Proizvodi' : 'Products'}</Link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbItem>
-          <BreadcrumbLink asChild>
-            <span>{category ? (language === 'sr' ? category.name.sr : category.name.en) : ''}</span>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/">{language === 'sr' ? 'Početna' : 'Home'}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink asChild>
+              <Link to="/proizvodi">{language === 'sr' ? 'Proizvodi' : 'Products'}</Link>
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <span className="font-medium text-foreground">
+              {category ? (language === 'sr' ? category.name.sr : category.name.en) : ''}
+            </span>
+          </BreadcrumbItem>
+        </BreadcrumbList>
       </Breadcrumb>
       
       {/* Category Header */}

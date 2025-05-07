@@ -141,9 +141,9 @@ function dispatch(action: Action) {
   })
 }
 
-interface Toast extends Omit<ToasterToast, "id"> {}
+type ToastOptions = Omit<ToasterToast, "id">;
 
-function toast({ ...props }: Toast) {
+function toast(props: ToastOptions) {
   const id = genId()
 
   const update = (props: ToasterToast) =>
