@@ -35,23 +35,7 @@ export class EmailService {
   // Load settings from Supabase or localStorage
   static async loadSettings(): Promise<EmailSettings | null> {
     try {
-      // Try to load from Supabase settings table
-      try {
-        const { data, error } = await supabase
-          .from('settings')
-          .select('*')
-          .eq('key', this.SETTINGS_KEY)
-          .single();
-          
-        if (!error && data && data.value) {
-          this.settings = JSON.parse(data.value);
-          return this.settings;
-        }
-      } catch (dbError) {
-        console.warn('Error loading email settings from database:', dbError);
-      }
-      
-      // Fall back to localStorage
+      // Try to load from local storage first as a fallback
       const storedSettings = localStorage.getItem(this.SETTINGS_KEY);
       if (storedSettings) {
         this.settings = JSON.parse(storedSettings);
@@ -76,7 +60,7 @@ export class EmailService {
     }
   }
 
-  // Save settings to Supabase and localStorage
+  // Save settings to localStorage
   static async saveSettings(settings: EmailSettings): Promise<boolean> {
     try {
       this.settings = settings;
@@ -84,24 +68,7 @@ export class EmailService {
       // Save to localStorage as a fallback
       localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings));
       
-      // Try to save to Supabase settings table
-      try {
-        const { error } = await supabase
-          .from('settings')
-          .upsert({
-            key: this.SETTINGS_KEY,
-            value: JSON.stringify(settings),
-            updated_at: new Date().toISOString()
-          });
-          
-        if (!error) {
-          console.log('Email settings saved to database');
-          return true;
-        }
-      } catch (dbError) {
-        console.warn('Error saving email settings to database:', dbError);
-      }
-      
+      console.log('Email settings saved');
       return true;
     } catch (error) {
       console.error('Error saving email settings:', error);
@@ -112,21 +79,6 @@ export class EmailService {
   // Load email templates
   static async loadTemplates(): Promise<EmailTemplate[]> {
     try {
-      // Try to load from Supabase
-      try {
-        const { data, error } = await supabase
-          .from('email_templates')
-          .select('*')
-          .order('name');
-          
-        if (!error && data) {
-          this.templates = data as EmailTemplate[];
-          return this.templates;
-        }
-      } catch (dbError) {
-        console.warn('Error loading email templates from database:', dbError);
-      }
-      
       // Fall back to localStorage
       const storedTemplates = localStorage.getItem(this.TEMPLATES_KEY);
       if (storedTemplates) {
@@ -185,23 +137,6 @@ export class EmailService {
       
       // In production environment, this would connect to an actual email service
       // For now, we'll just log the attempt and return success
-      
-      // Example of how this might work with a real email API:
-      // const response = await fetch('https://api.youremailservice.com/send', {
-      //   method: 'POST',
-      //   headers: {
-      //     'Content-Type': 'application/json',
-      //     'Authorization': `Bearer ${API_KEY}`
-      //   },
-      //   body: JSON.stringify({
-      //     from: `${this.settings?.fromName} <${this.settings?.fromEmail}>`,
-      //     to: emailData.to,
-      //     subject: emailData.subject,
-      //     html: emailData.body,
-      //     attachments: emailData.attachments || []
-      //   })
-      // });
-      // return response.ok;
       
       return true;
     } catch (error) {

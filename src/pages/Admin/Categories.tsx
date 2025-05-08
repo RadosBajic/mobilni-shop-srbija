@@ -26,6 +26,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash, Edit, Plus } from "lucide-react";
 
+// Updated interface to match the property names from the service
 interface Category {
   id: string;
   name: {
@@ -38,8 +39,8 @@ interface Category {
     en: string;
   };
   image: string;
-  isActive: boolean;
-  displayOrder: number;
+  is_active: boolean;
+  display_order: number;
 }
 
 // Pages/Admin/Categories.tsx
@@ -162,13 +163,13 @@ const Categories = () => {
             <TableBody>
               {categories.map((category) => (
                 <TableRow key={category.id}>
-                  <TableCell>{category.displayOrder}</TableCell>
+                  <TableCell>{category.display_order}</TableCell>
                   <TableCell>{category.name.sr}</TableCell>
                   <TableCell>{category.name.en}</TableCell>
                   <TableCell>{category.slug}</TableCell>
                   <TableCell>
-                    <Badge variant={category.isActive ? "primary" : "secondary"}>
-                      {category.isActive ? "Aktivna" : "Neaktivna"}
+                    <Badge variant={category.is_active ? "primary" : "secondary"}>
+                      {category.is_active ? "Aktivna" : "Neaktivna"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

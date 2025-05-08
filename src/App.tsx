@@ -1,7 +1,6 @@
 
 import React, { lazy, Suspense, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Analytics } from '@vercel/analytics/react';
 import Loading from './components/ui/loading';
 import ErrorBoundary from './components/ui/error-boundary';
 import { useAuth } from './contexts/AuthContext';
@@ -133,7 +132,6 @@ function App() {
       </ErrorBoundary>
       
       <Toaster />
-      <Analytics />
     </>
   );
 }
