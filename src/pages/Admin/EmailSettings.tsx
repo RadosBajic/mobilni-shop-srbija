@@ -23,36 +23,45 @@ const EmailSettingsPage: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      const emailSettings = await EmailService.loadSettings();
-      setSettings(emailSettings);
-      
-      const emailTemplates = await EmailService.loadTemplates();
-      setTemplates(emailTemplates);
-      setLoading(false);
+      try {
+        const emailSettings = await EmailService.getSettings();
+        setSettings(emailSettings);
+        
+        const emailTemplates = await EmailService.getTemplates();
+        setTemplates(emailTemplates);
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load email settings',
+          variant: 'destructive',
+        });
+      } finally {
+        setLoading(false);
+      }
     };
     
     loadData();
-  }, []);
+  }, [toast]);
 
   const handleSaveSettings = async () => {
     if (!settings) return;
     
     setLoading(true);
-    const success = await EmailService.saveSettings(settings);
-    setLoading(false);
-    
-    if (success) {
+    try {
+      await EmailService.updateSettings(settings);
       toast({
         title: 'Podešavanja sačuvana',
         description: 'Email podešavanja su uspešno sačuvana',
         variant: 'default',
       });
-    } else {
+    } catch (error) {
       toast({
         title: 'Greška',
         description: 'Došlo je do greške prilikom čuvanja podešavanja',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
     }
   };
   
@@ -78,16 +87,7 @@ const EmailSettingsPage: React.FC = () => {
     setIsSending(true);
     
     try {
-      const success = await EmailService.sendEmail({
-        to: testEmail,
-        subject: 'Test email sa Vašeg sajta',
-        body: `<h1>Test email</h1>
-              <p>Ovo je test email sa vašeg sajta.</p>
-              <p>Email podešavanja su ispravna i možete slati emailove.</p>
-              <p>SMTP server: ${settings.smtpServer}</p>
-              <p>SMTP port: ${settings.smtpPort}</p>
-              <p>Username: ${settings.username}</p>`
-      });
+      const success = await EmailService.sendTestEmail(testEmail);
       
       if (success) {
         toast({
@@ -153,43 +153,43 @@ const EmailSettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="smtpServer">SMTP Server</Label>
+                      <Label htmlFor="smtp_server">SMTP Server</Label>
                       <Input 
-                        id="smtpServer" 
-                        value={settings.smtpServer}
-                        onChange={(e) => handleSettingChange('smtpServer', e.target.value)}
+                        id="smtp_server" 
+                        value={settings.smtp_server}
+                        onChange={(e) => handleSettingChange('smtp_server', e.target.value)}
                         placeholder="smtp.gmail.com"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="smtpPort">SMTP Port</Label>
+                      <Label htmlFor="smtp_port">SMTP Port</Label>
                       <Input 
-                        id="smtpPort" 
+                        id="smtp_port" 
                         type="number"
-                        value={settings.smtpPort}
-                        onChange={(e) => handleSettingChange('smtpPort', Number(e.target.value))}
+                        value={settings.smtp_port}
+                        onChange={(e) => handleSettingChange('smtp_port', Number(e.target.value))}
                         placeholder="587"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="username">Korisničko ime</Label>
+                      <Label htmlFor="smtp_username">Korisničko ime</Label>
                       <Input 
-                        id="username" 
-                        value={settings.username}
-                        onChange={(e) => handleSettingChange('username', e.target.value)}
+                        id="smtp_username" 
+                        value={settings.smtp_username}
+                        onChange={(e) => handleSettingChange('smtp_username', e.target.value)}
                         placeholder="your-email@gmail.com"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="password">Lozinka</Label>
+                      <Label htmlFor="smtp_password">Lozinka</Label>
                       <Input 
-                        id="password" 
+                        id="smtp_password" 
                         type="password"
-                        value={settings.password}
-                        onChange={(e) => handleSettingChange('password', e.target.value)}
+                        value={settings.smtp_password}
+                        onChange={(e) => handleSettingChange('smtp_password', e.target.value)}
                         placeholder="••••••••"
                       />
                       <p className="text-xs text-muted-foreground mt-1">
@@ -200,32 +200,32 @@ const EmailSettingsPage: React.FC = () => {
                   
                   <div className="space-y-4">
                     <div>
-                      <Label htmlFor="fromEmail">Email adresa za slanje (From)</Label>
+                      <Label htmlFor="from_email">Email adresa za slanje (From)</Label>
                       <Input 
-                        id="fromEmail" 
-                        value={settings.fromEmail}
-                        onChange={(e) => handleSettingChange('fromEmail', e.target.value)}
+                        id="from_email" 
+                        value={settings.from_email}
+                        onChange={(e) => handleSettingChange('from_email', e.target.value)}
                         placeholder="your-store@example.com"
                       />
                     </div>
                     
                     <div>
-                      <Label htmlFor="fromName">Ime pošiljaoca (From Name)</Label>
+                      <Label htmlFor="from_name">Ime pošiljaoca (From Name)</Label>
                       <Input 
-                        id="fromName" 
-                        value={settings.fromName}
-                        onChange={(e) => handleSettingChange('fromName', e.target.value)}
+                        id="from_name" 
+                        value={settings.from_name}
+                        onChange={(e) => handleSettingChange('from_name', e.target.value)}
                         placeholder="Your Store Name"
                       />
                     </div>
                     
                     <div className="flex items-center space-x-2 mt-6">
                       <Switch 
-                        id="enableSSL"
-                        checked={settings.enableSSL}
-                        onCheckedChange={(checked) => handleSettingChange('enableSSL', checked)}
+                        id="use_ssl"
+                        checked={settings.use_ssl}
+                        onCheckedChange={(checked) => handleSettingChange('use_ssl', checked)}
                       />
-                      <Label htmlFor="enableSSL">Koristi SSL/TLS</Label>
+                      <Label htmlFor="use_ssl">Koristi SSL/TLS</Label>
                     </div>
                     
                     <div className="mt-6 space-y-3">
@@ -305,14 +305,14 @@ const EmailSettingsPage: React.FC = () => {
                           <Label>Sadržaj</Label>
                           <Textarea 
                             className="font-mono text-sm h-32" 
-                            defaultValue={template.body}
+                            defaultValue={template.body_html}
                             disabled
                           />
                         </div>
                         <div>
                           <Label>Dostupne promenljive</Label>
                           <div className="flex flex-wrap gap-2 mt-1">
-                            {template.variables.map(variable => (
+                            {template.variables && template.variables.map(variable => (
                               <div key={variable} className="bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-xs flex items-center gap-1">
                                 <Code className="h-3 w-3" />
                                 {`{${variable}}`}

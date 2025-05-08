@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { CategoryFormModal } from "@/components/Admin/CategoryFormModal";
-import { SupabaseCategoryService } from "@/services/SupabaseCategoryService";
+import { CategoryService } from "@/services/CategoryService";
 import { toast } from "sonner";
 import { 
   AlertDialog,
@@ -27,8 +27,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash, Edit, Plus } from "lucide-react";
 
 // Updated interface to match the property names from the service
-interface Category {
-  id: string;
+interface FormCategory {
+  id?: string;
   name: {
     sr: string;
     en: string;
@@ -38,16 +38,20 @@ interface Category {
     sr: string;
     en: string;
   };
-  image: string;
+  image?: string;
   is_active: boolean;
   display_order: number;
+  parent_id?: string | null;
 }
+
+// Using the service Category type
+import { Category } from "@/services/CategoryService";
 
 // Pages/Admin/Categories.tsx
 const Categories = () => {
   const queryClient = useQueryClient();
   const [isOpen, setIsOpen] = useState(false);
-  const [currentCategory, setCurrentCategory] = useState<Category | null>(null);
+  const [currentCategory, setCurrentCategory] = useState<FormCategory | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
   
@@ -56,7 +60,7 @@ const Categories = () => {
     queryKey: ['categories'],
     queryFn: async () => {
       try {
-        return await SupabaseCategoryService.getCategories();
+        return await CategoryService.getCategories();
       } catch (error) {
         console.error('Error loading categories:', error);
         toast.error('Došlo je do greške prilikom učitavanja kategorija');
@@ -67,15 +71,17 @@ const Categories = () => {
   
   // Mutacija za kreiranje/ažuriranje kategorije
   const saveMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: FormCategory) => {
       if (data.id) {
-        return await SupabaseCategoryService.updateCategory(data.id, data);
+        return await CategoryService.updateCategory(data.id, data);
       } else {
-        return await SupabaseCategoryService.createCategory(data);
+        return await CategoryService.createCategory(data as Omit<Category, 'id' | 'created_at' | 'updated_at'>);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
+      toast.success('Kategorija je uspešno sačuvana');
+      setIsOpen(false);
     },
     onError: (error) => {
       console.error('Error saving category:', error);
@@ -86,7 +92,7 @@ const Categories = () => {
   // Mutacija za brisanje kategorije
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await SupabaseCategoryService.deleteCategory(id);
+      return await CategoryService.deleteCategory(id);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories'] });
@@ -99,7 +105,7 @@ const Categories = () => {
   });
   
   // Handler za čuvanje kategorije
-  const handleSaveCategory = async (data: any) => {
+  const handleSaveCategory = async (data: FormCategory) => {
     await saveMutation.mutateAsync(data);
   };
   
@@ -120,7 +126,18 @@ const Categories = () => {
   
   // Otvori modal za izmenu postojeće kategorije
   const handleEditCategory = (category: Category) => {
-    setCurrentCategory(category);
+    // Convert Category to FormCategory
+    const formCategory: FormCategory = {
+      id: category.id,
+      name: category.name,
+      slug: category.slug,
+      description: category.description,
+      image: category.image,
+      is_active: category.is_active,
+      display_order: category.display_order,
+      parent_id: category.parent_id
+    };
+    setCurrentCategory(formCategory);
     setIsOpen(true);
   };
   

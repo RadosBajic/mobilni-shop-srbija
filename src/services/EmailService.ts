@@ -21,6 +21,7 @@ export interface EmailTemplate {
   name: string;
   subject: string;
   body_html: string;
+  variables: string[];
   created_at: string;
   updated_at: string;
 }
@@ -71,6 +72,7 @@ const initializeEmailData = (): void => {
         name: 'order_confirmation',
         subject: 'Order Confirmation - MobShop',
         body_html: '<p>Thank you for your order! Your order #{{order_id}} has been received.</p>',
+        variables: ['order_id', 'customer_name', 'total'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -79,6 +81,7 @@ const initializeEmailData = (): void => {
         name: 'shipping_notification',
         subject: 'Your Order Has Been Shipped - MobShop',
         body_html: '<p>Your order #{{order_id}} has been shipped! Tracking number: {{tracking_number}}</p>',
+        variables: ['order_id', 'customer_name', 'tracking_number'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       },
@@ -87,6 +90,7 @@ const initializeEmailData = (): void => {
         name: 'welcome_email',
         subject: 'Welcome to MobShop!',
         body_html: '<p>Welcome to MobShop, {{name}}! Thank you for creating an account.</p>',
+        variables: ['name'],
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -109,6 +113,11 @@ export const EmailService = {
     return settings;
   },
   
+  // For compatibility with existing code
+  loadSettings: async (): Promise<EmailSettings> => {
+    return EmailService.getSettings();
+  },
+  
   // Update email settings
   updateSettings: async (settings: Partial<EmailSettings>): Promise<EmailSettings> => {
     const currentSettings = getEmailSettings();
@@ -126,9 +135,25 @@ export const EmailService = {
     return updatedSettings;
   },
   
+  // Save settings (alias for updateSettings)
+  saveSettings: async (settings: EmailSettings): Promise<boolean> => {
+    try {
+      await EmailService.updateSettings(settings);
+      return true;
+    } catch (error) {
+      console.error('Error saving email settings:', error);
+      return false;
+    }
+  },
+  
   // Get all email templates
   getTemplates: async (): Promise<EmailTemplate[]> => {
     return getEmailTemplates();
+  },
+  
+  // For compatibility with existing code
+  loadTemplates: async (): Promise<EmailTemplate[]> => {
+    return EmailService.getTemplates();
   },
   
   // Get a specific template by name
@@ -186,5 +211,42 @@ export const EmailService = {
     console.log(`Sending test email to ${to}`);
     // In a real implementation, this would connect to an email service
     return true;
+  },
+
+  // Send email function
+  sendEmail: async (options: { to: string, subject: string, body: string }): Promise<boolean> => {
+    console.log('Sending email:', options);
+    // This is a mock implementation
+    return true;
+  },
+
+  // Send order confirmation email
+  sendOrderConfirmationEmail: async (
+    email: string,
+    name: string,
+    orderId: string,
+    total: number
+  ): Promise<boolean> => {
+    try {
+      const template = await EmailService.getTemplateByName('order_confirmation');
+      if (!template) {
+        throw new Error('Order confirmation template not found');
+      }
+
+      // Replace placeholders in the template
+      let body = template.body_html
+        .replace('{{order_id}}', orderId)
+        .replace('{{customer_name}}', name)
+        .replace('{{total}}', total.toString());
+
+      return await EmailService.sendEmail({
+        to: email,
+        subject: template.subject,
+        body: body
+      });
+    } catch (error) {
+      console.error('Error sending order confirmation email:', error);
+      return false;
+    }
   }
 };

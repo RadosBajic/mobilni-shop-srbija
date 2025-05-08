@@ -130,3 +130,13 @@ export const NotificationService = {
     saveNotificationsToStorage([]);
   }
 };
+
+// Export a standalone createNotification function for convenience
+export const createNotification = async (
+  title: string,
+  message: string,
+  type: 'info' | 'success' | 'warning' | 'error',
+  link?: string
+): Promise<Notification> => {
+  return NotificationService.createNotification({ title, message, type, link });
+};
