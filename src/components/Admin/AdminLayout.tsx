@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
@@ -16,18 +15,19 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import NotificationsDropdown from './NotificationsDropdown';
+import { logout } from '@/utils/auth';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   const navigationItems = [
@@ -84,7 +84,11 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   ];
 
   const handleLogout = async () => {
-    await logout();
+    logout();
+    toast({
+      title: "Odjava uspešna",
+      description: "Uspešno ste se odjavili iz admin panela"
+    });
     navigate('/admin/login');
   };
 

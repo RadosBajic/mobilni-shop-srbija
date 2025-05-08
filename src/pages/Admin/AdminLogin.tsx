@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { AdminAuthService } from '@/services/AdminAuthService';
+import { createNotification } from '@/services/NotificationService';
 
 const AdminLogin: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -14,7 +15,7 @@ const AdminLogin: React.FC = () => {
   const { login, isAuthenticated } = AdminAuthService.useAdminAuth();
 
   useEffect(() => {
-    // If already authenticated, redirect to dashboard
+    // Ako je korisnik već autentifikovan, preusmeri na dashboard
     if (isAuthenticated()) {
       navigate('/admin/dashboard');
     }
@@ -24,23 +25,34 @@ const AdminLogin: React.FC = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    const success = await login(username, password);
-    if (success) {
-      navigate('/admin/dashboard');
+    try {
+      const success = await login(username, password);
+      if (success) {
+        // Kreiraj obaveštenje o uspešnoj prijavi
+        await createNotification(
+          "Uspešna prijava", 
+          "Dobrodošli u admin panel", 
+          "success"
+        );
+        
+        navigate('/admin/dashboard');
+      }
+    } catch (error) {
+      console.error('Greška pri prijavi:', error);
+    } finally {
+      setIsLoading(false);
     }
-    
-    setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Admin Login</CardTitle>
+          <CardTitle>Admin Prijava</CardTitle>
           <CardDescription>
-            Sign in to access the admin panel
+            Prijavite se za pristup admin panelu
             <div className="mt-2 text-xs text-muted-foreground">
-              Demo credentials: admin / password123
+              Demo kredencijali: admin / password
             </div>
           </CardDescription>
         </CardHeader>
@@ -48,7 +60,7 @@ const AdminLogin: React.FC = () => {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
               <label htmlFor="username" className="block text-sm font-medium">
-                Username
+                Korisničko ime
               </label>
               <Input
                 id="username"
@@ -56,13 +68,13 @@ const AdminLogin: React.FC = () => {
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Enter admin username"
+                placeholder="Unesite admin korisničko ime"
               />
             </div>
             
             <div className="space-y-2">
               <label htmlFor="password" className="block text-sm font-medium">
-                Password
+                Lozinka
               </label>
               <Input
                 id="password"
@@ -70,7 +82,7 @@ const AdminLogin: React.FC = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter admin password"
+                placeholder="Unesite admin lozinku"
               />
             </div>
             
@@ -79,7 +91,7 @@ const AdminLogin: React.FC = () => {
               className="w-full" 
               disabled={isLoading}
             >
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? 'Prijava u toku...' : 'Prijavi se'}
             </Button>
           </form>
         </CardContent>

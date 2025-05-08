@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/components/ui/use-toast';
+import { createNotification } from '@/services/NotificationService';
 
 interface UseAdminAuthOptions {
   redirectTo?: string;
@@ -23,28 +24,28 @@ export const useAdminAuth = (options: UseAdminAuthOptions = {}) => {
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        // In a real app, this would verify with a backend API
-        // For this demo, we're using localStorage
+        // U pravoj aplikaciji, ovo bi proverilo sa backend API-jem
+        // Za ovu demo aplikaciju koristimo localStorage
         const authenticated = localStorage.getItem('adminAuthenticated') === 'true';
         
         setIsAuthenticated(authenticated);
         
         if (!authenticated && shouldRedirect) {
           toast({
-            title: "Authentication required",
-            description: "Please log in to access the admin panel",
+            title: "Potrebna autentikacija",
+            description: "Molimo prijavite se za pristup admin panelu",
             variant: "destructive",
           });
           navigate(redirectTo);
         }
       } catch (error) {
-        console.error('Authentication check failed:', error);
+        console.error('Provera autentikacije neuspešna:', error);
         setIsAuthenticated(false);
         
         if (shouldRedirect) {
           toast({
-            title: "Authentication error",
-            description: "Please log in again",
+            title: "Greška pri autentikaciji",
+            description: "Molimo prijavite se ponovo",
             variant: "destructive",
           });
           navigate(redirectTo);
@@ -61,12 +62,18 @@ export const useAdminAuth = (options: UseAdminAuthOptions = {}) => {
 };
 
 export const login = (username: string, password: string): Promise<boolean> => {
-  // In a real app, this would make an API request to validate credentials
+  // U pravoj aplikaciji, ovo bi napravilo API zahtev za validaciju kredencijala
   return new Promise((resolve) => {
     setTimeout(() => {
-      // Demo validation - in a real app this would be handled by the server
+      // Demo validacija - u pravoj aplikaciji ovo bi bilo obrađeno na serveru
       if (username === 'admin' && password === 'password') {
         localStorage.setItem('adminAuthenticated', 'true');
+        // Kreiraj obaveštenje o uspešnoj prijavi
+        createNotification(
+          "Uspešna prijava", 
+          "Uspešno ste se prijavili na admin panel", 
+          "success"
+        );
         resolve(true);
       } else {
         resolve(false);
@@ -77,6 +84,11 @@ export const login = (username: string, password: string): Promise<boolean> => {
 
 export const logout = () => {
   localStorage.removeItem('adminAuthenticated');
+  createNotification(
+    "Odjava", 
+    "Uspešno ste se odjavili sa admin panela", 
+    "info"
+  );
 };
 
 export const isAdminAuthenticated = (): boolean => {

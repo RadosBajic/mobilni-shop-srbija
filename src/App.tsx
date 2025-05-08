@@ -5,6 +5,7 @@ import Loading from './components/ui/loading';
 import ErrorBoundary from './components/ui/error-boundary';
 import { useAuth } from './contexts/AuthContext';
 import { Toaster } from '@/components/ui/toaster';
+import { isAdminAuthenticated } from '@/utils/auth';
 
 // Pages
 const Home = lazy(() => import('./pages/Home'));
@@ -33,31 +34,47 @@ const AdminNotifications = lazy(() => import('./pages/Admin/Notifications'));
 const AdminAnalytics = lazy(() => import('./pages/Admin/Analytics'));
 const AdminEmailSettings = lazy(() => import('./pages/Admin/EmailSettings'));
 
-function App() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
+// AdminRoute komponenta za zaštitu admin ruta
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [isChecking, setIsChecking] = React.useState(true);
 
-  const isAdmin = location.pathname.startsWith('/admin');
-  
-  // Redirect non-authenticated users from admin sections
   useEffect(() => {
-    if (!authLoading && !isAuthenticated && isAdmin && location.pathname !== '/admin/login') {
-      navigate('/admin/login');
-    }
-  }, [isAuthenticated, isAdmin, location.pathname, authLoading, navigate]);
-  
-  // Fallback for loading state
-  if (authLoading && isAdmin && location.pathname !== '/admin/login') {
+    const checkAuth = async () => {
+      try {
+        const authenticated = isAdminAuthenticated();
+        
+        if (!authenticated && location.pathname !== '/admin/login') {
+          navigate('/admin/login');
+        }
+        
+        setIsChecking(false);
+      } catch (error) {
+        console.error('Greška pri proveri autentikacije:', error);
+        navigate('/admin/login');
+        setIsChecking(false);
+      }
+    };
+    
+    checkAuth();
+  }, [location.pathname, navigate]);
+
+  if (isChecking) {
     return <Loading />;
   }
+  
+  return <>{children}</>;
+};
 
+function App() {
+  // Koristimo zaštićene admin rute
   return (
     <>
       <ErrorBoundary>
         <Suspense fallback={<Loading />}>
           <Routes>
-            {/* Public routes */}
+            {/* Javne rute */}
             <Route path="/" element={<Home />} />
             <Route path="/products" element={<Products />} />
             <Route path="/products/:id" element={<ProductDetails />} />
@@ -68,64 +85,25 @@ function App() {
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
             
-            {/* Admin routes - protected by authentication */}
+            {/* Admin rute */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route
-              path="/admin"
-              element={
-                isAuthenticated ? <Navigate to="/admin/dashboard" /> : <Navigate to="/admin/login" />
-              }
-            />
-            <Route
-              path="/admin/dashboard"
-              element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/products"
-              element={isAuthenticated ? <AdminProducts /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/categories"
-              element={isAuthenticated ? <AdminCategories /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/orders"
-              element={isAuthenticated ? <AdminOrders /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/orders/:id"
-              element={isAuthenticated ? <AdminOrderDetails /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/banners"
-              element={isAuthenticated ? <AdminBanners /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/promotions"
-              element={isAuthenticated ? <AdminPromotions /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/customers"
-              element={isAuthenticated ? <AdminCustomers /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/settings"
-              element={isAuthenticated ? <AdminSettings /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/notifications"
-              element={isAuthenticated ? <AdminNotifications /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/analytics"
-              element={isAuthenticated ? <AdminAnalytics /> : <Navigate to="/admin/login" />}
-            />
-            <Route
-              path="/admin/email-settings"
-              element={isAuthenticated ? <AdminEmailSettings /> : <Navigate to="/admin/login" />}
-            />
+            <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             
-            {/* 404 route */}
+            {/* Zaštićene admin rute */}
+            <Route path="/admin/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+            <Route path="/admin/products" element={<AdminRoute><AdminProducts /></AdminRoute>} />
+            <Route path="/admin/categories" element={<AdminRoute><AdminCategories /></AdminRoute>} />
+            <Route path="/admin/orders" element={<AdminRoute><AdminOrders /></AdminRoute>} />
+            <Route path="/admin/orders/:id" element={<AdminRoute><AdminOrderDetails /></AdminRoute>} />
+            <Route path="/admin/banners" element={<AdminRoute><AdminBanners /></AdminRoute>} />
+            <Route path="/admin/promotions" element={<AdminRoute><AdminPromotions /></AdminRoute>} />
+            <Route path="/admin/customers" element={<AdminRoute><AdminCustomers /></AdminRoute>} />
+            <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+            <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
+            <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
+            <Route path="/admin/email-settings" element={<AdminRoute><AdminEmailSettings /></AdminRoute>} />
+            
+            {/* 404 ruta */}
             <Route path="*" element={<Page404 />} />
           </Routes>
         </Suspense>
