@@ -1,212 +1,190 @@
 
-import { supabase } from '@/integrations/supabase/client';
+import { v4 as uuidv4 } from 'uuid';
 
+// Define types for email settings
 export interface EmailSettings {
-  smtpServer: string;
-  smtpPort: number;
-  username: string;
-  password: string;
-  fromEmail: string;
-  fromName: string;
-  enableSSL: boolean;
+  id: string;
+  smtp_server: string;
+  smtp_port: number;
+  smtp_username: string;
+  smtp_password: string;
+  from_email: string;
+  from_name: string;
+  use_ssl: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
+// Define types for email templates
 export interface EmailTemplate {
   id: string;
   name: string;
   subject: string;
-  body: string;
-  variables: string[]; // List of variables that can be used in the template
+  body_html: string;
+  created_at: string;
+  updated_at: string;
 }
 
-export interface EmailData {
-  to: string;
-  subject: string;
-  body: string;
-  attachments?: any[];
-}
+// Helper functions for localStorage
+const getEmailSettings = (): EmailSettings | null => {
+  const stored = localStorage.getItem('emailSettings');
+  return stored ? JSON.parse(stored) : null;
+};
 
-export class EmailService {
-  private static settings: EmailSettings | null = null;
-  private static templates: EmailTemplate[] = [];
-  private static readonly SETTINGS_KEY = 'email_settings';
-  private static readonly TEMPLATES_KEY = 'email_templates';
+const saveEmailSettings = (settings: EmailSettings): void => {
+  localStorage.setItem('emailSettings', JSON.stringify(settings));
+};
 
-  // Load settings from Supabase or localStorage
-  static async loadSettings(): Promise<EmailSettings | null> {
-    try {
-      // Try to load from local storage first as a fallback
-      const storedSettings = localStorage.getItem(this.SETTINGS_KEY);
-      if (storedSettings) {
-        this.settings = JSON.parse(storedSettings);
-        return this.settings;
-      }
-      
-      // Return default settings if nothing is found
-      this.settings = {
-        smtpServer: 'smtp.gmail.com',
-        smtpPort: 587,
-        username: 'your-email@gmail.com',
-        password: '',
-        fromEmail: 'your-email@gmail.com',
-        fromName: 'Your Store Name',
-        enableSSL: true,
-      };
-      
-      return this.settings;
-    } catch (error) {
-      console.error('Error loading email settings:', error);
-      return null;
-    }
+const getEmailTemplates = (): EmailTemplate[] => {
+  const stored = localStorage.getItem('emailTemplates');
+  return stored ? JSON.parse(stored) : [];
+};
+
+const saveEmailTemplates = (templates: EmailTemplate[]): void => {
+  localStorage.setItem('emailTemplates', JSON.stringify(templates));
+};
+
+// Initialize with default data
+const initializeEmailData = (): void => {
+  // Initialize settings if they don't exist
+  if (!getEmailSettings()) {
+    const defaultSettings: EmailSettings = {
+      id: uuidv4(),
+      smtp_server: 'smtp.example.com',
+      smtp_port: 587,
+      smtp_username: 'user@example.com',
+      smtp_password: 'password',
+      from_email: 'noreply@mobshop.com',
+      from_name: 'MobShop',
+      use_ssl: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    saveEmailSettings(defaultSettings);
   }
-
-  // Save settings to localStorage
-  static async saveSettings(settings: EmailSettings): Promise<boolean> {
-    try {
-      this.settings = settings;
-      
-      // Save to localStorage as a fallback
-      localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(settings));
-      
-      console.log('Email settings saved');
-      return true;
-    } catch (error) {
-      console.error('Error saving email settings:', error);
-      return false;
-    }
-  }
-
-  // Load email templates
-  static async loadTemplates(): Promise<EmailTemplate[]> {
-    try {
-      // Fall back to localStorage
-      const storedTemplates = localStorage.getItem(this.TEMPLATES_KEY);
-      if (storedTemplates) {
-        this.templates = JSON.parse(storedTemplates);
-        return this.templates;
+  
+  // Initialize templates if they don't exist
+  if (getEmailTemplates().length === 0) {
+    const defaultTemplates: EmailTemplate[] = [
+      {
+        id: uuidv4(),
+        name: 'order_confirmation',
+        subject: 'Order Confirmation - MobShop',
+        body_html: '<p>Thank you for your order! Your order #{{order_id}} has been received.</p>',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        name: 'shipping_notification',
+        subject: 'Your Order Has Been Shipped - MobShop',
+        body_html: '<p>Your order #{{order_id}} has been shipped! Tracking number: {{tracking_number}}</p>',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: uuidv4(),
+        name: 'welcome_email',
+        subject: 'Welcome to MobShop!',
+        body_html: '<p>Welcome to MobShop, {{name}}! Thank you for creating an account.</p>',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
-      
-      // Return default templates if nothing is found
-      this.templates = [
-        {
-          id: '1',
-          name: 'order_confirmation',
-          subject: 'Potvrda porudžbine - {order_id}',
-          body: `<h1>Hvala na porudžbini!</h1>
-<p>Poštovani/a {customer_name},</p>
-<p>Uspešno ste napravili porudžbinu.</p>
-<p>ID porudžbine: {order_id}</p>
-<p>Ukupan iznos: {total_amount} RSD</p>
-<p>Očekivani datum isporuke: {delivery_date}</p>`,
-          variables: ['customer_name', 'order_id', 'total_amount', 'delivery_date']
-        },
-        {
-          id: '2',
-          name: 'shipping_confirmation',
-          subject: 'Vaša porudžbina je poslata - {order_id}',
-          body: `<h1>Porudžbina je poslata!</h1>
-<p>Poštovani/a {customer_name},</p>
-<p>Vaša porudžbina je poslata i biće isporučena u roku od {delivery_days} radnih dana.</p>
-<p>ID porudžbine: {order_id}</p>
-<p>Broj za praćenje: {tracking_number}</p>`,
-          variables: ['customer_name', 'order_id', 'delivery_days', 'tracking_number']
-        }
-      ];
-      
-      // Save default templates to localStorage
-      localStorage.setItem(this.TEMPLATES_KEY, JSON.stringify(this.templates));
-      
-      return this.templates;
-    } catch (error) {
-      console.error('Error loading email templates:', error);
-      return [];
-    }
+    ];
+    saveEmailTemplates(defaultTemplates);
   }
+};
 
-  // Send email (in real implementation this would connect to SMTP server or use an API)
-  static async sendEmail(emailData: EmailData): Promise<boolean> {
-    try {
-      if (!this.settings) {
-        await this.loadSettings();
-      }
-      
-      console.log('Sending email:', {
-        ...emailData,
-        settings: this.settings
-      });
-      
-      // In production environment, this would connect to an actual email service
-      // For now, we'll just log the attempt and return success
-      
-      return true;
-    } catch (error) {
-      console.error('Error sending email:', error);
-      return false;
-    }
-  }
+// Call initialization
+initializeEmailData();
 
-  // Get a specific template and replace variables with values
-  static async getRenderedTemplate(
-    templateName: string, 
-    variables: Record<string, string>
-  ): Promise<{ subject: string; body: string } | null> {
-    try {
-      if (this.templates.length === 0) {
-        await this.loadTemplates();
-      }
-      
-      const template = this.templates.find(t => t.name === templateName);
-      if (!template) {
-        return null;
-      }
-      
-      let subject = template.subject;
-      let body = template.body;
-      
-      // Replace all variables in subject and body
-      Object.entries(variables).forEach(([key, value]) => {
-        const regex = new RegExp(`{${key}}`, 'g');
-        subject = subject.replace(regex, value);
-        body = body.replace(regex, value);
-      });
-      
-      return { subject, body };
-    } catch (error) {
-      console.error('Error rendering email template:', error);
-      return null;
+// Email service
+export const EmailService = {
+  // Get email settings
+  getSettings: async (): Promise<EmailSettings> => {
+    const settings = getEmailSettings();
+    if (!settings) {
+      throw new Error('Email settings not found');
     }
-  }
-
-  // Send an order confirmation email
-  static async sendOrderConfirmationEmail(
-    customerEmail: string,
-    customerName: string,
-    orderId: string,
-    totalAmount: number
-  ): Promise<boolean> {
-    try {
-      const deliveryDate = new Date();
-      deliveryDate.setDate(deliveryDate.getDate() + 3); // Estimated delivery in 3 days
-      
-      const template = await this.getRenderedTemplate('order_confirmation', {
-        customer_name: customerName,
-        order_id: orderId,
-        total_amount: totalAmount.toString(),
-        delivery_date: deliveryDate.toLocaleDateString('sr-RS')
-      });
-      
-      if (!template) {
-        return false;
-      }
-      
-      return await this.sendEmail({
-        to: customerEmail,
-        subject: template.subject,
-        body: template.body
-      });
-    } catch (error) {
-      console.error('Error sending order confirmation email:', error);
-      return false;
+    return settings;
+  },
+  
+  // Update email settings
+  updateSettings: async (settings: Partial<EmailSettings>): Promise<EmailSettings> => {
+    const currentSettings = getEmailSettings();
+    if (!currentSettings) {
+      throw new Error('Email settings not found');
     }
+    
+    const updatedSettings: EmailSettings = {
+      ...currentSettings,
+      ...settings,
+      updated_at: new Date().toISOString()
+    };
+    
+    saveEmailSettings(updatedSettings);
+    return updatedSettings;
+  },
+  
+  // Get all email templates
+  getTemplates: async (): Promise<EmailTemplate[]> => {
+    return getEmailTemplates();
+  },
+  
+  // Get a specific template by name
+  getTemplateByName: async (name: string): Promise<EmailTemplate | null> => {
+    const templates = getEmailTemplates();
+    return templates.find(t => t.name === name) || null;
+  },
+  
+  // Create a new email template
+  createTemplate: async (template: Omit<EmailTemplate, 'id' | 'created_at' | 'updated_at'>): Promise<EmailTemplate> => {
+    const newTemplate: EmailTemplate = {
+      id: uuidv4(),
+      ...template,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+    
+    const templates = getEmailTemplates();
+    templates.push(newTemplate);
+    saveEmailTemplates(templates);
+    
+    return newTemplate;
+  },
+  
+  // Update an existing template
+  updateTemplate: async (id: string, updates: Partial<EmailTemplate>): Promise<EmailTemplate> => {
+    const templates = getEmailTemplates();
+    const index = templates.findIndex(t => t.id === id);
+    
+    if (index === -1) {
+      throw new Error('Template not found');
+    }
+    
+    const updatedTemplate: EmailTemplate = {
+      ...templates[index],
+      ...updates,
+      updated_at: new Date().toISOString()
+    };
+    
+    templates[index] = updatedTemplate;
+    saveEmailTemplates(templates);
+    
+    return updatedTemplate;
+  },
+  
+  // Delete a template
+  deleteTemplate: async (id: string): Promise<void> => {
+    const templates = getEmailTemplates();
+    const filtered = templates.filter(t => t.id !== id);
+    saveEmailTemplates(filtered);
+  },
+  
+  // Send a test email (mock implementation)
+  sendTestEmail: async (to: string): Promise<boolean> => {
+    console.log(`Sending test email to ${to}`);
+    // In a real implementation, this would connect to an email service
+    return true;
   }
-}
+};
