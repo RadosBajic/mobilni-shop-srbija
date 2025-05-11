@@ -36,20 +36,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Use explicit mapping to fix deep recursion issue
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching products:', error);
       
