@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import { AuthProvider } from './contexts/AuthContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { CartProvider } from './contexts/CartContext';
 import './index.css';
 
 const queryClient = new QueryClient();
@@ -14,7 +15,9 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <LanguageProvider>
-          <App />
+          <CartProvider>
+            <App />
+          </CartProvider>
         </LanguageProvider>
       </AuthProvider>
     </QueryClientProvider>
