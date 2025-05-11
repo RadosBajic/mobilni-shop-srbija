@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from '@/services/ProductService';
@@ -230,7 +229,14 @@ export const SupabaseProductService = {
       
       // Return mock products
       const mockProducts = getMockProducts();
-      return mockProducts.filter(p => ids.includes(p.id));
+      // Use a for loop instead of filter to avoid potential recursion issues
+      const result: Product[] = [];
+      for (let i = 0; i < mockProducts.length; i++) {
+        if (ids.includes(mockProducts[i].id)) {
+          result.push({...mockProducts[i]});
+        }
+      }
+      return result;
     }
   },
   
@@ -330,12 +336,17 @@ export const SupabaseProductService = {
     } catch (error) {
       console.error('Error searching products:', error);
       
-      // Return mock products
+      // Return mock products using a for loop instead of filter to avoid recursion issues
       const mockProducts = getMockProducts();
-      return mockProducts.filter(p => 
-        p.title.en.toLowerCase().includes(query.toLowerCase()) || 
-        p.title.sr.toLowerCase().includes(query.toLowerCase())
-      );
+      const result: Product[] = [];
+      for (let i = 0; i < mockProducts.length; i++) {
+        const p = mockProducts[i];
+        if (p.title.en.toLowerCase().includes(query.toLowerCase()) || 
+            p.title.sr.toLowerCase().includes(query.toLowerCase())) {
+          result.push({...p});
+        }
+      }
+      return result;
     }
   },
   
@@ -716,21 +727,45 @@ const getMockProducts = (category?: string, limit?: number, isOnSale?: boolean, 
     },
   ];
   
-  let filteredProducts = [...mockProducts];
+  // Create a new array to avoid reference issues
+  let filteredProducts: Product[] = [];
+  
+  // Manually copy each product to avoid reference issues
+  for (let i = 0; i < mockProducts.length; i++) {
+    filteredProducts.push({...mockProducts[i]});
+  }
   
   if (category) {
-    filteredProducts = filteredProducts.filter(p => p.category === category);
+    const categoryFiltered: Product[] = [];
+    for (let i = 0; i < filteredProducts.length; i++) {
+      if (filteredProducts[i].category === category) {
+        categoryFiltered.push({...filteredProducts[i]});
+      }
+    }
+    filteredProducts = categoryFiltered;
   }
   
   if (isOnSale === true) {
-    filteredProducts = filteredProducts.filter(p => p.isOnSale);
+    const onSaleFiltered: Product[] = [];
+    for (let i = 0; i < filteredProducts.length; i++) {
+      if (filteredProducts[i].isOnSale) {
+        onSaleFiltered.push({...filteredProducts[i]});
+      }
+    }
+    filteredProducts = onSaleFiltered;
   }
   
   if (isNew === true) {
-    filteredProducts = filteredProducts.filter(p => p.isNew);
+    const newFiltered: Product[] = [];
+    for (let i = 0; i < filteredProducts.length; i++) {
+      if (filteredProducts[i].isNew) {
+        newFiltered.push({...filteredProducts[i]});
+      }
+    }
+    filteredProducts = newFiltered;
   }
   
-  if (limit && limit > 0) {
+  if (limit && limit > 0 && filteredProducts.length > limit) {
     filteredProducts = filteredProducts.slice(0, limit);
   }
   
