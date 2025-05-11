@@ -1,3 +1,4 @@
+
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from '@/services/ProductService';
@@ -36,22 +37,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -75,22 +80,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -114,22 +123,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -189,22 +202,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -245,22 +262,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -283,22 +304,26 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: Product[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+          });
+        }
       }
       
       return result;
@@ -322,28 +347,32 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      // Fix for deep recursion issue - create completely new objects
+      // Create completely new objects to avoid recursion issues
       const result: AdminProduct[] = [];
-      for (const item of data) {
-        result.push({
-          id: item.id,
-          title: {
-            en: item.title_en || '',
-            sr: item.title_sr || '',
-          },
-          price: item.price || 0,
-          oldPrice: item.old_price || null,
-          image: item.image || '',
-          category: item.category || '',
-          isNew: item.is_new || false,
-          isOnSale: item.is_on_sale || false,
-          sku: item.sku || '',
-          stock: item.stock || 0,
-          status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
-          descriptionSr: item.description_sr || '',
-          descriptionEn: item.description_en || '',
-          description: '',  // Remove reference to non-existing property
-        });
+      
+      if (data) {
+        for (let i = 0; i < data.length; i++) {
+          const item = data[i];
+          result.push({
+            id: item.id,
+            title: {
+              en: item.title_en || '',
+              sr: item.title_sr || '',
+            },
+            price: item.price || 0,
+            oldPrice: item.old_price || null,
+            image: item.image || '',
+            category: item.category || '',
+            isNew: item.is_new || false,
+            isOnSale: item.is_on_sale || false,
+            sku: item.sku || '',
+            stock: item.stock || 0,
+            status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
+            descriptionSr: item.description_sr || '',
+            descriptionEn: item.description_en || '',
+            description: '',
+          });
+        }
       }
       
       return result;
@@ -396,7 +425,7 @@ export const SupabaseProductService = {
         status: data.status as 'active' | 'outOfStock' | 'draft',
         descriptionSr: data.description_sr || '',
         descriptionEn: data.description_en || '',
-        description: '',  // Izbacujemo referencu na property koji ne postoji
+        description: '',
       };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -454,7 +483,7 @@ export const SupabaseProductService = {
         status: data.status as 'active' | 'outOfStock' | 'draft',
         descriptionSr: data.description_sr || '',
         descriptionEn: data.description_en || '',
-        description: '',  // Izbacujemo referencu na property koji ne postoji
+        description: '',
       };
     } catch (error) {
       console.error('Error updating product:', error);
@@ -516,23 +545,27 @@ export const SupabaseProductService = {
       }
       
       // First, prepare the products data to match Supabase table structure
-      const formattedProducts = products.map(product => ({
-        title: product.title || product.name,
-        title_sr: product.title_sr || product.nameSr || product.title || product.name,
-        title_en: product.title_en || product.nameEn || product.title || product.name,
-        sku: product.sku,
-        category: product.category,
-        price: product.price,
-        old_price: product.old_price || product.oldPrice,
-        stock: product.stock,
-        status: product.status,
-        description: product.description,
-        description_sr: product.description_sr || product.descriptionSr,
-        description_en: product.description_en || product.descriptionEn,
-        is_new: product.is_new || product.isNew || false,
-        is_on_sale: product.is_on_sale || product.isOnSale || false,
-        image_url: product.image_url || product.image,
-      }));
+      const formattedProducts = [];
+      for (let i = 0; i < products.length; i++) {
+        const product = products[i];
+        formattedProducts.push({
+          title: product.title || product.name,
+          title_sr: product.title_sr || product.nameSr || product.title || product.name,
+          title_en: product.title_en || product.nameEn || product.title || product.name,
+          sku: product.sku,
+          category: product.category,
+          price: product.price,
+          old_price: product.old_price || product.oldPrice,
+          stock: product.stock,
+          status: product.status,
+          description: product.description,
+          description_sr: product.description_sr || product.descriptionSr,
+          description_en: product.description_en || product.descriptionEn,
+          is_new: product.is_new || product.isNew || false,
+          is_on_sale: product.is_on_sale || product.isOnSale || false,
+          image_url: product.image_url || product.image,
+        });
+      }
       
       const { error } = await supabase.from('products').upsert(formattedProducts);
       
@@ -705,13 +738,21 @@ const getMockProducts = (category?: string, limit?: number, isOnSale?: boolean, 
 };
 
 const getMockAdminProducts = (): AdminProduct[] => {
-  return getMockProducts().map(product => ({
-    ...product,
-    sku: `SKU-${product.id}`,
-    stock: Math.floor(Math.random() * 100) + 1,
-    status: 'active' as 'active' | 'outOfStock' | 'draft',
-    descriptionSr: 'Opis proizvoda na srpskom.',
-    descriptionEn: 'Product description in English.',
-    description: '',  // Izbacujemo referencu na property koji ne postoji
-  }));
+  const mockProducts = getMockProducts();
+  const result: AdminProduct[] = [];
+  
+  for (let i = 0; i < mockProducts.length; i++) {
+    const product = mockProducts[i];
+    result.push({
+      ...product,
+      sku: `SKU-${product.id}`,
+      stock: Math.floor(Math.random() * 100) + 1,
+      status: 'active' as 'active' | 'outOfStock' | 'draft',
+      descriptionSr: 'Opis proizvoda na srpskom.',
+      descriptionEn: 'Product description in English.',
+      description: '',
+    });
+  }
+  
+  return result;
 };
