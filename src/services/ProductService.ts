@@ -1,7 +1,7 @@
 
 import { SupabaseProductService } from '@/services/SupabaseProductService';
-import { Product, GetProductsParams } from '@/types/product';
-import type { AdminProduct } from '@/types/product';
+import { Product } from '@/types/product';
+import type { AdminProduct, GetProductsParams } from '@/types/product';
 
 export type { AdminProduct, GetProductsParams };
 
