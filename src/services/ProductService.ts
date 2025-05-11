@@ -1,8 +1,9 @@
 
 import { SupabaseProductService } from '@/services/SupabaseProductService';
-import { Product, AdminProduct, GetProductsParams } from '@/types/product';
+import { Product, GetProductsParams } from '@/types/product';
+import type { AdminProduct } from '@/types/product';
 
-export { AdminProduct, GetProductsParams };
+export type { AdminProduct, GetProductsParams };
 
 export const ProductService = {
   getProducts: async (params: GetProductsParams): Promise<Product[]> => {
