@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -44,7 +43,7 @@ interface FormCategory {
   parent_id?: string | null;
 }
 
-// Using the service Category type
+// Using the service Category type instead of redefining it
 import { Category } from "@/services/CategoryService";
 
 // Pages/Admin/Categories.tsx
@@ -131,7 +130,7 @@ const Categories = () => {
       id: category.id,
       name: category.name,
       slug: category.slug,
-      description: category.description,
+      description: category.description || { sr: '', en: '' },
       image: category.image,
       is_active: category.is_active,
       display_order: category.display_order,

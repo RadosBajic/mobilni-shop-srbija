@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 interface Category {
@@ -15,6 +14,7 @@ interface Category {
   image?: string;
   is_active: boolean;
   display_order: number;
+  parent_id?: string | null;
 }
 
 export const SupabaseCategoryService = {
@@ -33,16 +33,17 @@ export const SupabaseCategoryService = {
         id: item.id,
         slug: item.slug,
         name: {
-          sr: item.name_sr || item.name || '',
-          en: item.name_en || item.name || '', 
+          sr: item.name_sr || '',
+          en: item.name_en || '', 
         },
-        description: item.description ? {
-          sr: item.description_sr || item.description || '',
-          en: item.description_en || item.description || '',
-        } : undefined,
+        description: {
+          sr: item.description_sr || '',
+          en: item.description_en || '',
+        },
         image: item.image,
         is_active: item.is_active,
-        display_order: item.display_order
+        display_order: item.display_order,
+        parent_id: item.parent_id
       }));
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -71,16 +72,17 @@ export const SupabaseCategoryService = {
         id: data.id,
         slug: data.slug,
         name: {
-          sr: data.name_sr || data.name || '',
-          en: data.name_en || data.name || '', 
+          sr: data.name_sr || '',
+          en: data.name_en || '', 
         },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
-        } : undefined,
+        description: {
+          sr: data.description_sr || '',
+          en: data.description_en || '',
+        },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order
+        display_order: data.display_order,
+        parent_id: data.parent_id
       };
     } catch (error) {
       console.error('Error fetching category by slug:', error);
@@ -94,16 +96,15 @@ export const SupabaseCategoryService = {
   createCategory: async (category: Partial<Category>): Promise<Category> => {
     try {
       const categoryData = {
-        slug: category.slug,
-        name: category.name?.en || '',
+        slug: category.slug || '',
         name_sr: category.name?.sr || '',
         name_en: category.name?.en || '',
-        description: category.description?.en || null,
         description_sr: category.description?.sr || null,
         description_en: category.description?.en || null,
         image: category.image || null,
         is_active: category.is_active !== undefined ? category.is_active : true,
         display_order: category.display_order || 0,
+        parent_id: category.parent_id || null
       };
       
       const { data, error } = await supabase.from('categories')
@@ -119,16 +120,17 @@ export const SupabaseCategoryService = {
         id: data.id,
         slug: data.slug,
         name: {
-          sr: data.name_sr || data.name || '',
-          en: data.name_en || data.name || '', 
+          sr: data.name_sr || '',
+          en: data.name_en || '', 
         },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
-        } : undefined,
+        description: {
+          sr: data.description_sr || '',
+          en: data.description_en || '',
+        },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order
+        display_order: data.display_order,
+        parent_id: data.parent_id
       };
     } catch (error) {
       console.error('Error creating category:', error);
@@ -138,25 +140,18 @@ export const SupabaseCategoryService = {
   
   updateCategory: async (id: string, category: Partial<Category>): Promise<Category> => {
     try {
-      const categoryData = {
-        slug: category.slug,
-        name: category.name?.en || undefined,
-        name_sr: category.name?.sr || undefined,
-        name_en: category.name?.en || undefined,
-        description: category.description?.en || undefined,
-        description_sr: category.description?.sr || undefined,
-        description_en: category.description?.en || undefined,
-        image: category.image,
-        is_active: category.is_active,
-        display_order: category.display_order,
-      };
+      const categoryData: Record<string, any> = {};
       
-      // Remove undefined values
-      Object.keys(categoryData).forEach(key => {
-        if (categoryData[key] === undefined) {
-          delete categoryData[key];
-        }
-      });
+      // Build update data conditionally
+      if (category.slug !== undefined) categoryData.slug = category.slug;
+      if (category.name?.sr !== undefined) categoryData.name_sr = category.name.sr;
+      if (category.name?.en !== undefined) categoryData.name_en = category.name.en;
+      if (category.description?.sr !== undefined) categoryData.description_sr = category.description.sr;
+      if (category.description?.en !== undefined) categoryData.description_en = category.description.en;
+      if (category.image !== undefined) categoryData.image = category.image;
+      if (category.is_active !== undefined) categoryData.is_active = category.is_active;
+      if (category.display_order !== undefined) categoryData.display_order = category.display_order;
+      if (category.parent_id !== undefined) categoryData.parent_id = category.parent_id;
       
       const { data, error } = await supabase.from('categories')
         .update(categoryData)
@@ -172,16 +167,17 @@ export const SupabaseCategoryService = {
         id: data.id,
         slug: data.slug,
         name: {
-          sr: data.name_sr || data.name || '',
-          en: data.name_en || data.name || '', 
+          sr: data.name_sr || '',
+          en: data.name_en || '', 
         },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
-        } : undefined,
+        description: {
+          sr: data.description_sr || '',
+          en: data.description_en || '',
+        },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order
+        display_order: data.display_order,
+        parent_id: data.parent_id
       };
     } catch (error) {
       console.error('Error updating category:', error);

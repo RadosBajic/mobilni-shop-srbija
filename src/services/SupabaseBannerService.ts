@@ -100,9 +100,24 @@ export const SupabaseBannerService = {
 
   createBanner: async (banner: Partial<Banner>): Promise<Banner> => {
     try {
+      // Make sure required properties are present
+      const bannerData = {
+        title_sr: banner.title_sr || '',
+        title_en: banner.title_en || '',
+        description_sr: banner.description_sr || null,
+        description_en: banner.description_en || null,
+        image: banner.image || null,
+        target_url: banner.target_url || null,
+        is_active: banner.is_active !== undefined ? banner.is_active : true,
+        position: banner.position || 'home',
+        order: banner.order !== undefined ? banner.order : 0,
+        start_date: banner.start_date || null,
+        end_date: banner.end_date || null
+      };
+
       const { data, error } = await supabase
         .from('banners')
-        .insert(banner)
+        .insert(bannerData)
         .select()
         .single();
 
@@ -117,9 +132,25 @@ export const SupabaseBannerService = {
   
   createPromotion: async (promotion: Partial<Promotion>): Promise<Promotion> => {
     try {
+      // Make sure required properties are present
+      const promotionData = {
+        title_sr: promotion.title_sr || '',
+        title_en: promotion.title_en || '',
+        description_sr: promotion.description_sr || null,
+        description_en: promotion.description_en || null,
+        image: promotion.image || null,
+        target_url: promotion.target_url || null,
+        is_active: promotion.is_active !== undefined ? promotion.is_active : true,
+        position: promotion.position || 'promotion',
+        order: promotion.order !== undefined ? promotion.order : 0,
+        discount: promotion.discount || null,
+        start_date: promotion.start_date || null,
+        end_date: promotion.end_date || null
+      };
+
       const { data, error } = await supabase
         .from('promotions')
-        .insert(promotion)
+        .insert(promotionData)
         .select()
         .single();
 
