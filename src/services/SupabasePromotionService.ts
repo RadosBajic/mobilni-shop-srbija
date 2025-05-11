@@ -43,20 +43,20 @@ export const SupabasePromotionService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          sr: item.title_sr || item.title || '',
-          en: item.title_en || item.title || '',
+          sr: item.title_sr || '',
+          en: item.title_en || '',
         },
-        description: item.description ? {
-          sr: item.description_sr || item.description || '',
-          en: item.description_en || item.description || '',
+        description: item.description_sr || item.description_en ? {
+          sr: item.description_sr || '',
+          en: item.description_en || '',
         } : undefined,
-        image: item.image,
-        link: item.link,
+        image: item.image || '',
+        link: item.target_url || undefined,
         position: item.position,
         order: item.order,
         is_active: item.is_active,
-        backgroundColor: item.background_color,
-        textColor: item.text_color,
+        backgroundColor: item.background_color || undefined,
+        textColor: item.text_color || undefined,
       }));
     } catch (error) {
       console.error(`Error fetching ${position} promotions:`, error);
@@ -69,14 +69,12 @@ export const SupabasePromotionService = {
   createPromotion: async (promotion: Partial<Promotion>): Promise<Promotion> => {
     try {
       const promotionData = {
-        title: promotion.title?.en || '',
         title_sr: promotion.title?.sr || '',
         title_en: promotion.title?.en || '',
-        description: promotion.description?.en || null,
         description_sr: promotion.description?.sr || null,
         description_en: promotion.description?.en || null,
         image: promotion.image || '',
-        link: promotion.link || null,
+        target_url: promotion.link || null,
         position: promotion.position || 'home',
         order: promotion.order || 0,
         is_active: promotion.is_active !== undefined ? promotion.is_active : true,
@@ -97,20 +95,20 @@ export const SupabasePromotionService = {
       return {
         id: data.id,
         title: {
-          sr: data.title_sr || data.title || '',
-          en: data.title_en || data.title || '',
+          sr: data.title_sr || '',
+          en: data.title_en || '',
         },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
+        description: data.description_sr || data.description_en ? {
+          sr: data.description_sr || '',
+          en: data.description_en || '',
         } : undefined,
-        image: data.image,
-        link: data.link,
+        image: data.image || '',
+        link: data.target_url || undefined,
         position: data.position,
         order: data.order,
         is_active: data.is_active,
-        backgroundColor: data.background_color,
-        textColor: data.text_color,
+        backgroundColor: data.background_color || undefined,
+        textColor: data.text_color || undefined,
       };
     } catch (error) {
       console.error('Error creating promotion:', error);
@@ -123,19 +121,17 @@ export const SupabasePromotionService = {
       const promotionData: any = {};
       
       if (promotion.title) {
-        promotionData.title = promotion.title.en || '';
         promotionData.title_sr = promotion.title.sr || '';
         promotionData.title_en = promotion.title.en || '';
       }
       
       if (promotion.description) {
-        promotionData.description = promotion.description.en || null;
         promotionData.description_sr = promotion.description.sr || null;
         promotionData.description_en = promotion.description.en || null;
       }
       
       if (promotion.image !== undefined) promotionData.image = promotion.image;
-      if (promotion.link !== undefined) promotionData.link = promotion.link;
+      if (promotion.link !== undefined) promotionData.target_url = promotion.link;
       if (promotion.position !== undefined) promotionData.position = promotion.position;
       if (promotion.order !== undefined) promotionData.order = promotion.order;
       if (promotion.is_active !== undefined) promotionData.is_active = promotion.is_active;
@@ -156,20 +152,20 @@ export const SupabasePromotionService = {
       return {
         id: data.id,
         title: {
-          sr: data.title_sr || data.title || '',
-          en: data.title_en || data.title || '',
+          sr: data.title_sr || '',
+          en: data.title_en || '',
         },
-        description: data.description ? {
-          sr: data.description_sr || data.description || '',
-          en: data.description_en || data.description || '',
+        description: data.description_sr || data.description_en ? {
+          sr: data.description_sr || '',
+          en: data.description_en || '',
         } : undefined,
-        image: data.image,
-        link: data.link,
+        image: data.image || '',
+        link: data.target_url || undefined,
         position: data.position,
         order: data.order,
         is_active: data.is_active,
-        backgroundColor: data.background_color,
-        textColor: data.text_color,
+        backgroundColor: data.background_color || undefined,
+        textColor: data.text_color || undefined,
       };
     } catch (error) {
       console.error('Error updating promotion:', error);
