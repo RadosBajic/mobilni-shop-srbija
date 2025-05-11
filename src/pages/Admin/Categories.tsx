@@ -40,7 +40,6 @@ interface FormCategory {
   image?: string;
   is_active: boolean;
   display_order: number;
-  parent_id?: string | null;
 }
 
 // Using the service Category type instead of redefining it
@@ -130,11 +129,13 @@ const Categories = () => {
       id: category.id,
       name: category.name,
       slug: category.slug,
-      description: category.description || { sr: '', en: '' },
+      description: {
+        sr: category.description?.sr || '',
+        en: category.description?.en || ''
+      },
       image: category.image,
       is_active: category.is_active,
-      display_order: category.display_order,
-      parent_id: category.parent_id
+      display_order: category.display_order
     };
     setCurrentCategory(formCategory);
     setIsOpen(true);

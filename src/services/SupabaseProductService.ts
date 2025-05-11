@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { Product } from '@/components/Products/ProductCard';
 import { AdminProduct } from '@/services/ProductService';
@@ -40,12 +39,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -73,12 +72,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -106,12 +105,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -142,12 +141,12 @@ export const SupabaseProductService = {
       return {
         id: data.id,
         title: {
-          en: data.title_en || data.title || '',
-          sr: data.title_sr || data.title || '',
+          en: data.title_en || '',
+          sr: data.title_sr || '',
         },
         price: data.price || 0,
         oldPrice: data.old_price || null,
-        image: data.image_url || '',
+        image: data.image || '',
         category: data.category || '',
         isNew: data.is_new || false,
         isOnSale: data.is_on_sale || false,
@@ -174,12 +173,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -224,12 +223,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -256,12 +255,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -289,12 +288,12 @@ export const SupabaseProductService = {
       return data.map(item => ({
         id: item.id,
         title: {
-          en: item.title_en || item.title || '',
-          sr: item.title_sr || item.title || '',
+          en: item.title_en || '',
+          sr: item.title_sr || '',
         },
         price: item.price || 0,
         oldPrice: item.old_price || null,
-        image: item.image_url || '',
+        image: item.image || '',
         category: item.category || '',
         isNew: item.is_new || false,
         isOnSale: item.is_on_sale || false,
@@ -316,21 +315,19 @@ export const SupabaseProductService = {
   createProduct: async (formData: any): Promise<AdminProduct> => {
     try {
       const productData = {
-        title: formData.name,
-        title_sr: formData.nameSr,
-        title_en: formData.nameEn,
-        sku: formData.sku,
-        category: formData.category,
-        price: formData.price,
+        title_sr: formData.nameSr || formData.name || '',
+        title_en: formData.nameEn || formData.name || '',
+        sku: formData.sku || '',
+        category: formData.category || '',
+        price: formData.price || 0,
         old_price: formData.oldPrice || null,
-        stock: formData.stock,
-        status: formData.status,
-        description: formData.description,
-        description_sr: formData.descriptionSr,
-        description_en: formData.descriptionEn,
-        is_new: formData.isNew,
-        is_on_sale: formData.isOnSale,
-        image_url: formData.image,
+        stock: formData.stock || 0,
+        status: formData.status || 'active',
+        description_sr: formData.descriptionSr || formData.description || '',
+        description_en: formData.descriptionEn || formData.description || '',
+        is_new: formData.isNew !== undefined ? formData.isNew : false,
+        is_on_sale: formData.isOnSale !== undefined ? formData.isOnSale : false,
+        image: formData.image || null
       };
       
       const { data, error } = await supabase.from('products').insert(productData).select().single();
@@ -342,12 +339,12 @@ export const SupabaseProductService = {
       return {
         id: data.id,
         title: {
-          en: data.title_en || data.title,
-          sr: data.title_sr || data.title,
+          en: data.title_en || '',
+          sr: data.title_sr || '',
         },
         price: data.price,
         oldPrice: data.old_price,
-        image: data.image_url,
+        image: data.image,
         category: data.category,
         isNew: data.is_new,
         isOnSale: data.is_on_sale,
@@ -356,7 +353,7 @@ export const SupabaseProductService = {
         status: data.status,
         descriptionSr: data.description_sr,
         descriptionEn: data.description_en,
-        description: data.description,
+        description: data.description_sr || data.description_en || '',
       };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -366,23 +363,25 @@ export const SupabaseProductService = {
   
   updateProduct: async (id: string, formData: any): Promise<AdminProduct> => {
     try {
-      const productData = {
-        title: formData.name,
-        title_sr: formData.nameSr,
-        title_en: formData.nameEn,
-        sku: formData.sku,
-        category: formData.category,
-        price: formData.price,
-        old_price: formData.oldPrice,
-        stock: formData.stock,
-        status: formData.status,
-        description: formData.description,
-        description_sr: formData.descriptionSr,
-        description_en: formData.descriptionEn,
-        is_new: formData.isNew,
-        is_on_sale: formData.isOnSale,
-        image_url: formData.image,
-      };
+      const productData: Record<string, any> = {};
+      
+      if (formData.nameSr !== undefined) productData.title_sr = formData.nameSr;
+      if (formData.nameEn !== undefined) productData.title_en = formData.nameEn;
+      if (formData.name !== undefined && !productData.title_sr) productData.title_sr = formData.name;
+      if (formData.name !== undefined && !productData.title_en) productData.title_en = formData.name;
+      if (formData.sku !== undefined) productData.sku = formData.sku;
+      if (formData.category !== undefined) productData.category = formData.category;
+      if (formData.price !== undefined) productData.price = formData.price;
+      if (formData.oldPrice !== undefined) productData.old_price = formData.oldPrice;
+      if (formData.stock !== undefined) productData.stock = formData.stock;
+      if (formData.status !== undefined) productData.status = formData.status;
+      if (formData.descriptionSr !== undefined) productData.description_sr = formData.descriptionSr;
+      if (formData.descriptionEn !== undefined) productData.description_en = formData.descriptionEn;
+      if (formData.description !== undefined && !productData.description_sr) productData.description_sr = formData.description;
+      if (formData.description !== undefined && !productData.description_en) productData.description_en = formData.description;
+      if (formData.isNew !== undefined) productData.is_new = formData.isNew;
+      if (formData.isOnSale !== undefined) productData.is_on_sale = formData.isOnSale;
+      if (formData.image !== undefined) productData.image = formData.image;
       
       const { data, error } = await supabase
         .from('products')
@@ -398,12 +397,12 @@ export const SupabaseProductService = {
       return {
         id: data.id,
         title: {
-          en: data.title_en || data.title,
-          sr: data.title_sr || data.title,
+          en: data.title_en || '',
+          sr: data.title_sr || '',
         },
         price: data.price,
         oldPrice: data.old_price,
-        image: data.image_url,
+        image: data.image,
         category: data.category,
         isNew: data.is_new,
         isOnSale: data.is_on_sale,
@@ -412,7 +411,7 @@ export const SupabaseProductService = {
         status: data.status,
         descriptionSr: data.description_sr,
         descriptionEn: data.description_en,
-        description: data.description,
+        description: data.description_sr || data.description_en || '',
       };
     } catch (error) {
       console.error('Error updating product:', error);

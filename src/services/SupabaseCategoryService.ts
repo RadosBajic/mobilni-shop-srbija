@@ -42,8 +42,7 @@ export const SupabaseCategoryService = {
         },
         image: item.image,
         is_active: item.is_active,
-        display_order: item.display_order,
-        parent_id: item.parent_id
+        display_order: item.display_order
       }));
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -81,8 +80,7 @@ export const SupabaseCategoryService = {
         },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order,
-        parent_id: data.parent_id
+        display_order: data.display_order
       };
     } catch (error) {
       console.error('Error fetching category by slug:', error);
@@ -103,8 +101,7 @@ export const SupabaseCategoryService = {
         description_en: category.description?.en || null,
         image: category.image || null,
         is_active: category.is_active !== undefined ? category.is_active : true,
-        display_order: category.display_order || 0,
-        parent_id: category.parent_id || null
+        display_order: category.display_order || 0
       };
       
       const { data, error } = await supabase.from('categories')
@@ -129,8 +126,7 @@ export const SupabaseCategoryService = {
         },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order,
-        parent_id: data.parent_id
+        display_order: data.display_order
       };
     } catch (error) {
       console.error('Error creating category:', error);
@@ -151,7 +147,6 @@ export const SupabaseCategoryService = {
       if (category.image !== undefined) categoryData.image = category.image;
       if (category.is_active !== undefined) categoryData.is_active = category.is_active;
       if (category.display_order !== undefined) categoryData.display_order = category.display_order;
-      if (category.parent_id !== undefined) categoryData.parent_id = category.parent_id;
       
       const { data, error } = await supabase.from('categories')
         .update(categoryData)
@@ -176,8 +171,7 @@ export const SupabaseCategoryService = {
         },
         image: data.image,
         is_active: data.is_active,
-        display_order: data.display_order,
-        parent_id: data.parent_id
+        display_order: data.display_order
       };
     } catch (error) {
       console.error('Error updating category:', error);
