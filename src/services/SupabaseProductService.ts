@@ -75,19 +75,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching featured products:', error);
       
@@ -108,19 +114,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching new arrivals:', error);
       
@@ -144,6 +156,7 @@ export const SupabaseProductService = {
         return null;
       }
 
+      // Return a new object to prevent deep recursion
       return {
         id: data.id,
         title: {
@@ -176,19 +189,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching products by IDs:', error);
       
@@ -226,19 +245,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching related products:', error);
       
@@ -258,19 +283,25 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: Product[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error searching products:', error);
       
@@ -291,25 +322,31 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-        sku: item.sku || '',
-        stock: item.stock || 0,
-        status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
-        descriptionSr: item.description_sr || '',
-        descriptionEn: item.description_en || '',
-        description: '',  // Remove reference to non-existing property
-      }));
+      // Fix for deep recursion issue - create completely new objects
+      const result: AdminProduct[] = [];
+      for (const item of data) {
+        result.push({
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+          sku: item.sku || '',
+          stock: item.stock || 0,
+          status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
+          descriptionSr: item.description_sr || '',
+          descriptionEn: item.description_en || '',
+          description: '',  // Remove reference to non-existing property
+        });
+      }
+      
+      return result;
     } catch (error) {
       console.error('Error fetching admin products:', error);
       
