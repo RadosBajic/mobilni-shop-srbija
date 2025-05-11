@@ -55,8 +55,8 @@ export const SupabasePromotionService = {
         position: item.position,
         order: item.order,
         is_active: item.is_active,
-        backgroundColor: item.background_color || undefined,
-        textColor: item.text_color || undefined,
+        backgroundColor: undefined,  // uklanjamo reference na polja koja ne postoje
+        textColor: undefined,  // uklanjamo reference na polja koja ne postoje
       }));
     } catch (error) {
       console.error(`Error fetching ${position} promotions:`, error);
@@ -66,7 +66,7 @@ export const SupabasePromotionService = {
     }
   },
   
-  createPromotion: async (promotion: Partial<Promotion>): Promise<Promotion> => {
+  createPromotion: async (promotion: Partial<Promotion> & { position: string; order: number }): Promise<Promotion> => {
     try {
       const promotionData = {
         title_sr: promotion.title?.sr || '',
@@ -75,11 +75,9 @@ export const SupabasePromotionService = {
         description_en: promotion.description?.en || null,
         image: promotion.image || '',
         target_url: promotion.link || null,
-        position: promotion.position || 'home',
-        order: promotion.order || 0,
-        is_active: promotion.is_active !== undefined ? promotion.is_active : true,
-        background_color: promotion.backgroundColor || null,
-        text_color: promotion.textColor || null,
+        position: promotion.position,
+        order: promotion.order,
+        is_active: promotion.is_active !== undefined ? promotion.is_active : true
       };
       
       const { data, error } = await supabase
@@ -107,8 +105,8 @@ export const SupabasePromotionService = {
         position: data.position,
         order: data.order,
         is_active: data.is_active,
-        backgroundColor: data.background_color || undefined,
-        textColor: data.text_color || undefined,
+        backgroundColor: undefined,  // uklanjamo reference na polja koja ne postoje
+        textColor: undefined,  // uklanjamo reference na polja koja ne postoje
       };
     } catch (error) {
       console.error('Error creating promotion:', error);
@@ -135,8 +133,6 @@ export const SupabasePromotionService = {
       if (promotion.position !== undefined) promotionData.position = promotion.position;
       if (promotion.order !== undefined) promotionData.order = promotion.order;
       if (promotion.is_active !== undefined) promotionData.is_active = promotion.is_active;
-      if (promotion.backgroundColor !== undefined) promotionData.background_color = promotion.backgroundColor;
-      if (promotion.textColor !== undefined) promotionData.text_color = promotion.textColor;
       
       const { data, error } = await supabase
         .from('promotions')
@@ -164,8 +160,8 @@ export const SupabasePromotionService = {
         position: data.position,
         order: data.order,
         is_active: data.is_active,
-        backgroundColor: data.background_color || undefined,
-        textColor: data.text_color || undefined,
+        backgroundColor: undefined,  // uklanjamo reference na polja koja ne postoje
+        textColor: undefined,  // uklanjamo reference na polja koja ne postoje
       };
     } catch (error) {
       console.error('Error updating promotion:', error);

@@ -36,19 +36,22 @@ export const SupabaseProductService = {
         throw error;
       }
 
-      return data.map(item => ({
-        id: item.id,
-        title: {
-          en: item.title_en || '',
-          sr: item.title_sr || '',
-        },
-        price: item.price || 0,
-        oldPrice: item.old_price || null,
-        image: item.image || '',
-        category: item.category || '',
-        isNew: item.is_new || false,
-        isOnSale: item.is_on_sale || false,
-      }));
+      // Koristimo explicit mapping umesto direktnog мапирања
+      return data.map(item => {
+        return {
+          id: item.id,
+          title: {
+            en: item.title_en || '',
+            sr: item.title_sr || '',
+          },
+          price: item.price || 0,
+          oldPrice: item.old_price || null,
+          image: item.image || '',
+          category: item.category || '',
+          isNew: item.is_new || false,
+          isOnSale: item.is_on_sale || false,
+        };
+      });
     } catch (error) {
       console.error('Error fetching products:', error);
       
@@ -302,7 +305,7 @@ export const SupabaseProductService = {
         status: (item.status as 'active' | 'outOfStock' | 'draft') || 'draft',
         descriptionSr: item.description_sr || '',
         descriptionEn: item.description_en || '',
-        description: item.description || '',
+        description: '',  // Izbacujemo referencu na property koji ne postoji
       }));
     } catch (error) {
       console.error('Error fetching admin products:', error);
@@ -322,7 +325,7 @@ export const SupabaseProductService = {
         price: formData.price || 0,
         old_price: formData.oldPrice || null,
         stock: formData.stock || 0,
-        status: formData.status as 'active' | 'outOfStock' | 'draft' || 'active',
+        status: formData.status || 'active',
         description_sr: formData.descriptionSr || formData.description || '',
         description_en: formData.descriptionEn || formData.description || '',
         is_new: formData.isNew !== undefined ? formData.isNew : false,
@@ -351,9 +354,9 @@ export const SupabaseProductService = {
         sku: data.sku,
         stock: data.stock,
         status: data.status as 'active' | 'outOfStock' | 'draft',
-        descriptionSr: data.description_sr,
-        descriptionEn: data.description_en,
-        description: data.description_sr || data.description_en || '',
+        descriptionSr: data.description_sr || '',
+        descriptionEn: data.description_en || '',
+        description: '',  // Izbacujemo referencu na property koji ne postoji
       };
     } catch (error) {
       console.error('Error creating product:', error);
@@ -409,9 +412,9 @@ export const SupabaseProductService = {
         sku: data.sku,
         stock: data.stock,
         status: data.status as 'active' | 'outOfStock' | 'draft',
-        descriptionSr: data.description_sr,
-        descriptionEn: data.description_en,
-        description: data.description_sr || data.description_en || '',
+        descriptionSr: data.description_sr || '',
+        descriptionEn: data.description_en || '',
+        description: '',  // Izbacujemo referencu na property koji ne postoji
       };
     } catch (error) {
       console.error('Error updating product:', error);
@@ -669,6 +672,6 @@ const getMockAdminProducts = (): AdminProduct[] => {
     status: 'active' as 'active' | 'outOfStock' | 'draft',
     descriptionSr: 'Opis proizvoda na srpskom.',
     descriptionEn: 'Product description in English.',
-    description: 'Detaljan opis proizvoda / Product details',
+    description: '',  // Izbacujemo referencu na property koji ne postoji
   }));
 };
