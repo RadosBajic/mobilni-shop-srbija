@@ -1,23 +1,8 @@
 
 import { SupabaseProductService } from '@/services/SupabaseProductService';
-import { Product } from '@/components/Products/ProductCard';
+import { Product, AdminProduct, GetProductsParams } from '@/types/product';
 
-// Define the params interface for getProducts
-interface GetProductsParams {
-  category?: string;
-  limit?: number;
-  isOnSale?: boolean;
-  isNew?: boolean;
-}
-
-export interface AdminProduct extends Product {
-  sku: string;
-  stock: number;
-  status: 'active' | 'outOfStock' | 'draft';
-  descriptionSr: string;
-  descriptionEn: string;
-  description: string;
-}
+export { AdminProduct, GetProductsParams };
 
 export const ProductService = {
   getProducts: async (params: GetProductsParams): Promise<Product[]> => {
@@ -81,7 +66,6 @@ export const ProductService = {
 
   searchProducts: async (query: string): Promise<Product[]> => {
     try {
-      // New function in SupabaseProductService
       return await SupabaseProductService.searchProducts(query);
     } catch (error) {
       console.error('ProductService searchProducts error:', error);
