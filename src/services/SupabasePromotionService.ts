@@ -55,8 +55,9 @@ export const SupabasePromotionService = {
         position: item.position,
         order: item.order,
         is_active: item.is_active,
-        backgroundColor: undefined,  // uklanjamo reference na polja koja ne postoje
-        textColor: undefined,  // uklanjamo reference na polja koja ne postoje
+        // Remove references to non-existing fields
+        backgroundColor: undefined,
+        textColor: undefined,
       }));
     } catch (error) {
       console.error(`Error fetching ${position} promotions:`, error);

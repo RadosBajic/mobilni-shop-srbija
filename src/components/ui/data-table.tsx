@@ -6,7 +6,8 @@ import { Loader } from "@/components/ui/loader";
 
 interface DataTableProps<T> {
   columns: {
-    accessorKey: string;
+    accessorKey?: string;
+    id?: string;
     header: string;
     cell?: ({ row }: { row: { original: T } }) => React.ReactNode;
   }[];
@@ -69,7 +70,7 @@ export function DataTable<T>({
           <TableHeader>
             <TableRow>
               {columns.map((column) => (
-                <TableHead key={column.accessorKey}>{column.header}</TableHead>
+                <TableHead key={column.accessorKey || column.id}>{column.header}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
@@ -90,10 +91,10 @@ export function DataTable<T>({
               filteredData.map((row, i) => (
                 <TableRow key={i}>
                   {columns.map((column) => (
-                    <TableCell key={column.accessorKey}>
+                    <TableCell key={column.accessorKey || column.id}>
                       {column.cell
                         ? column.cell({ row: { original: row } })
-                        : (row as any)[column.accessorKey]}
+                        : (row as any)[column.accessorKey || column.id]}
                     </TableCell>
                   ))}
                 </TableRow>

@@ -89,7 +89,7 @@ const Promotions: React.FC = () => {
       header: language === "sr" ? "Redosled" : "Order",
     },
     {
-      id: "actions",
+      accessorKey: "actions",
       header: language === "sr" ? "Akcije" : "Actions",
       cell: ({ row }: { row: any }) => (
         <DropdownMenu>
